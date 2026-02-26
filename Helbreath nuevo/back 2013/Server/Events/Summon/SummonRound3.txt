@@ -1,0 +1,9 @@
+round-summon = 1 10 Hellclaw
+round-summon = 2 5 HellDeath
+round-summon = 3 10 Tigerworm
+round-summon = 4 5 LightWorm
+round-summon = 5 3 Wyvern
+round-summon = 6 3 Fire-Wyvern
+round-summon = 7 2 DeathWyvern
+round-summon = 8 2 GhostAba
+round-summon = 9 1 Abaddon

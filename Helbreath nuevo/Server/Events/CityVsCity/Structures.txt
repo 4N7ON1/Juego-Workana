@@ -1,0 +1,111 @@
+//------------------Num-MapName-------Type----X-----Y---						
+						
+//Aresden	Left	Button	-	Mana	Stone	
+CityVsCity-structure	=	1	aresden	42	27	270
+CityVsCity-structure	=	2	aresden	42	28	270
+CityVsCity-structure	=	3	aresden	42	29	270
+CityVsCity-structure	=	4	aresden	42	30	270
+CityVsCity-structure	=	5	aresden	42	31	270
+CityVsCity-structure	=	6	aresden	42	32	270
+CityVsCity-structure	=	7	aresden	42	33	270
+CityVsCity-structure	=	8	aresden	42	34	270
+CityVsCity-structure	=	9	aresden	42	35	270
+CityVsCity-structure	=	10	aresden	42	36	270
+CityVsCity-structure	=	11	aresden	42	37	270
+CityVsCity-structure	=	12	aresden	42	38	270
+CityVsCity-structure	=	13	aresden	42	39	270
+						
+//Aresden	right	button				
+CityVsCity-structure	=	14	aresden	42	277	201
+CityVsCity-structure	=	15	aresden	42	277	202
+CityVsCity-structure	=	16	aresden	42	277	203
+CityVsCity-structure	=	17	aresden	42	277	204
+CityVsCity-structure	=	18	aresden	42	277	205
+CityVsCity-structure	=	19	aresden	42	277	206
+CityVsCity-structure	=	20	aresden	42	277	207
+CityVsCity-structure	=	21	aresden	42	277	208
+CityVsCity-structure	=	22	aresden	42	277	209
+						
+//Aresden	right	top				
+CityVsCity-structure	=	23	aresden	42	257	21
+CityVsCity-structure	=	24	aresden	42	258	21
+CityVsCity-structure	=	25	aresden	42	258	22
+CityVsCity-structure	=	26	aresden	42	259	22
+CityVsCity-structure	=	27	aresden	42	259	23
+CityVsCity-structure	=	28	aresden	42	260	23
+CityVsCity-structure	=	29	aresden	42	260	24
+CityVsCity-structure	=	30	aresden	42	261	24
+CityVsCity-structure	=	31	aresden	42	261	25
+CityVsCity-structure	=	32	aresden	42	262	25
+CityVsCity-structure	=	33	aresden	42	262	26
+CityVsCity-structure	=	34	aresden	42	263	26
+						
+//Aresden	Left	Top				
+CityVsCity-structure	=	35	aresden	42	25	23
+CityVsCity-structure	=	36	aresden	42	26	23
+CityVsCity-structure	=	37	aresden	42	27	23
+CityVsCity-structure	=	38	aresden	42	28	23
+CityVsCity-structure	=	39	aresden	42	29	23
+CityVsCity-structure	=	40	aresden	42	30	23
+CityVsCity-structure	=	41	aresden	42	31	23
+CityVsCity-structure	=	42	aresden	42	32	23
+CityVsCity-structure	=	43	aresden	42	33	23
+CityVsCity-structure	=	44	aresden	42	34	23
+CityVsCity-structure	=	45	aresden	42	35	23
+						
+//Elvine	left	button				
+CityVsCity-structure	=	46	elvine	42	23	271
+CityVsCity-structure	=	47	elvine	42	23	272
+CityVsCity-structure	=	48	elvine	42	24	272
+CityVsCity-structure	=	49	elvine	42	24	273
+CityVsCity-structure	=	50	elvine	42	25	273
+CityVsCity-structure	=	51	elvine	42	25	274
+CityVsCity-structure	=	52	elvine	42	26	274
+CityVsCity-structure	=	53	elvine	42	26	275
+CityVsCity-structure	=	54	elvine	42	27	275
+CityVsCity-structure	=	55	elvine	42	27	276
+CityVsCity-structure	=	56	elvine	42	28	276
+CityVsCity-structure	=	57	elvine	42	28	277
+CityVsCity-structure	=	58	elvine	42	29	277
+						
+//Elvine	right	button				
+CityVsCity-structure	=	59	elvine	42	276	192
+CityVsCity-structure	=	60	elvine	42	276	193
+CityVsCity-structure	=	61	elvine	42	276	194
+CityVsCity-structure	=	62	elvine	42	276	195
+CityVsCity-structure	=	63	elvine	42	276	196
+CityVsCity-structure	=	64	elvine	42	276	197
+CityVsCity-structure	=	65	elvine	42	276	198
+CityVsCity-structure	=	66	elvine	42	276	199
+CityVsCity-structure	=	67	elvine	42	276	200
+						
+//Elvine	right	top				
+CityVsCity-structure	=	68	elvine	42	213	23
+CityVsCity-structure	=	69	elvine	42	213	24
+CityVsCity-structure	=	70	elvine	42	214	24
+CityVsCity-structure	=	71	elvine	42	214	25
+CityVsCity-structure	=	72	elvine	42	215	25
+CityVsCity-structure	=	73	elvine	42	215	26
+CityVsCity-structure	=	74	elvine	42	216	26
+CityVsCity-structure	=	75	elvine	42	216	27
+CityVsCity-structure	=	76	elvine	42	217	27
+CityVsCity-structure	=	77	elvine	42	217	28
+CityVsCity-structure	=	78	elvine	42	218	28
+CityVsCity-structure	=	79	elvine	42	218	29
+CityVsCity-structure	=	80	elvine	42	219	29
+CityVsCity-structure	=	81	elvine	42	219	30
+CityVsCity-structure	=	82	elvine	42	220	30
+CityVsCity-structure	=	83	elvine	42	220	31
+						
+//Elvine	left	top				
+CityVsCity-structure	=	84	elvine	42	250	270
+CityVsCity-structure	=	85	elvine	42	251	270
+CityVsCity-structure	=	86	elvine	42	252	270
+CityVsCity-structure	=	87	elvine	42	253	270
+CityVsCity-structure	=	88	elvine	42	254	270
+CityVsCity-structure	=	89	elvine	42	255	270
+CityVsCity-structure	=	90	elvine	42	256	270
+CityVsCity-structure	=	91	elvine	42	257	270
+CityVsCity-structure	=	92	elvine	42	258	270
+CityVsCity-structure	=	93	elvine	42	259	270
+CityVsCity-structure	=	94	elvine	42	260	270

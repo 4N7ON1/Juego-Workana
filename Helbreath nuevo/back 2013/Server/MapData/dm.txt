@@ -1,0 +1,19 @@
+[MAP-INFO]
+
+map-location  = dm
+
+initial-point = 1  49 48
+initial-point = 2  61 50
+initial-point = 3  63 58
+initial-point = 4  57 62
+initial-point = 5  47 63
+initial-point = 6  39 60
+initial-point = 7  37 53
+initial-point = 8  41 59
+initial-point = 9  50 56
+
+maximum-object = 500
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

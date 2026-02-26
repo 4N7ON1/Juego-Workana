@@ -1,0 +1,10 @@
+[MAP-INFO]
+
+map-location  = acrypt
+initial-point = 1  59 72
+
+maximum-object		= 600
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

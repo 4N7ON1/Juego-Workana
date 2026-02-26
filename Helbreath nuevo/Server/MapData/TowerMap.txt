@@ -1,0 +1,10 @@
+[MAP-INFO]
+
+map-location  = TowerMap
+initial-point = 1  102 80
+
+maximum-object		= 300
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

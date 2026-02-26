@@ -1,0 +1,14 @@
+[MAP-INFO]
+
+map-location  = shop
+initial-point = 1  68 66
+
+waypoint          =     1      80 69
+
+npc               =   ShopKeeper-W	 1           1 1 1 1 1 1 1 1 1 1         1  
+
+no-attack-area           = 1       -10 -10 -10 -10
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

@@ -1,0 +1,14 @@
+[MAP-INFO]
+
+map-location  = Whouse
+initial-point = 1   62 71
+
+waypoint          =     1      74 71
+
+npc               =   ShopKeeper-W	 1           1 1 1 1 1 1 1 1 1 1         1  
+
+no-attack-area           = 1       -10 -10 -10 -10
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

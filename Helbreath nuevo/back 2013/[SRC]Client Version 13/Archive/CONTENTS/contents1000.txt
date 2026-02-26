@@ -1,0 +1,124 @@
+<
+-Helbreath Cursed - Updates
+<
+04/11/2025
+<
+Se habilito el rebirth hasta nivel 10
+Se agrego la magia Haste
+Se habilitaron nuevos weapons
+DeathWand y DemonSlayer
+<
+Nuevas EkQuest de DeathWand y DemonSlayer
+Aumentado el limite de upgrade a 42% 18%
+<
+Aumentados los ekxkill en eventos tipo DM
+Gungame 5 ek x kill, Deathmatch 3 ek x kill
+<
+Nuevas quest
+HasteManual PowerBarbarian Aby Ring
+RingofArcmage NecklaceOfXelima
+<
+Se modificaron los drops de
+Wyvern, Fire-Wyvern WereWolf, 
+Frost, Ettin y Cyclops.
+<
+Nuevo sistema de upgpade para Hero Set
+Cada nivel subido otorga 3 puntos
+de armor defense y 3 puntos de 
+defensa especial.
+Upgradeado al maximo dara un total de 50
+puntos de defensa extra.
+Este bonus solo se aplica
+teniendo las 4 partes equipadas.
+Se necesitan 1000 eks y 100k x level de
+contribucion para subir cada item.
+Ejemplo nivel 3: 1000 eks, 300k contrib.
+<
+Eliminado mapa dungeon
+Eliminados los sistemas de 
+Manufactura, mineria y pesca.
+<
+29/10/2025
+<
+Pits de DarkElf agregados en promiseland
+Nuevas quests
+DarkExecutor, MagicWand(MS30-LLF)
+y DarkElfBow.
+Evento Purga habilitado
+Podes ir desde shop en el npc de ch cuando este
+activado.
+Nuevo sistema AntiDelay para magias
+Ahora cuando se tira una magia al cuerpo
+ya sea, pfm, amp, lize, cancel invi, 
+la magia tendra efecto independientemente
+del ping del jugador.
+Se modifico bastante codigo relacionacionado
+con el envio de informacion a los clientes,
+optimizando asi el rendimiento del servidor.
+Se eliminaron los guardias al realizar
+una accion "criminal".
+<
+21/10/2025
+<
+Agregados DarkExecutor Y MS30LLF al 
+trade token
+Nuevo limite de strong %105
+Cambio de hosting y modificaciones
+en los relay (vpn)
+Modificaciones en la clase socket
+del servidor
+Nuevos drops de strong fragments
+en ww frost ettin y cyclops
+<
+16/10/2025
+<
+Nuevas quest y ekquest de NecklaceOfXelima
+Nuevas ekquest de MS30-LLF y DarkExecutor
+Agregado el NecklaceOfXelima al trade token
+Se corrigio el valor en eks del Nox
+Agregadas Quest y Ekquest de fragmentos
+<
+10/10/2025
+<
+Se agregaron items al trade ek 
+MagicDiamond, MagicEmerald, MagicSapphire
+Se agregaron items al trade tokens
+MagicDiamond, MagicEmerald, MagicSapphire,
+RM30, DF+30, MagicWand(M.Shield), EmyRing
+y Fragmentos. (150 frags x 1 token)
+Agregadas 2 locaciones mas de vpn
+Corea y Malaysia
+Maname ahora pide 50 maj y dura 30 minutos
+Habilitadas las siguientes magias en las citys
+Fire-Wall, Fire-Field, Spike-Field
+<
+08/10/2025
+<
+Nuevo sistema de vpn para garantizar
+el mejor ping posible segun la ubicacion.
+Recorda elegir la mas cercana de tu region.
+Si esto no mejora tu ping, usa la internacional.
+Gungame y dm event habilitados
+Trade contrib corregido
+Nuevas ek quest de Rings
+Agregado otro tp a city enemy
+por church.
+Agregados los wyverns al droplist
+y corregido el drop rate.
+Se contrato un nuevo servidor dedicado
+con tecnologia Intel Xenon y disco SSD.
+<
+04/10/2025
+<
+Lanzamiento oficial
+<
+Max level 200
+Max stats 200
+Ek x kill 5
+Exp High
+Drop rate Mid/High
+Max drops 6% 14%
+Max enchanting 12% 28%
+Rebirth disabled
+<
+-www.hbcursed.com

@@ -1,0 +1,10 @@
+[MAP-INFO]
+
+map-location  = rfarm
+initial-point = 1   116 124
+
+maximum-object = 2000
+
+fixed-dayornight-mode	= 1
+
+[END-MAP-INFO]

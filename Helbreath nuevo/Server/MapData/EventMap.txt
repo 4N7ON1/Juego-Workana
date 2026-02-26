@@ -1,0 +1,17 @@
+[MAP-INFO]
+
+map-location  = EventMap
+initial-point = 1  80 94
+initial-point = 2  60 82
+initial-point = 3  102 81
+initial-point = 4  40 65
+initial-point = 5  124 66
+initial-point = 6  60 49
+initial-point = 7  102 49
+initial-point = 8  79 36
+
+maximum-object = 500
+
+fixed-dayornight-mode	= 1
+
+[END-MAP-INFO]

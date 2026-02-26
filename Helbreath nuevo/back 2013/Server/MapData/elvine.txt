@@ -1,0 +1,54 @@
+[MAP-INFO]
+
+map-location  = elvine
+initial-point = 1  170 145
+initial-point = 2  60 46
+initial-point = 3  80 198
+initial-point = 4  222 219
+initial-point = 5  155 57
+initial-point = 6  157 248
+initial-point = 7  222 219
+initial-point = 8  241 129
+
+teleport-loc     =      197    127    wrhus_2              -1     -1    4
+teleport-loc     =      198    128    wrhus_2              -1     -1    4
+teleport-loc     =      199    129    wrhus_2              -1     -1    4
+teleport-loc     =      203    129    wrhus_2              -1     -1    4
+
+teleport-loc     =      225    151    gshop_2             50     39    4
+teleport-loc     =      225    152    gshop_2             50     39    4
+teleport-loc     =      226    152    gshop_2             50     39    4
+teleport-loc     =      229    152    gshop_2             50     39    4
+teleport-loc     =      230    151    gshop_2             50     39    4
+
+teleport-loc     =      218    20    2ndmiddle             141    223    4
+teleport-loc     =      219    20    2ndmiddle             141    223    4
+teleport-loc     =      220    20    2ndmiddle             141    223    4
+teleport-loc     =      221    20    2ndmiddle             141    223    4
+teleport-loc     =      222    20    2ndmiddle             141    223    4
+teleport-loc     =      223    20    2ndmiddle             141    223    4
+teleport-loc     =      224    20    2ndmiddle             141    223    4
+teleport-loc     =      225    20    2ndmiddle             141    223    4
+teleport-loc     =      226    20    2ndmiddle             141    223    4
+teleport-loc     =      227    20    2ndmiddle             141    223    4
+teleport-loc     =      228    20    2ndmiddle             141    223    4
+teleport-loc     =      229    20    2ndmiddle             141    223    4
+teleport-loc     =      230    20    2ndmiddle             141    223    4
+
+//teleport-loc     =     258 83      dungeon             166 101 4
+//teleport-loc     =     258 82      dungeon             166 101 4
+//teleport-loc     =     259 82      dungeon             166 101 4
+//teleport-loc     =     259 81      dungeon             166 101 4
+//teleport-loc     =     260 81      dungeon             166 101 4
+
+teleport-loc     =     144 127      aresden             148 126 4
+teleport-loc     =     144 126      aresden             148 126 4
+teleport-loc     =     145 126      aresden             148 126 4
+
+teleport-loc     =     130 76      aresden             187 94 4
+teleport-loc     =     130 75      aresden             187 94 4
+teleport-loc     =     131 75      aresden             187 94 4
+
+maximum-object		= 600
+
+[END-MAP-INFO]

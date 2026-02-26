@@ -1,0 +1,20 @@
+<
+- SHORTCUTS 
+<
+Control + H ----> "Magical Forging" (New)
+Control + J ----> "Character Role" (New)
+Control + L ----> "Drop Logs" (New)
+Control + U ----> "Mastery Dialog" (New)
+Control + Y ----> "Events Scheduler" (New)
+Control + I ----> "Bind bar" (New)
+Control + V ----> "New Map Guide" (New)
+Control + C ----> "Criticals x gold"
+Control + E ----> "Enchanting"
+Control + G ----> "Ek list"
+Control + Q ----> "Quest Panel"
+Control + P ----> "Control Panel"
+Control + B ----> "Bar Mode"
+Control + Z ----> "Transparent interfase"
+Control + N ----> "Fps & Timer"
+F12/Control + x-> "Sistem Menu"
+<

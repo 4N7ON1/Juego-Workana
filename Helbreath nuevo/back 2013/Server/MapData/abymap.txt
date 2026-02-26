@@ -1,0 +1,9 @@
+[MAP-INFO]
+
+map-location  = abymap
+initial-point = 1  41 39
+
+maximum-object = 500
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

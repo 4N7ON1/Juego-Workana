@@ -1,0 +1,8 @@
+;Guild file - Updated 2026/01/23 20:17
+[GUILD-INFO]
+
+guildmaster-name     = pt
+guild-GUID           = 452453113
+guild-location       = aresden
+
+[GUILDSMAN]

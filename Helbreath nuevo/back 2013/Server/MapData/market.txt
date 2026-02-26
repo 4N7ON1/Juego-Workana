@@ -1,0 +1,58 @@
+[MAP-INFO]
+
+map-location  = market
+initial-point = 1  100	80
+initial-point = 2  101	81
+initial-point = 3  102	82
+initial-point = 4  103	83
+initial-point = 5  104	84
+initial-point = 6  105	85
+initial-point = 7  100	81
+initial-point = 8  101	82
+initial-point = 9  102	83
+
+level-limit	=	20
+
+//-Teleportation-Set----SX-----SY-----DestMapName---------DX-----DY----Dir---;
+//teleport-loc       =    106	79     Whouse              42	40	4
+//teleport-loc       =    106	80     Whouse              43	40	4
+
+teleport-loc       =    106	79     market              -1	-1	4
+teleport-loc       =    106	80     market              -1	-1	4
+
+//-WayPoint-Set---------Num-----X-----Y----;
+waypoint          =     1      83	73
+waypoint          =     2      83	73
+waypoint          =     3      83	73
+waypoint          =     4      83	73
+waypoint          =     5      83	73
+waypoint          =     6      83	73
+waypoint          =     7      83	73
+waypoint          =     8      83	73
+waypoint          =     9      83	73
+waypoint          =     10     83	73
+
+waypoint          =     11	89	77
+waypoint          =     12	89	77
+waypoint          =     13	89	77
+waypoint          =     14	89	77
+waypoint          =     15	89	77
+waypoint          =     16	89	77
+waypoint          =     17	89	77
+waypoint          =     18	89	77
+waypoint          =     19	89	77
+waypoint          =     20 	89	77
+
+//-NPC-setting--------Name---------------MoveType----WaypointIndex(10)-------NamePrefix-------;
+
+npc               =   Howard		1	1 2 3 4 5 6 7 8 9 10		1  
+npc               =   Gail		1	11 12 13 14 15 16 17 18 19 20	1 
+
+
+
+//-No-Attack-Area----------Num-----RECT-------------
+no-attack-area           = 1       -10 -10 -10 -10
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

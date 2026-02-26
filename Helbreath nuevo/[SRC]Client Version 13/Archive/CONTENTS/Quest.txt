@@ -1,0 +1,40 @@
+//Quest	=	ID	City	Bicho	C/Bicho	MinLvl	MaxLvl	Premio	Mapa	
+//aresden										
+quest	=	3	1	13	100	20	376	2000	AresdenCity	//cyclops
+quest	=	4	1	27	150	20	376	3000	NeutralGarden	//Helhound
+quest	=	6	1	60	100	20	376	5000	NeutralGarden	//cannibalplant
+quest	=	7	1	29	100	20	376	6000	Middleland	//Orge
+quest	=	8	1	33	100	20	376	7000	Middleland	//WereWolf
+quest	=	9	1	59	100	20	376	8000	Middleland	//Ettin
+quest	=	10	1	65	100	20	376	9000	IceMap	//icegolem
+quest	=	11	1	63	100	20	376	10000	IceMap	//Frost
+quest	=	12	1	79	100	20	376	11000	IceMap	//Nizie
+quest	=	13	1	105	100	20	376	12000	HighLand	//Phantom
+quest	=	14	1	99	100	20	376	13000	HighLand	//Butcher
+quest	=	15	1	107	100	20	376	14000	HighLand	//GrandEttin
+quest	=	16	1	71	100	20	376	15000	Promiseland	//centaurus
+quest	=	17	1	96	100	20	376	16000	HighLand	//RedDemon
+//elvine										
+quest	=	20	2	13	100	20	376	2000	ElvineCity	//cyclops
+quest	=	21	2	27	150	20	376	3000	NeutralGarden	//Helhound
+quest	=	23	2	60	100	20	376	5000	NeutralGarden	//cannibalplant
+quest	=	24	2	29	100	20	376	6000	Middleland	//Orge
+quest	=	25	2	33	100	20	376	7000	Middleland	//WereWolf
+quest	=	26	2	59	100	20	376	8000	Middleland	//Ettin
+quest	=	27	2	65	100	20	376	9000	IceMap	//icegolem
+quest	=	28	2	63	100	20	376	10000	IceMap	//Frost
+quest	=	29	2	79	100	20	376	11000	IceMap	//Nizie
+quest	=	30	2	105	100	20	376	12000	HighLand	//Phantom
+quest	=	31	2	99	100	20	376	13000	HighLand	//Butcher
+quest	=	32	2	107	100	20	376	14000	HighLand	//GrandEttin
+quest	=	33	2	71	100	20	376	15000	Promiseland	//centaurus
+quest	=	34	2	95	100	20	376	16000	HighLand	//BlueDemon
+//Quest	=	ID	City	Bicho	C/Bicho	MinLvl	MaxLvl	Premio	Mapa	
+//aresden										
+quest	=	35	1	28	100	20	376	5000	EventGarden	//troll
+quest	=	36	1	13	100	20	376	6500	EventGarden	//cyclops
+quest	=	37	1	33	100	20	376	8000	EventGarden	//ww
+//elvine										
+quest	=	38	2	28	100	20	376	5000	EventGarden	//troll
+quest	=	39	2	13	100	20	376	6500	EventGarden	//cyclops
+quest	=	40	2	33	100	20	376	8000	EventGarden	//ww

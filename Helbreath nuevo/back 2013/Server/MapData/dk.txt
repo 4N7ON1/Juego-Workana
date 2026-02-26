@@ -1,0 +1,19 @@
+[MAP-INFO]
+
+map-location  = dk
+
+initial-point = 1  34 32
+initial-point = 2  41 30
+initial-point = 3  48 32
+initial-point = 4  50 36
+initial-point = 5  47 40
+initial-point = 6  41 42
+initial-point = 7  34 40
+initial-point = 8  31 36
+
+random-mob-generator	= 1  20
+
+maximum-object		= 500
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

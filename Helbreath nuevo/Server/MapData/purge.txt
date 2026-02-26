@@ -1,0 +1,12 @@
+[MAP-INFO]
+
+map-location  = purge
+
+initial-point = 1 100 78
+
+maximum-object		= 2000
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]
+

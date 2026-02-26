@@ -1,0 +1,28 @@
+[MAP-INFO]
+
+map-location = fightzone6
+type         = 1
+
+initial-point = 1  25 29
+initial-point = 2  51 29
+initial-point = 3  24 29
+initial-point = 4  51 28
+initial-point = 5  23 29
+initial-point = 6  51 27
+
+//-WayPoint-Set---------Num-----X-----Y----;
+waypoint          =     0       39    30
+waypoint          =     1       39    30
+waypoint          =     2       39    30
+waypoint          =     3       39    30
+waypoint          =     4       39    30
+waypoint          =     5       39    30
+waypoint          =     6       39    30
+waypoint          =     7       39    30
+waypoint          =     8       39    30
+waypoint          =     9       30    30
+
+maximum-object		= 200
+fixed-dayornight-mode   = 1
+
+[END-MAP-INFO]

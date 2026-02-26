@@ -1,0 +1,18 @@
+//------------------Num-MapName-------Type----X-----Y---
+
+//Gates
+structure = 1  NewEvent        91      98 113
+structure = 2  NewEvent        91      128 133
+structure = 3  NewEvent        91      158 153
+
+//Reliquias Elvine
+structure = 4  NewEvent        92      65 102
+structure = 5  NewEvent        92      74 96
+structure = 6  NewEvent        92      83 90
+structure = 7  NewEvent        92      83 103
+
+//Reliquias Aresden
+structure = 8  NewEvent        92      173 162
+structure = 9  NewEvent        92      173 174
+structure = 10 NewEvent        92      182 168
+structure = 11 NewEvent        92      191 162

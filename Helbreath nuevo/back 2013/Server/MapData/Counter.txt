@@ -1,0 +1,29 @@
+[MAP-INFO]
+
+map-location  = Counter
+initial-point = 1   80 60
+initial-point = 2  107 74
+initial-point = 3   92 68
+initial-point = 4   89 62
+initial-point = 5   98 72
+initial-point = 6   83 58
+initial-point = 7  104 76
+initial-point = 8   95 66
+initial-point = 9  101 70
+initial-point = 10  86 64
+
+//-Teleportation-Set----SX-----SY-----DestMapName---------DX-----DY----Dir---;
+
+teleport-loc     =      103	60	Counter		-1	-1	4
+teleport-loc     =      103	59	Counter		-1	-1	4
+teleport-loc     =      104	60	Counter		-1	-1	4
+
+//-No-Attack-Area----------Num-----RECT-------------
+
+no-attack-area           = 1	70 45	125 85
+
+maximum-object = 500
+
+fixed-dayornight-mode	= 1
+
+[END-MAP-INFO]

@@ -1,0 +1,12 @@
+Account-generated: Time(2026:1/24/12/33) IP(192.168.0.59)
+[Account Info]
+account-name     = gon
+account-password = asd
+account-Email    = asdasd@hotmail.com
+account-Quiz =  
+account-Answer = -
+account-change-password = 2026 1 24
+
+[CHARACTERS]
+
+account-character-YAP  = GameMaster

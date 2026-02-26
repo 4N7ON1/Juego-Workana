@@ -1,0 +1,17 @@
+[MAP-INFO]
+
+map-location  = dkshop2
+initial-point = 1   50 40
+initial-point = 2   48 40
+initial-point = 3   54 42
+initial-point = 4   50 43
+
+
+waypoint          =     1      57 41
+npc               =  EventOfficer       1           1 1 1 1 1 1 1 1 1 1         1 
+
+//-No-Attack-Area----------Num-----RECT-------------
+no-attack-area           = 1       -10 -10 -10 -10
+
+fixed-dayornight-mode = 1
+[END-MAP-INFO]

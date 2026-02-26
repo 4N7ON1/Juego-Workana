@@ -1,0 +1,69 @@
+[MAP-INFO]
+
+map-location  = garden
+initial-point = 1  85 23
+
+
+//-Teleportation-Set----SX-----SY-----DestMapName---------DX-----DY----Dir---;
+teleport-loc     =      78     20     Whouse 		-1	-1	1
+teleport-loc     =      79     20     Whouse 		-1	-1	1
+teleport-loc     =      80     20     Whouse 		-1	-1	1
+teleport-loc     =      81     20     Whouse 		-1	-1	1
+teleport-loc     =      82     20     Whouse 		-1	-1	1
+teleport-loc     =      83     20     Whouse 		-1	-1	1
+teleport-loc     =      84     20     Whouse 		-1	-1	1
+teleport-loc     =      85     20     Whouse 		-1	-1	1
+teleport-loc     =      86     20     Whouse 		-1	-1	1
+teleport-loc     =      87     20     Whouse 		-1	-1	1
+teleport-loc     =      88     20     Whouse 		-1	-1	1
+teleport-loc     =      89     20     Whouse 		-1	-1	1
+teleport-loc     =      90     20     Whouse 		-1	-1	1
+teleport-loc     =      91     20     Whouse 		-1	-1	1
+teleport-loc     =      92     20     Whouse 		-1	-1	1
+teleport-loc     =      93     20     Whouse 		-1	-1	1
+teleport-loc     =      94     20     Whouse 		-1	-1	1
+teleport-loc     =      95     20     Whouse 		-1	-1	1
+
+
+
+//-WayPoint-Set---------Num-----X-----Y----;
+waypoint          =     0       55    94
+waypoint          =     1       113   76
+waypoint          =     2       156   104
+waypoint          =     3       187   140
+waypoint          =     4       161   164
+waypoint          =     5       135   169
+waypoint          =     6       109   191
+waypoint          =     7       98    162
+waypoint          =     8       64    137
+waypoint          =     9       198   105
+
+maximum-object		= 600
+
+//-----------------------Num-Type-RECT---------------Mob-MobNum															
+
+spot-mob-generator	=	1	1	116	133	150	176	33	10 //ww
+spot-mob-generator	=	2	1	26	135	71	177	28	10 //Troll
+spot-mob-generator	=	3	1	116	133	150	176	33	10 //ww
+spot-mob-generator	=	4	1	26	135	71	177	28	10 //Troll
+spot-mob-generator	=	5	1	72	77	117	119	13	10 //Cyclops
+spot-mob-generator	=	6	1	72	77	117	119	13	10 //Cyclops
+spot-mob-generator	=	7	1	116	133	150	176	33	10 //ww
+spot-mob-generator	=	8	1	26	135	71	177	28	10 //Troll
+spot-mob-generator	=	9	1	116	133	150	176	33	10 //ww
+spot-mob-generator	=	10	1	26	135	71	177	28	10 //Troll
+spot-mob-generator	=	11	1	72	77	117	119	13	10 //Cyclops
+spot-mob-generator	=	12	1	72	77	117	119	13	10 //Cyclops
+spot-mob-generator	=	13	1	139	48	151	60 	115	10 //HellButcher
+spot-mob-generator	=	14	1	154	67	170	83	116	10 //HellTroll
+spot-mob-generator	=	15	1	38	52	52	67	112	10 //Houndeath
+
+[END-MAP-INFO]
+
+
+
+
+
+
+
+

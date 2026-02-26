@@ -1,0 +1,8 @@
+[MAP-INFO]
+
+map-location  = newshop
+initial-point = 1 68 80
+no-attack-area           = 1       -10 -10 -10 -10
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

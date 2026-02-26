@@ -1,0 +1,350 @@
+-Legendary Drops
+<
+Orc
+Monster pieces
+Fragments
+ContribBall (3000)
+MajBall (1000)
+KnecklaceOfFirePro (1)
+<
+Skeleton
+Monster pieces
+ContribBall (3000)
+MajBall (1000)
+<
+Scorpion
+Monster pieces
+Fragments
+ContribBall (3000)
+MajBall (1000)
+<
+Unicorn
+Monster pieces
+EtherealEmerald (1)
+KnecklaceOfLightPro (1)
+MerienPlateMailM (1)
+MerienPlateMailW (1)
+MerienChainMailM (1)
+MerienChainMailW (1)
+KnecklaceOfAirEle (1)
+<
+Stone-Golem
+Monster pieces
+Fragments
+ContribBall (15000)
+MajBall (5000)
+NecklaceOfStoneGol (1)
+<
+Clay-Golem
+Monster pieces
+Fragments
+ContribBall (15000)
+MajBall (5000)
+NecklaceOfStoneGol (1)
+<
+Troll
+Monster pieces
+Fragments
+ContribBall (15000)
+MajBall (5000)
+AbyssalSapphire (1)
+RingofOgrepower (1)
+<
+Frost
+Fragments
+ContribBall (15000)
+MajBall (5000)
+Luminous-Quartz (1)
+KnecklaceOfIcePro (1)
+KnecklaceOfIceEle (1)
+RingOfGrandMage (1)
+IceStormManual (1)
+MagicWand(MS30-LLF)
+RingofArcmage
+MagicNecklace(RM30)
+<
+Ettin
+Fragments
+ArcaneCrystal (1)
+RingofDemonpower (1)
+BloodSword (1)
+BloodSwordAxe (1)
+BloodSwordRapier (1)
+KnecklaceOfEfreet (1)
+BloodyShoWaveManual (1)
+DarkExecutor
+RingoftheAbaddon
+NecklaceOfXelima
+MagicNecklace(DF+30)
+<
+Cyclops
+Monster pieces
+Fragments
+KnecklaceOfFirePro (1)
+KnecklaceOfLightPro (1)
+MagicNecklace(DM+1) (1)
+MagicNecklace(MS10) (1)
+RingofOgrepower (1)
+MagicWand(MS30-LLF)
+RingofArcmage
+MagicNecklace(RM30)
+<
+Orge
+Monster pieces
+Fragments
+ContribBall (15000)
+MajBall (5000)
+RingofOgrepower (1)
+<
+WereWolf
+Monster pieces
+Fragments
+TwilightOpal (1)
+MerienPlateMailM (1)
+MerienPlateMailW (1)
+MerienChainMailM (1)
+MerienChainMailW (1)
+DarkExecutor
+RingoftheAbaddon
+NecklaceOfXelima
+MagicNecklace(DF+30)
+<
+Hellbound
+Monster pieces
+Fragments
+ContribBall (15000)
+MajBall (5000)
+<
+Demon
+Monster pieces
+Fragments
+RingofDemonpower (1)
+BloodyShoWaveManual (1)
+<
+Liche
+Fragments
+NecklaceOfLiche (1)
+RingOfGrandMage (1)
+MassFireStrikeManual (1)
+BloodyShoWaveManual (1)
+<
+Zombie
+Fragments
+MagicNecklace(DM+1) (1)
+MagicNecklace(MS10) (1)
+ContribBall (3000)
+MajBall (1000)
+<
+Dark-Elf
+Fragments
+MagicNecklace(DF+10) (1)
+MagicNecklace(MR+10) (1)
+MagicNecklace(DM+1) (1)
+MagicNecklace(MS10) (1)
+ContribBall (15000)
+MajBall (5000)
+<
+Rudolph
+Fragments
+MagicNecklace(DF+10) (1)
+MagicNecklace(MR+10) (1)
+MagicNecklace(DM+1) (1)
+MagicNecklace(MS10) (1)
+RingofOgrepower (1)
+NecklaceofFireProtection (1)
+ContribBall (15000)
+MajBall (5000)
+<
+DireBoar
+Fragments
+NecklaceOfLiche (1)
+MagicNecklace(DF+10) (1)
+MagicNecklace(MR+10) (1)
+MagicNecklace(DM+1) (1)
+MagicNecklace(MS10) (1)
+RingOfGrandMage (1)
+ContribBall (15000)
+MajBall (5000)
+<
+Ice-Golem
+Fragments
+MagicWand(M.Shield) (1)
+MagicNecklace(DF+10) (1)
+MagicNecklace(MR+10) (1)
+MagicNecklace(DM+1) (1)
+MagicNecklace(MS10) (1)
+NecklaceofIceProtection (1)
+ContribBall (15000)
+MajBall (5000)
+<
+Gagoyle
+Fragments
+BloodyShockWaveManual (1)
+RingoftheXelima (1)
+Excalibur (1)
+XelimaRapier (1)
+XelimaBlade (1)
+XelimaAxe (1)
+RingofDemonpower (1)
+RingofDragonPower (1)
+<
+Giant-Frog
+Fragments
+ContribBall (15000)
+MajBall (5000)
+MythicAlexandrite (1)
+EclipseTanzanite (1)
+<
+Cannibal-Plant
+Fragments
+ContribBall (15000)
+MajBall (5000)
+DivineAmethyst (1)
+<
+Stalker
+Fragments
+ContribBall (15000)
+MajBall (5000)
+RingofDemonpower (1)
+RingofDragonPower (1)
+<
+Beholder
+Fragments
+ContribBall (15000)
+MajBall (5000)
+CelestialDiamond (1)
+<
+Giant-Ant
+Fragments
+MagicNecklace(DM+1) (1)
+MagicNecklace(MS10) (1)
+ContribBall (10000)
+MajBall (4000)
+<
+Giant-Plant
+Fragments
+MagicNecklace(DF+10) 
+RingofOgrepower 
+ContribBall (15000)
+MajBall (5000)
+MagicNecklace(DM+1) (1)
+MagicNecklace(MS10) (1)
+<
+Hellclaw
+MagicWand(M.Shield) (1)
+MagicNecklace(DM+1) (1)
+RingOfMage (1)
+MagicNecklace(DF+10) (1)
+RingofMage (1)
+MagicNecklace(RM10) (1)
+RingofOgrepower (1)
+RingofDemonpower (1)
+MagicNecklace(MS10) (1)
+RingofWizard (1)
+EmeraldRing (1)
+RingofGrandMage (1)
+ResurWand(MS.10) (1)
+SwordofIceElemental (1)
+LuckyGoldRing (1)
+RubyRing (1)
+KnecklaceOfIceEle (1)
+KnecklaceOfIcePro (1)
+<
+Tigerworm
+XelimaBlade (1)
+XelimaRapier (1)
+XelimaAxe (1)
+KnecklaceOfIcePro (1)
+NeckofFireProtec (1)
+MagicNecklace(RM10) (1)
+MagicWand(M.Shield) (1)
+RingOfMage (1)
+RingofWizard (1)
+RubyRing (1)
+RingofGrandMage (1)
+LuckyGoldRing (2)
+EmeraldRing (1)
+MagicNecklace(DF+10) (1)
+KnecklaceOfIceEle (1)
+MagicNecklace(MS10) (1)
+MagicNecklace(DM+1) (1)
+RingofDemonpower (1)
+RingoftheXelima (1)
+IceStormManual (1)
+SwordofIceElemental (1)
+ResurWand(MS.30) (1)
+BloodRapier (1)
+Excaliber (1)
+BloodAxe (1)
+<
+Wyvern
+HasteManual
+DarkElfBow
+DarkExecutor
+MagicWand(MS30-LLF)
+NecklaceOfXelima
+RingoftheAbaddon
+RingofArcmage
+ZemstoneofSacrifice
+MagicNecklace(RM30)
+MagicNecklace(DF+30)
+MagicNecklace(MS22)
+WarNecklace(HitP25)
+MagNecklace(HitP25) 
+RingoftheAbaddon 
+RingofArcmage 
+BlueFireManual 
+SwordofIceElemental 
+KnecklaceOfIcePro 
+IceStormManual 
+RubyRing
+EmeraldRing
+LuckyGoldRing
+InviPotion
+PowerRedPotion 
+PowerBluePotion 
+MagicNecklace(RM10) 
+MagicNecklace(DF+10)
+MagicNecklace(MS10) 
+MagicNecklace(DM+1) 
+MagicWand(M.Shield) 
+RingofGrandMage 
+BloodRapier 
+<
+Fire-Wyvern
+HasteManual
+DarkElfBow
+DarkExecutor
+MagicWand(MS30-LLF)
+NecklaceOfXelima
+RingoftheAbaddon
+RingofArcmage
+ZemstoneofSacrifice
+MagicNecklace(RM30)
+MagicNecklace(DF+30)
+MagicNecklace(MS22) 
+WarNecklace(HitP25) 
+MagNecklace(HitP25) 
+RingoftheAbaddon 
+RingofArcmage 
+HealSpotManual 
+IceStormManual 
+InviPotion 
+MagicNecklace(RM10)
+Excaliber
+MassFireStrikeManual
+BloodyShoWaveManual 
+MagicNecklace(DF+10) 
+RubyRing 
+EmeraldRing 
+LuckyGoldRing 
+BloodRapier
+BloodSword
+BloodAxe 
+MagicNecklace(MS10) 
+MagicNecklace(DM+1)
+RingofGrandMage 
+RingofDragonpower 
+KnecklaceOfFirePro
+KnecklaceOfEfreet 
+MagicWand(M.Shield) 

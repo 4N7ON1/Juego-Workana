@@ -1,0 +1,38 @@
+[MAP-INFO]
+
+map-location  = FightMap
+initial-point = 1  49 90
+initial-point = 2  49 38
+initial-point = 3  51 92
+initial-point = 4  51 40
+initial-point = 5  51 90
+initial-point = 6  51 38
+initial-point = 7  49 92
+initial-point = 8  49 40
+initial-point = 9  50 91
+initial-point = 10  50 39
+initial-point = 11  50 90
+initial-point = 12  50 38
+initial-point = 13  50 92
+initial-point = 14  50 40
+initial-point = 15  49 91
+initial-point = 16  49 39
+initial-point = 17  51 91
+initial-point = 18  51 39
+CitizenLimit		= 1
+
+
+//-No-Attack-Area----------Num-----RECT-------------
+no-attack-area           = 1      45 36  55 43
+no-attack-area           = 2      49 35  51 44
+no-attack-area           = 3      43 39  57 40
+no-attack-area           = 4      45 88  55 95
+no-attack-area           = 5      49 87  51 96
+no-attack-area           = 6      43 91  57 92
+
+
+maximum-object		= 200
+
+fixed-dayornight-mode	= 1
+
+[END-MAP-INFO]

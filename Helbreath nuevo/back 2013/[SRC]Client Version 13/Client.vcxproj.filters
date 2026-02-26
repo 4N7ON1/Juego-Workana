@@ -1,0 +1,290 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Library">
+      <UniqueIdentifier>{4d71e21e-82a2-4b33-9f40-c4f039b69c39}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Language">
+      <UniqueIdentifier>{c549b115-7fd6-4b7f-a2c0-13faeb465602}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ressources">
+      <UniqueIdentifier>{354003bb-4cc7-4d87-97e4-fcd5ea3c437e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="classes">
+      <UniqueIdentifier>{ac6343d1-2943-4f44-be98-8cd1dddb600b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{7de33d5a-b17c-4462-980a-0ff5eeab046f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Motor">
+      <UniqueIdentifier>{7da7dac7-44fa-482f-8455-45aacfe8f238}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="General">
+      <UniqueIdentifier>{5ed30f75-0b1a-41d0-91d9-f3b4fb77fcda}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shared">
+      <UniqueIdentifier>{3d5ccc11-0491-4a90-ae34-dabe606706ab}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Language\lan_eng.h">
+      <Filter>Language</Filter>
+    </ClInclude>
+    <ClInclude Include="Library\Cint.h">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Library\CNTREVNT.H">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Library\d3dtypes.h">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Library\DDRAW.H">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Library\DINPUT.H">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Library\DSOUND.H">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Library\YWSound.h">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Ressources\resource.h">
+      <Filter>Ressources</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\BuildItem.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\CharInfo.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Curse.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Effect.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Game.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\GameMonitor.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Item.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\ItemName.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Magic.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\MapData.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Misc.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\MouseInterface.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Msg.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Mydib.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Skill.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\SoundBuffer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Sprite.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\StrTok.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Tile.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\TileSpr.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Winmain.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\XSocket.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Motor\DXC_ddraw.h">
+      <Filter>Motor</Filter>
+    </ClInclude>
+    <ClInclude Include="Motor\DXC_dinput.h">
+      <Filter>Motor</Filter>
+    </ClInclude>
+    <ClInclude Include="Motor\DXC_dsound.h">
+      <Filter>Motor</Filter>
+    </ClInclude>
+    <ClInclude Include="General\ActionID.h">
+      <Filter>General</Filter>
+    </ClInclude>
+    <ClInclude Include="General\AFXRES.H">
+      <Filter>General</Filter>
+    </ClInclude>
+    <ClInclude Include="General\DynamicObjectID.h">
+      <Filter>General</Filter>
+    </ClInclude>
+    <ClInclude Include="General\GlobalDef.h">
+      <Filter>General</Filter>
+    </ClInclude>
+    <ClInclude Include="General\NPC_Config.h">
+      <Filter>General</Filter>
+    </ClInclude>
+    <ClInclude Include="General\SpriteID.h">
+      <Filter>General</Filter>
+    </ClInclude>
+    <ClInclude Include="Resolution\Resolution.h">
+      <Filter>classes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\shared.h">
+      <Filter>Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\Event.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\XSocketUDP.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="UDPClient.h" />
+    <ClInclude Include="ClientUDP.h" />
+    <ClInclude Include="Headers\colors.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Headers\AntiSpeedHack.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="EmbeddedDDraw.h" />
+    <ClInclude Include="Headers\commonds.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Library\YWSound.cpp">
+      <Filter>Library</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\BuildItem.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\CharInfo.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\Curse.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\Effect.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\Game.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\GameMonitor.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\Item.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\ItemName.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\Magic.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\MapData.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\Misc.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\MouseInterface.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\Msg.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\Mydib.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\Skill.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\SoundBuffer.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\Sprite.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\StrTok.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\Tile.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\TileSpr.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\Wmain.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\XSocket.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="Motor\DXC_ddraw.cpp">
+      <Filter>Motor</Filter>
+    </ClCompile>
+    <ClCompile Include="Motor\DXC_dinput.cpp">
+      <Filter>Motor</Filter>
+    </ClCompile>
+    <ClCompile Include="Motor\DXC_dsound.cpp">
+      <Filter>Motor</Filter>
+    </ClCompile>
+    <ClCompile Include="Resolution\Resolution.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\Helbreath.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\Event.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\XSocketUDP.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientUDP.cpp" />
+    <ClCompile Include="classes\AntiSpeedHack.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="Motor\DXC_ddraw_d3d9.cpp">
+      <Filter>Motor</Filter>
+    </ClCompile>
+    <ClCompile Include="EmbeddedDDraw.cpp" />
+    <ClCompile Include="MemoryModule.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="icon1.ico" />
+    <None Include="readme.txt" />
+    <None Include="C:\Users\hbarg\Desktop\Archive\HBARG.dll" />
+    <None Include="C:\Users\hbarg\Desktop\Archive\cximage.dll" />
+    <None Include="Ressources\AIcon.ico">
+      <Filter>Ressources</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Ressources\resource.rc">
+      <Filter>Ressources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

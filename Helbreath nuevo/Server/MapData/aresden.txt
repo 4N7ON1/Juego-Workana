@@ -1,0 +1,58 @@
+[MAP-INFO]
+
+map-location  = aresden
+initial-point = 1  112 244
+initial-point = 2  138 204
+initial-point = 3  170 145
+initial-point = 4  65 124
+initial-point = 5  138 48
+initial-point = 6  250 78
+initial-point = 7  250 155
+initial-point = 8  252 236
+
+teleport-loc     =     101    183     wrhus_1             -1     -1    4
+teleport-loc     =     102    184     wrhus_1             -1     -1    4
+teleport-loc     =     103    185     wrhus_1             -1     -1    4
+teleport-loc     =     107    185     wrhus_1             -1     -1    4
+
+teleport-loc     =     126    166     gshop_1             50     39    4
+teleport-loc     =     126    167     gshop_1             50     39    4
+teleport-loc     =     127    167     gshop_1             50     39    4
+teleport-loc     =     130    167     gshop_1             50     39    4
+teleport-loc     =     131    166     gshop_1             50     39    4
+
+teleport-loc     =     26    279      2ndmiddle             126    25    4
+teleport-loc     =     27    279      2ndmiddle             126    25    4
+teleport-loc     =     28    279      2ndmiddle             126    25    4
+teleport-loc     =     29    279      2ndmiddle             126    25    4
+teleport-loc     =     30    279      2ndmiddle             126    25    4
+teleport-loc     =     31    279      2ndmiddle             126    25    4
+teleport-loc     =     32    279      2ndmiddle             126    25    4
+teleport-loc     =     33    279      2ndmiddle             126    25    4
+teleport-loc     =     34    279      2ndmiddle             126    25    4
+teleport-loc     =     35    279      2ndmiddle             126    25    4
+teleport-loc     =     36    279      2ndmiddle             126    25    4
+teleport-loc     =     37    279      2ndmiddle             126    25    4
+teleport-loc     =     38    279      2ndmiddle             126    25    4
+teleport-loc     =     39    279      2ndmiddle             126    25    4
+
+
+//teleport-loc     =     78 211      dungeon             40 40 4
+//teleport-loc     =     78 210      dungeon             40 40 4
+//teleport-loc     =     79 210      dungeon             40 40 4
+//teleport-loc     =     79 209      dungeon             40 40 4
+//teleport-loc     =     80 209      dungeon             40 40 4
+
+teleport-loc     =     144 123 elvine 148 130 4
+teleport-loc     =     144 122 elvine 148 130 4
+teleport-loc     =     145 122 elvine 148 130 4
+
+teleport-loc     =     184 92 elvine 133 78 4
+teleport-loc     =     184 91 elvine 133 78 4
+teleport-loc     =     185 91 elvine 133 78 4
+
+maximum-object		= 600
+
+
+[END-MAP-INFO]
+

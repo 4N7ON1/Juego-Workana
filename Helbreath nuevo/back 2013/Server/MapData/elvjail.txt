@@ -1,0 +1,18 @@
+[MAP-INFO]
+
+map-location  = elvjail
+initial-point = 1  105 55
+initial-point = 2  106 55
+initial-point = 3  107 55
+initial-point = 4  105 56
+initial-point = 5  105 57
+initial-point = 6  105 58
+
+//-No-Attack-Area----------Num-----RECT-------------
+no-attack-area           = 1       -10 -10 -10 -10
+
+fixed-dayornight-mode = 1
+
+
+[END-MAP-INFO]
+

@@ -1,0 +1,11 @@
+[MAP-INFO]
+
+map-location  = mines2
+initial-point = 1  91 93
+
+
+maximum-object		= 600
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

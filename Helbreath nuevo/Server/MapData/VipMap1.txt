@@ -1,0 +1,80 @@
+[MAP-INFO]
+
+map-location  = VipMap1
+initial-point = 1 	114 36	
+initial-point = 2 	116 36
+initial-point = 3	117 36
+initial-point = 4	119 36
+initial-point = 5 	114 37
+initial-point = 6 	116 37
+initial-point = 7	117 37
+initial-point = 8	119 37
+initial-point = 9 	114 38
+initial-point = 10 	116 38
+initial-point = 11	117 38
+initial-point = 12	119 38
+
+//------------------------Num-Type-waypoints--------------Mob-MobNum
+spot-mob-generator	= 1   1    84 38  108 51	99  10 //Butcher	
+spot-mob-generator	= 2   1    66 53 91 61		59  10 //Ettin
+spot-mob-generator	= 3   1    46 74 69 82		105 15 //Phantom
+spot-mob-generator	= 4   1    85 86 106 97		107  10 //WereWolf
+spot-mob-generator	= 5   1    104 71 129 85	63  15 //Frost
+spot-mob-generator	= 6   1    88 113 109 123	52  1 //Hellclaw
+spot-mob-generator	= 7   1    147 75 161 89	51  1  //Tigerworm
+spot-mob-generator	= 8   1    61 96 77 106		31  4  //Demon
+spot-mob-generator	= 9   1    120 99 134 107	55  2  //Gagoyle
+spot-mob-generator	= 10   1    24 72 39 91		33  8  //GrandEttin
+
+//-WayPoint-Set---------Num-----X-----Y----;
+
+waypoint          =     1      117	33
+waypoint          =     2      117	33
+waypoint          =     3      117	33
+waypoint          =     4      117	33
+waypoint          =     5      117	33
+waypoint          =     6      117	33
+waypoint          =     7      117	33
+waypoint          =     8      117	33
+waypoint          =     9      117	33
+waypoint          =     10     117	33
+
+waypoint          =     11	115	34
+waypoint          =     12	115	34
+waypoint          =     13	115	34
+waypoint          =     14	115	34
+waypoint          =     15	115	34
+waypoint          =     16	115	34
+waypoint          =     17	115	34
+waypoint          =     18	115	34
+waypoint          =     19	115	34
+waypoint          =     20 	115	34
+
+waypoint          =     21	119	34
+waypoint          =     22	119	34
+waypoint          =     23	119	34
+waypoint          =     24	119	34
+waypoint          =     25	119	34
+waypoint          =     26	119	34
+waypoint          =     27	119	34
+waypoint          =     28	119	34
+waypoint          =     29	119	34
+waypoint          =     30 	119	34
+
+
+//-NPC-setting--------Name---------------MoveType----WaypointIndex(10)-------NamePrefix-------;
+npc               =   Tom                1	1 2 3 4 5 6 7 8 9 10		1  
+npc               =   Howard	         1	11 12 13 14 15 16 17 18 19 20	1
+npc               =   ShopKeeper-W       2      21 22 23 24 25 26 27 28 29 30	1
+
+
+
+//-No-Attack-Area----------Num-----RECT-------------
+no-attack-area           = 1       108 32 125 41
+no-attack-area           = 2       114 42 122 43
+
+maximum-object		= 500
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

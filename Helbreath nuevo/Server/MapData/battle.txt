@@ -1,0 +1,12 @@
+[MAP-INFO]
+
+map-location  = battle
+
+initial-point = 1  93 102
+
+random-mob-generator	= 1  20
+
+maximum-object		= 500
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

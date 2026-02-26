@@ -1,0 +1,14 @@
+[MAP-INFO]
+
+map-location  = wh
+initial-point = 1  64 71
+
+waypoint          =     1      71 73
+
+npc               =   Howard   1           1 1 1 1 1 1 1 1 1 1         1  
+
+no-attack-area           = 1       -10 -10 -10 -10
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

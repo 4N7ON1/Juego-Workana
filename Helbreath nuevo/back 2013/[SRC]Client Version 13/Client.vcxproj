@@ -1,0 +1,288 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Desbug|Win32">
+      <Configuration>Desbug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Desbug|x64">
+      <Configuration>Desbug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>Game</ProjectName>
+    <ProjectGuid>{91B364CE-2BE3-4681-B1E5-4A0908AA27F8}</ProjectGuid>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <PlatformToolset>v120_xp</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <PlatformToolset>v120_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Desbug|Win32'">
+    <PlatformToolset>v120_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Desbug|x64'" Label="Configuration">
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Archive\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Debug\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Helbreath Cursed</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Helbreath Argentina</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Desbug|Win32'">Helbreath Cursed</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Desbug|x64'">Helbreath Argentina</TargetName>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Desbug|Win32'">.\Archive\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Desbug|Win32'">.\Debug\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Midl>
+      <TypeLibraryName>.\Release/Client.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <PreprocessorDefinitions>ZLIB_WINAPI;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\Release/Client.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Release/</AssemblerListingLocation>
+      <ObjectFileName>.\Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level1</WarningLevel>
+      <AdditionalIncludeDirectories>..\zlib</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0809</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalOptions>/FORCE:UNRESOLVED %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>zlibstat.lib;search.lib;ACHEV.LIB;wsock32.lib;DINPUT.LIB;DSOUND.LIB;DXGUID.LIB;IMM32.LIB;winmm.lib;Cint.lib;cximage/release/cximage.lib;jpeg/release/Jpeg.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>Archive/Helbreath Cursed.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <IgnoreSpecificDefaultLibraries>MSVCRTD;LIBC;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <SubSystem>Windows</SubSystem>
+      <SetChecksum>true</SetChecksum>
+      <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>..\\zlib\\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <DelayLoadDLLs>
+      </DelayLoadDLLs>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release/Client.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TypeLibraryName>.\Release/Client.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\Release/Client.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Release/</AssemblerListingLocation>
+      <ObjectFileName>.\Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0809</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalOptions>/FORCE:UNRESOLVED %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>search.lib;ACHEV.LIB;wsock32.lib;DINPUT.LIB;DSOUND.LIB;DXGUID.LIB;ddraw.lib;IMM32.LIB;winmm.lib;Cint.lib;cximage/release/cximage.lib;jpeg/release/Jpeg.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>Archive/Helbreath Argentina.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <IgnoreSpecificDefaultLibraries>MSVCRTD;LIBC;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <SubSystem>Windows</SubSystem>
+      <SetChecksum>true</SetChecksum>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release/Client.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Desbug|Win32'">
+    <Link>
+      <OutputFile>Archive/Helbreath Cursed.exe</OutputFile>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>MSVCRTD;LIBC;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <AdditionalDependencies>zlibstat.lib;Libs\search.lib;Libs\ACHEV.LIB;Libs\wsock32.lib;Libs\DINPUT.LIB;Libs\DSOUND.LIB;Libs\DXGUID.LIB;Libs\ddraw.lib;Libs\IMM32.LIB;Libs\winmm.lib;Libs\Cint.lib;Libs\cximage.lib;Libs\Jpeg.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>..\\zlib\\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <ClCompile>
+      <PreprocessorDefinitions>ZLIB_WINAPI;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\zlib</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Desbug|x64'">
+    <Link>
+      <OutputFile>Archive/Helbreath Argentina.exe</OutputFile>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>MSVCRTD;LIBC;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <AdditionalDependencies>Libs\search.lib;Libs\ACHEV.LIB;Libs\wsock32.lib;Libs\DINPUT.LIB;Libs\DSOUND.LIB;Libs\DXGUID.LIB;Libs\ddraw.lib;Libs\IMM32.LIB;Libs\winmm.lib;Libs\Cint.lib;Libs\cximage.lib;Libs\Jpeg.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Shared\shared.h" />
+    <ClInclude Include="ClientUDP.h" />
+    <ClInclude Include="EmbeddedDDraw.h" />
+    <ClInclude Include="General\ActionID.h" />
+    <ClInclude Include="General\AFXRES.H" />
+    <ClInclude Include="General\DynamicObjectID.h" />
+    <ClInclude Include="General\GlobalDef.h" />
+    <ClInclude Include="General\NPC_Config.h" />
+    <ClInclude Include="General\SpriteID.h" />
+    <ClInclude Include="Headers\AntiSpeedHack.h" />
+    <ClInclude Include="Headers\BuildItem.h" />
+    <ClInclude Include="Headers\CharInfo.h" />
+    <ClInclude Include="Headers\colors.h" />
+    <ClInclude Include="Headers\commonds.h" />
+    <ClInclude Include="Headers\Curse.h" />
+    <ClInclude Include="Headers\Effect.h" />
+    <ClInclude Include="Headers\Event.h" />
+    <ClInclude Include="Headers\Game.h" />
+    <ClInclude Include="Headers\GameMonitor.h" />
+    <ClInclude Include="Headers\Item.h" />
+    <ClInclude Include="Headers\ItemName.h" />
+    <ClInclude Include="Headers\Magic.h" />
+    <ClInclude Include="Headers\MapData.h" />
+    <ClInclude Include="Headers\Misc.h" />
+    <ClInclude Include="Headers\MouseInterface.h" />
+    <ClInclude Include="Headers\Msg.h" />
+    <ClInclude Include="Headers\Mydib.h" />
+    <ClInclude Include="Headers\Skill.h" />
+    <ClInclude Include="Headers\SoundBuffer.h" />
+    <ClInclude Include="Headers\Sprite.h" />
+    <ClInclude Include="Headers\StrTok.h" />
+    <ClInclude Include="Headers\Tile.h" />
+    <ClInclude Include="Headers\TileSpr.h" />
+    <ClInclude Include="Headers\Winmain.h" />
+    <ClInclude Include="Headers\XSocket.h" />
+    <ClInclude Include="Headers\XSocketUDP.h" />
+    <ClInclude Include="Library\Cint.h" />
+    <ClInclude Include="Library\CNTREVNT.H" />
+    <ClInclude Include="Library\d3dtypes.h" />
+    <ClInclude Include="Library\DDRAW.H" />
+    <ClInclude Include="Library\DINPUT.H" />
+    <ClInclude Include="Library\DSOUND.H" />
+    <ClInclude Include="Library\YWSound.h" />
+    <ClInclude Include="Language\lan_eng.h" />
+    <ClInclude Include="Motor\DXC_ddraw.h" />
+    <ClInclude Include="Motor\DXC_dinput.h" />
+    <ClInclude Include="Motor\DXC_dsound.h" />
+    <ClInclude Include="Resolution\Resolution.h" />
+    <ClInclude Include="Ressources\resource.h" />
+    <ClInclude Include="UDPClient.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="classes\AntiSpeedHack.cpp" />
+    <ClCompile Include="classes\BuildItem.cpp" />
+    <ClCompile Include="classes\CharInfo.cpp" />
+    <ClCompile Include="classes\Curse.cpp" />
+    <ClCompile Include="classes\Effect.cpp" />
+    <ClCompile Include="classes\Event.cpp" />
+    <ClCompile Include="classes\Game.cpp" />
+    <ClCompile Include="classes\GameMonitor.cpp" />
+    <ClCompile Include="classes\Helbreath.cpp" />
+    <ClCompile Include="classes\Item.cpp" />
+    <ClCompile Include="classes\ItemName.cpp" />
+    <ClCompile Include="classes\Magic.cpp" />
+    <ClCompile Include="classes\MapData.cpp" />
+    <ClCompile Include="classes\Misc.cpp" />
+    <ClCompile Include="classes\MouseInterface.cpp" />
+    <ClCompile Include="classes\Msg.cpp" />
+    <ClCompile Include="classes\Mydib.cpp" />
+    <ClCompile Include="classes\Skill.cpp" />
+    <ClCompile Include="classes\SoundBuffer.cpp" />
+    <ClCompile Include="classes\Sprite.cpp" />
+    <ClCompile Include="classes\StrTok.cpp" />
+    <ClCompile Include="classes\Tile.cpp" />
+    <ClCompile Include="classes\TileSpr.cpp" />
+    <ClCompile Include="classes\Wmain.cpp" />
+    <ClCompile Include="classes\XSocket.cpp" />
+    <ClCompile Include="classes\XSocketUDP.cpp" />
+    <ClCompile Include="ClientUDP.cpp" />
+    <ClCompile Include="EmbeddedDDraw.cpp" />
+    <ClCompile Include="Library\YWSound.cpp">
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <ClCompile Include="MemoryModule.c" />
+    <ClCompile Include="Motor\DXC_ddraw.cpp" />
+    <ClCompile Include="Motor\DXC_ddraw_d3d9.cpp" />
+    <ClCompile Include="Motor\DXC_dinput.cpp" />
+    <ClCompile Include="Motor\DXC_dsound.cpp" />
+    <ClCompile Include="Resolution\Resolution.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Ressources\AIcon.ico" />
+    <None Include="C:\Users\hbarg\Desktop\Archive\cximage.dll" />
+    <None Include="C:\Users\hbarg\Desktop\Archive\HBARG.dll" />
+    <None Include="icon1.ico" />
+    <None Include="readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Ressources\resource.rc">
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

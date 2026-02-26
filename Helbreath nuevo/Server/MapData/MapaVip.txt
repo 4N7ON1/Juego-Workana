@@ -1,0 +1,47 @@
+[MAP-INFO]
+
+map-location  = MapaVip
+initial-point = 1  48 153 
+initial-point = 2  51 151
+initial-point = 3  54 149
+initial-point = 4  57 147
+initial-point = 5  60 145
+initial-point = 6  59 142
+initial-point = 7  53 140
+initial-point = 8  48 143
+CitizenLimit		= 1
+
+//-Teleportation-Set----SX-----SY-----DestMapName---------DX-----DY----Dir---;
+teleport-loc     =      53 143     MapaVip		45	137	4
+teleport-loc     =      53 144     MapaVip		51	133	4
+teleport-loc     =      54 143     MapaVip		59	135	4
+teleport-loc     =      54 144     MapaVip		66	140	4
+teleport-loc     =      55 143     MapaVip		72	147	4
+teleport-loc     =      55 144     MapaVip		66	151	4
+
+
+//------------------------Num-Type-waypoints--------------Mob-MobNum
+spot-mob-generator	= 1   1    63 54  90 64	 	114   2 // DeathWyvern
+spot-mob-generator	= 2   1    161 48  169 78 	109   10 // LightWorm
+spot-mob-generator	= 3   1    95 146  102 151 	 51   3 // Hellclaw
+spot-mob-generator	= 4   1    120 145  126 151 	 51   3 // Hellclaw
+spot-mob-generator	= 5   1    144 146  150 151 	 51   3 // Hellclaw
+spot-mob-generator	= 6   1    93 114  104 122 	 73   2 // FireWyvern
+spot-mob-generator	= 7   1    120 104  137 112 	 52   5 // TigerWorm
+spot-mob-generator	= 8   1    160 112  169 138 	 66   2 // Wyvern
+spot-mob-generator	= 9   1    125 125  132	131 	 31   2 // Demon
+spot-mob-generator	= 10  1    66 100  75 106 	108   5 // HellDeath
+spot-mob-generator	= 11  1    107 81  113 89 	 55   3 // Gagoyle
+spot-mob-generator	= 12  1    101 85  109 91 	 55   3 // Gagoyle
+spot-mob-generator	= 13  1    109 35  121 42 	108   1 // HellDeath
+
+
+//-No-Attack-Area----------Num-----RECT-------------
+no-attack-area           = 1      45 151  65 149
+no-attack-area           = 2      50 138  58 155
+no-attack-area           = 3      45 151  59 155
+
+
+maximum-object		= 400
+
+[END-MAP-INFO]

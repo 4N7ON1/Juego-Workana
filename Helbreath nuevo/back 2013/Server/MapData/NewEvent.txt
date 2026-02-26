@@ -1,0 +1,41 @@
+[MAP-INFO]
+
+map-location  = NewEvent
+initial-point = 1  149 218
+initial-point = 2  203 218
+initial-point = 3  143 140
+initial-point = 4  114 120
+
+
+//-Teleportation-Set----SX-----SY-----DestMapName---------DX-----DY----Dir---;
+//Aresden
+teleport-loc	=	139	213	NewEvent	-1	-1	5
+teleport-loc	=	139	214	NewEvent	-1	-1	5
+teleport-loc	=	139	215	NewEvent	-1	-1	5
+teleport-loc	=	140	212	NewEvent	-1	-1	5
+teleport-loc	=	140	213	NewEvent	-1	-1	5
+teleport-loc	=	140	214	NewEvent	-1	-1	5
+teleport-loc	=	141	211	NewEvent	-1	-1	5
+teleport-loc	=	141	212	NewEvent	-1	-1	5
+teleport-loc	=	141	213	NewEvent	-1	-1	5
+teleport-loc	=	142	211	NewEvent	-1	-1	5
+teleport-loc	=	142	212	NewEvent	-1	-1	5
+
+//Elvine
+teleport-loc	=	193	213	NewEvent	-1	-1	5
+teleport-loc	=	193	214	NewEvent	-1	-1	5
+teleport-loc	=	193	215	NewEvent	-1	-1	5
+teleport-loc	=	194	212	NewEvent	-1	-1	5
+teleport-loc	=	194	213	NewEvent	-1	-1	5
+teleport-loc	=	194	214	NewEvent	-1	-1	5
+teleport-loc	=	195	211	NewEvent	-1	-1	5
+teleport-loc	=	195	212	NewEvent	-1	-1	5
+teleport-loc	=	195	213	NewEvent	-1	-1	5
+teleport-loc	=	196	211	NewEvent	-1	-1	5
+teleport-loc	=	196	212	NewEvent	-1	-1	5
+
+maximum-object		= 300
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

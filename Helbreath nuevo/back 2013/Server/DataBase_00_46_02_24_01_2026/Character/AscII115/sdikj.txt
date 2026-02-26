@@ -1,0 +1,283 @@
+[FILE-DATE]
+
+file-saved-date: 2026 1 23 19 46
+
+[NAME-ACCOUNT]
+
+character-name     = sdikj
+account-name       = asd
+Hour-Play = 2
+Min-Play = 2
+
+CheckProcess = OFF
+
+[NAME-ACCOUNT]
+
+character-profile 	=__________
+character-location   = elvine
+character-guild-name = NONE
+character-guild-GUID = -1
+character-guild-rank = -1
+
+
+[MAP-DATA]
+
+character-loc-map = wrhus_2
+character-loc-x   = 73
+character-loc-y   = 83
+
+locked-map-name = NONE
+locked-map-time = 0
+
+
+[STATS]
+
+character-EXP      = 47023054
+character-LEVEL    = 150
+character-LU_Pool  = 3
+character-STR      = 200
+character-INT      = 47
+character-VIT      = 91
+character-DEX      = 159
+character-MAG      = 10
+character-CHARISMA = 10
+
+
+[STATUS]
+
+character-HP       = 756
+character-MP       = 343
+character-SP       = 700
+sex-status       = 1
+skin-status      = 2
+hairstyle-status = 1
+haircolor-status = 15
+underwear-status = 1
+hunger-status    = 0
+admin-user-level = 0
+party-id = 0
+
+
+[TIMMERS]
+
+timeleft-shutup  = 0
+timeleft-rating  = 0
+timeleft-force-recall  = 0
+timeleft-firm-staminar = 0
+dead-penalty-time = 0
+penalty-block-date = 0 0 0
+special-ability-time = 0
+
+
+[POINTS]
+
+character-current-luck = 0
+Assasain-Count = 0
+character-RATING   = 0
+character-EK-Count = 0
+character-EK-TotalCount = 0
+character-PK-Count = 0
+character-FK-Count = 0
+character-contribution = 0
+gizon-item-upgade-left = 1
+super-attack-left = 5000
+Coins = 0
+character-role = 0
+character-raiderlvl = 0
+character-hunterlvl = 0
+character-event-points = 0
+
+
+[QUEST]
+
+character-quest-number = 0
+character-quest-ID     = 0
+current-quest-count    = 0
+quest-reward-type      = 0
+quest-reward-amount    = 0
+item-quest-number	   = 0
+item-quest-ID		   = 0
+item-quest-count	   = 0
+item-reward-type       = 0
+stated-quest-number    = 0
+stated-quest-ID        = 0
+stated-quest-count     = 0
+stated-reward-type     = 0
+
+
+[ACHIVEMENTS]
+
+Total-Mobs-Killed = 10
+Total-Death = 0
+Total-Client-Killed = 0
+Total-Quest-Completed = 0
+
+
+[DATA-EVENTS]
+
+crusade-job = 0
+crusade-GUID = 0
+construct-point = 0
+character-war-contribution = 0
+EventID = 2
+EventKill = 0
+EventDeath = 0
+Random-Event-ID = 0
+Event-Time-Playing = 0
+
+
+[OTHER-DATA]
+
+character-IDnum1 = -14627
+character-IDnum2 = 534
+character-IDnum3 = 1
+reserved-fightzone-id = 0 0 0
+character-reward-gold = 0
+character-downskillindex = -1
+ip-muerte = appr1
+
+
+appr1 = 497
+appr2 = 0
+appr3 = 0
+appr4 = 0
+appr-color = 0
+appr-color2 = 0
+
+[RANK-SYSTEM]
+
+character-rank-level = 0
+character-rank-points = 0
+character-rank-exp = 0
+
+character-rank-addstr = 0
+character-rank-addvit = 0
+character-rank-addint = 0
+character-rank-adddex = 0
+character-rank-addmag = 0
+
+
+[MASTERY-SYSTEM]
+
+character-current-mastery = 0
+character-droprate-level = 0
+character-npcdmg-level = 0
+character-regen-level = 0
+character-vit-level = 0
+character-defense-level = 0
+character-tokens = 0
+
+
+[ENCHANTING]
+
+character-shard-light = 0
+character-shard-strong = 0
+character-fragment-hp = 0
+character-fragment-dr = 0
+character-fragment-hprec = 0
+character-fragment-sprec = 0
+character-fragment-mprec = 0
+character-fragment-mr = 0
+character-fragment-pa = 0
+character-fragment-ma = 0
+character-fragment-exp = 0
+character-ice-segments = 0
+character-lighting-segments = 0
+character-fire-segments = 0
+character-talent = -1
+character-fire-talent-lvl = 1
+character-ice-talent-lvl = 1
+character-lightning-talent-lvl = 1
+character-fire-points = 0
+character-ice-points = 0
+character-lightning-points = 0
+character-force-teleport-shop = 1
+character-change-color = 1
+
+
+[DONNER-SYSTEM]
+
+character-candy-insert = 0
+character-candy-delete = 0
+character-no-drop = 0
+
+[REBIRTH]
+
+character-rebirth-level = 0
+character-rebirth-status = 0
+character-rebirth-enabled = 0
+character-back-rebirth-level = 0
+character-back-exp = 0
+character-back-stats-point = 0
+character-back-str = 0
+character-back-vit = 0
+character-back-int = 0
+character-back-dex = 0
+character-back-chr = 0
+character-back-mag = 0
+character-back-level = 0
+
+
+[OTHER-DATA]
+
+character-added-pa = 0
+character-added-ma = 0
+character-added-mr = 0
+character-added-dr = 0
+character-added-physdamage = 0
+character-added-physhit = 0
+character-added-magicdamage = 0
+character-added-magichit = 0
+character-added-manasave = 0
+character-regen = 0
+character-regen-time = 0
+character-regen-mode = 0
+character-questx2 = 0
+character-questx3 = 0
+character-goodrate = 0
+character-regen-endu = 0
+character-regen-endu-time = 0
+
+[ITEMLIST]
+
+character-item = BarrackSword         1 0 0 0 0 0 0 0 0 493 0 0 7
+character-item = RedCandy             1 0 0 0 0 0 0 0 0 300 0 0 -2
+character-item = RedCandy             1 0 0 0 0 0 0 0 0 300 0 0 -2
+character-item = RedCandy             1 0 0 0 0 0 0 0 0 300 0 0 -2
+character-item = RedCandy             1 0 0 0 0 0 0 0 0 300 0 0 -2
+character-item = RedCandy             1 0 0 0 0 0 0 0 0 300 0 0 -2
+character-item = BlueCandy            1 0 0 0 0 0 0 0 0 300 0 41 -2
+character-item = BlueCandy            1 0 0 0 0 0 0 0 0 300 0 41 -2
+character-item = BlueCandy            1 0 0 0 0 0 0 0 0 300 0 41 -2
+character-item = BlueCandy            1 0 0 0 0 0 0 0 0 300 0 41 -2
+character-item = BlueCandy            1 0 0 0 0 0 0 0 0 300 0 41 -2
+character-item = GreenCandy           1 0 0 0 0 0 0 0 0 300 0 83 -3
+character-item = GreenCandy           1 0 0 0 0 0 0 0 0 300 0 83 -3
+character-item = GreenCandy           1 0 0 0 0 0 0 0 0 300 0 83 -3
+character-item = GreenCandy           1 0 0 0 0 0 0 0 0 300 0 83 -3
+character-item = GreenCandy           1 0 0 0 0 0 0 0 0 300 0 83 -3
+character-item = Gold                 998800 0 0 0 0 0 0 0 0 600 0 138 89
+character-item = ManufacturingHammer  1 2 22037 123 163023909 0 0 0 0 300 0 40 30
+
+
+
+
+[MAGIC-SKILL-MASTERY]
+
+//------------------012345678901234567890123456789012345678901234567890
+magic-mastery     = 0000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+skill-mastery     = 100 100 94 83 20 100 100 100 100 100 100 100 94 100 100 0 0 0 0 50 0 20 0 20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+skill-SSN     = 0 0 0 0 0 0 0 20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+
+Achivements     = 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+
+[ITEM-EQUIP-STATUS]
+
+item-equip-status = 00000000000000000000000000000000000000000000000000
+item-position-x = 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 
+item-position-y = 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 
+
+[EOF]
+
+
+

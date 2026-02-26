@@ -1,0 +1,10 @@
+[MAP-INFO]
+
+map-location  = ctrcity
+
+initial-point = 1 155 154
+
+maximum-object		= 2000
+
+[END-MAP-INFO]
+

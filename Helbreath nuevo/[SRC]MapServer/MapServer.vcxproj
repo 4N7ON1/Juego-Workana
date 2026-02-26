@@ -1,0 +1,250 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{E8832C46-2BB7-467F-83BF-CFFD519B96DF}</ProjectGuid>
+    <ProjectName>CoreServer</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\Server</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Debug/MapServer.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>Debug/MapServer.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>Debug/</AssemblerListingLocation>
+      <ObjectFileName>Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>Debug/</ProgramDataBaseFileName>
+      <BrowseInformation>false</BrowseInformation>
+      <WarningLevel>Level1</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <EnablePREfast>false</EnablePREfast>
+      <AdditionalIncludeDirectories>
+      </AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0412</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;Dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>Debug/MapServer.pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>Debug/MapServer.map</MapFileName>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+      <OutputFile>..\Server\CoreServer.exe</OutputFile>
+      <AdditionalOptions>/LARGEADDRESSAWARE
+ %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Debug/MapServer.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Release/MapServer.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\Release/MapServer.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Release/</AssemblerListingLocation>
+      <ObjectFileName>.\Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0412</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>.\Release/MapServer.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ProgramDatabaseFile>.\Release/MapServer.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalOptions>/LARGEADDRESSAWARE
+ %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release/MapServer.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Shared\shared.h" />
+    <ClInclude Include="General\ActionID.h" />
+    <ClInclude Include="General\AFXRES.H" />
+    <ClInclude Include="General\DynamicObjectID.h" />
+    <ClInclude Include="General\GlobalDef.h" />
+    <ClInclude Include="General\MessageIndex.h" />
+    <ClInclude Include="General\UserMessages.h" />
+    <ClInclude Include="General\Version.h" />
+    <ClInclude Include="Header\BuildItem.h" />
+    <ClInclude Include="Header\Client.h" />
+    <ClInclude Include="Header\DelayEvent.h" />
+    <ClInclude Include="Header\DynamicObject.h" />
+    <ClInclude Include="Header\Event.h" />
+    <ClInclude Include="Header\Fish.h" />
+    <ClInclude Include="Header\Game.h" />
+    <ClInclude Include="Header\GuildsMan.h" />
+    <ClInclude Include="Header\Item.h" />
+    <ClInclude Include="Header\Magic.h" />
+    <ClInclude Include="Header\Map.h" />
+    <ClInclude Include="Header\Mineral.h" />
+    <ClInclude Include="Header\Misc.h" />
+    <ClInclude Include="Header\Msg.h" />
+    <ClInclude Include="Header\Npc.h" />
+    <ClInclude Include="Header\OccupyFlag.h" />
+    <ClInclude Include="Header\PartyManager.h" />
+    <ClInclude Include="Header\Potion.h" />
+    <ClInclude Include="Header\Quest.h" />
+    <ClInclude Include="Header\RelayShared.h" />
+    <ClInclude Include="Header\Skill.h" />
+    <ClInclude Include="Header\StrategicPoint.h" />
+    <ClInclude Include="Header\StrTok.h" />
+    <ClInclude Include="Header\Teleport.h" />
+    <ClInclude Include="Header\TeleportLoc.h" />
+    <ClInclude Include="Header\Tile.h" />
+    <ClInclude Include="Header\WINMAIN.H" />
+    <ClInclude Include="Header\XSocket.h" />
+    <ClInclude Include="language\englishitem.h" />
+    <ClInclude Include="language\koreaitem.h" />
+    <ClInclude Include="language\resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Drops.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Source\AbaddonEvent.cpp" />
+    <ClCompile Include="Source\battle.cpp" />
+    <ClCompile Include="Source\BuildItem.cpp" />
+    <ClCompile Include="Source\Client.cpp" />
+    <ClCompile Include="Source\DeathMatchV2.cpp" />
+    <ClCompile Include="Source\DelayEvent.cpp" />
+    <ClCompile Include="Source\dksetevent.cpp" />
+    <ClCompile Include="Source\DynamicObject.cpp" />
+    <ClCompile Include="Source\Event.cpp" />
+    <ClCompile Include="Source\Fish.cpp" />
+    <ClCompile Include="Source\Game.cpp" />
+    <ClCompile Include="Source\CoreServer.cpp" />
+    <ClCompile Include="Source\GuildsMan.cpp" />
+    <ClCompile Include="Source\GunGameV3.cpp" />
+    <ClCompile Include="Source\hbot.cpp" />
+    <ClCompile Include="Source\Item.cpp" />
+    <ClCompile Include="Source\Login.cpp" />
+    <ClCompile Include="Source\Magic.cpp" />
+    <ClCompile Include="Source\Map.cpp" />
+    <ClCompile Include="Source\MasterySystem.cpp" />
+    <ClCompile Include="Source\Mineral.cpp" />
+    <ClCompile Include="Source\Misc.cpp" />
+    <ClCompile Include="Source\Msg.cpp" />
+    <ClCompile Include="Source\Npc.cpp" />
+    <ClCompile Include="Source\OccupyFlag.cpp" />
+    <ClCompile Include="Source\PartyManager.cpp" />
+    <ClCompile Include="Source\Potion.cpp" />
+    <ClCompile Include="Source\Quest.cpp" />
+    <ClCompile Include="Source\QuestList.cpp" />
+    <ClCompile Include="Source\Rank.cpp" />
+    <ClCompile Include="Source\reader.cpp" />
+    <ClCompile Include="Source\RelayShared.cpp" />
+    <ClCompile Include="Source\Skill.cpp" />
+    <ClCompile Include="Source\StrategicPoint.cpp" />
+    <ClCompile Include="Source\StrTok.cpp" />
+    <ClCompile Include="Source\Teleport.cpp" />
+    <ClCompile Include="Source\TeleportLoc.cpp" />
+    <ClCompile Include="Source\Tile.cpp" />
+    <ClCompile Include="Source\Utils.cpp" />
+    <ClCompile Include="Source\Wmain.cpp" />
+    <ClCompile Include="Source\XSocket.cpp" />
+    <ClCompile Include="Trades.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="Libs\WINMM.LIB" />
+    <Library Include="Libs\WS2_32.LIB" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="language\HGserver.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

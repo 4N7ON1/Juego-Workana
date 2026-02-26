@@ -1,0 +1,43 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.sdf
+*.opensdf
+*.db
+*.opendb
+
+# Build Artifacts
+Debug/
+Release/
+x64/
+x86/
+build/
+bin/
+obj/
+*.obj
+*.pdb
+*.ilk
+*.exe
+*.dll
+*.lib
+*.exp
+*.map
+*.res
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.rsp
+*.pgc
+*.pgd
+*.meta
+*.pch
+
+# Others
+*.log
+*.sqm
+*.VC.db
+ipch/

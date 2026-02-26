@@ -1,0 +1,12 @@
+[MAP-INFO]
+
+map-location  = maze
+initial-point = 1 38 164
+
+//-WayPoint-Set---------Num-----X-----Y----;
+waypoint          =     1      38 164
+
+maximum-object = 500
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

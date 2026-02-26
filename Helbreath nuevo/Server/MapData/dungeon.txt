@@ -1,0 +1,25 @@
+[MAP-INFO]
+
+map-location  = dungeon
+initial-point = 1  33 97
+initial-point = 2  166 101
+
+//ares city tp
+teleport-loc       = 34 36 aresden 78 206 4
+teleport-loc       = 35 36 aresden 78 206 4
+teleport-loc       = 36 36 aresden 78 206 4
+teleport-loc       = 34 37 aresden 78 206 4
+teleport-loc       = 35 37 aresden 78 206 4
+
+//elv city tp
+teleport-loc       = 163 97 elvine 256 80 4
+teleport-loc       = 164 97 elvine 256 80 4
+teleport-loc       = 165 97 elvine 256 80 4
+teleport-loc       = 163 98 elvine 256 80 4
+teleport-loc       = 164 98 elvine 256 80 4
+
+maximum-object		= 600
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

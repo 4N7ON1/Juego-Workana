@@ -1,0 +1,28 @@
+[MAP-INFO]
+
+map-location  = city
+
+initial-point = 1 155 154
+
+maximum-object		= 2000
+
+
+//-Teleportation-Set----SX-----SY-----DestMapName---------DX-----DY----Dir---;
+
+
+//city tps
+//minezone elv side
+teleport-loc       = 40 74 dungeon 33 97 4
+teleport-loc       = 41 74 dungeon 33 97 4
+teleport-loc       = 42 74 dungeon 33 97 4
+
+//minezone ares side
+teleport-loc       = 174 259 dungeon 166 101 4
+teleport-loc       = 175 259 dungeon 166 101 4
+teleport-loc       = 175 258 dungeon 166 101 4
+teleport-loc       = 173 259 dungeon 166 101 4
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]
+

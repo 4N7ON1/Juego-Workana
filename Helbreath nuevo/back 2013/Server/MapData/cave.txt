@@ -1,0 +1,23 @@
+[MAP-INFO]
+
+map-location  = cave
+initial-point = 1  57 103
+
+//mine zone tps
+//mine zone elvine side to elvine
+teleport-loc       = 57 98 city 39 70 4
+teleport-loc       = 58 98 city 39 70 4
+teleport-loc       = 57 99 city 39 70 4
+teleport-loc       = 58 99 city 39 70 4
+
+//mine zone ares side to aresden
+teleport-loc       = 149 93 city 172 256 4
+teleport-loc       = 150 93 city 172 256 4
+teleport-loc       = 149 94 city 172 256 4
+teleport-loc       = 150 94 city 172 256 4
+
+maximum-object		= 600
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

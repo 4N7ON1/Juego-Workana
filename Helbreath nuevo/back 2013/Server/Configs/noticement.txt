@@ -1,0 +1,94 @@
+-HELBREATH ARGENTINA V14
+<
+-*OFICIAL MODE INTERNACIONAL*
+<
+<
+MAX LEVEL 180
+<
+MAX STATS 200
+<
+EXP = HIGH
+<
+DROP = MEDIUM
+<
+RARE DROP = MEDIUM
+
+EK x 10 / 20 / 40 / 50 / 100
+<
+<
+-VERSION 14.00
+<
+-* MAPAS ONLINE *
+<
+-Mapas
+<
+Aresden - Elvine - Ares Barracks
+Elvin Barracks - Event Garden 
+Neutral Garden - Middleland
+PromiseLand - DunLand - Icebound
+HighLand - MortalCombat
+Arenas - Battlefield.
+<
+<
+-* EVENTOS *
+<
+Happy Hour - Happy Day - Crusade
+City vs City - All Vs All
+Soccer - Hell Of Death - Rush
+Capture the Flag - Tower Defense 
+Apocalypse - Summon Event
+Extreme Fight - HuntMap - Final Fight
+DeathMatch - All Eks - All Dk Eks
+Quest x 2 - Quest x 3.
+<
+<
+-* NPC V4*
+<
+Ice-Worm - Fire-Worm - Blue-Demon
+Red-Demon - Wood-Golem - Ice-Lizard
+Butcher - Snoob - Fire-Snoob
+Satan - Giant-Spider - Diablo
+Phamton - Yeti - GrandEttin	
+HellDeath - LightWorm
+<
+<
+-* NPC V5*
+<
+HoundHell - HellLiche - HellButcher 
+HellTrol - GiantDeath - HellGagoyle
+HellDemon -  DeathWivern - HellAbaddon
+<
+-* NPC V10*
+<
+GhostAbaddon - RedGoblin
+BlueGoblin - Danny
+<
+<
+-* SHORTCUT´S *
+<
+Control + L ----> "Archiments"
+Control + E ----> "Logs Ek & Pk"
+Control + Q ----> "NewBar"
+Control + P ----> "Panel Ek/Mp/tops/Setting"
+Control + B ----> "Barras"
+"Grande/Chica/FullScreen"
+Control + Z ----> "Entorno Invi"
+Control + N ----> "Fps & Timer"
+F12/Control + x-> "Sistem Menu"
+<
+<
+-* CREDITOS *
+<
+-LaloRamos
+<
+-* PAGINAS OFICIALES *
+<
+www.helbreathargentina.com
+www.facebook.com/HelbreathArgentina
+www.helbreathargentina.com/foro
+<
+<
+Podran Imitarnos, Pero "Jamas"
+Podran Igualarnos!
+<
+-* HELBREATH ARGENTINA v14*

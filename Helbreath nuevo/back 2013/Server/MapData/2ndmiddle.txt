@@ -1,0 +1,49 @@
+[MAP-INFO]
+
+map-location = 2ndmiddle
+initial-point = 1  125 125
+
+//-Teleportation-Set----SX-----SY-----DestMapName---------DX-----DY----Dir---;
+
+teleport-loc     =     135    228     elvine   		221 24	7
+teleport-loc     =     136    228     elvine   		221 24	7
+teleport-loc     =     137    228     elvine   		221 24	7
+teleport-loc     =     138    228     elvine   		221 24	7
+teleport-loc     =     139    228     elvine   		221 24	7
+teleport-loc     =     140    228     elvine   		221 24	7
+teleport-loc     =     141    228     elvine   		221 24	7
+teleport-loc     =     142    228     elvine   		221 24	7
+teleport-loc     =     143    228     elvine   		221 24	7
+teleport-loc     =     144    228     elvine   		221 24	7
+teleport-loc     =     145    228     elvine   		221 24	7
+
+teleport-loc     =     121     21     aresden   		32 274 7
+teleport-loc     =     122     21     aresden   		32 274 7
+teleport-loc     =     123     21     aresden   		32 274 7
+teleport-loc     =     124     21     aresden   		32 274 7
+teleport-loc     =     125     21     aresden   		32 274 7
+teleport-loc     =     126     21     aresden   		32 274 7
+teleport-loc     =     127     21     aresden   		32 274 7
+teleport-loc     =     128     21     aresden   		32 274 7
+teleport-loc     =     129     21     aresden   		32 274 7
+teleport-loc     =     130     21     aresden   		32 274 7
+teleport-loc     =     131     21     aresden   	    32 274 7
+
+
+//-WayPoint-Set---------Num-----X-----Y----;
+waypoint          =     0       75    75
+waypoint          =     1       75   200
+waypoint          =     2      200   200
+waypoint          =     3      200    75
+waypoint          =     4      125   125
+
+maximum-object		= 600
+
+
+//strategic-point-Num-Side-Value--X----Y
+strategic-point = 1   0    2     176  224
+strategic-point = 2   0    1     456  213
+strategic-point = 3   0    1     275  286
+
+
+[END-MAP-INFO]

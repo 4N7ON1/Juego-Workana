@@ -1,0 +1,46 @@
+How to move character
+   
+ 
+Walking
+ 
+Press left mouse button to the position
+you want to go. Press right mouse button
+for 1~2 seconds to stop while moving.
+ 
+Running
+ 
+Press left mouse button with shift key
+pressed. You need enough SP(Staminar
+Point) to run.
+ 
+Change Direction
+ 
+If you want to change the direction
+while you do not move, press the right
+mouse button to the position that
+you want to change.
+ 
+Go into or out the building
+ 
+Go to the front of the building to 
+enter the building. Going out is
+the same with entering.
+ 
+Teleport
+ 
+You can teleport to the other place
+by moving to the teleport portal in
+beginner zone or revival zone.
+ 
+Recall
+ 
+You can recall to your nation by
+double clicking the recall scroll
+or click your character after casting
+recall magic.
+ 
+Pick up items
+ 
+Go to the position above the item
+which you want to get. And click
+your character to pick up the item.

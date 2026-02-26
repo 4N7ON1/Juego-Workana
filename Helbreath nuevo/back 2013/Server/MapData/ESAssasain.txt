@@ -1,0 +1,16 @@
+[MAP-INFO]
+
+map-location  = ESAssasain
+initial-point = 1  44 40
+initial-point = 2  45 42
+initial-point = 3  44 42
+initial-point = 4  45 40
+initial-point = 5  46 41
+initial-point = 6  47 43
+
+
+fixed-dayornight-mode = 1
+
+maximum-object		= 500
+
+[END-MAP-INFO]

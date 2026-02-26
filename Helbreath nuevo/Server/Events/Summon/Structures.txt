@@ -1,0 +1,35 @@
+summon-structure = 1  ESAresden	38      49 48
+summon-structure = 2  ESAresden	38      33 48
+summon-structure = 3  ESAresden	38      26 44
+summon-structure = 4  ESAresden	38      29 37
+summon-structure = 5  ESAresden	38      43 28
+summon-structure = 6  ESAresden	38      52 28
+summon-structure = 7  ESAresden	38      61 34
+summon-structure = 8  ESAresden	38      61 41
+summon-structure = 9  ESAresden 38      41 35
+summon-structure = 10  ESAresden 38      37 42
+summon-structure = 11  ESAresden 38      51 35
+
+summon-structure = 12  ESElvine	38      49 48
+summon-structure = 13  ESElvine	38      33 48
+summon-structure = 14  ESElvine	38      26 44
+summon-structure = 15  ESElvine	38      29 37
+summon-structure = 16  ESElvine	38      43 28
+summon-structure = 17  ESElvine	38      52 28
+summon-structure = 18  ESElvine	38      61 34
+summon-structure = 19  ESElvine	38      61 41
+summon-structure = 20  ESElvine	38      41 35
+summon-structure = 21  ESElvine	38      37 42
+summon-structure = 22  ESElvine	38      51 35
+
+summon-structure = 23  ESAssasain	38      49 48
+summon-structure = 24  ESAssasain	38      33 48
+summon-structure = 25  ESAssasain	38      26 44
+summon-structure = 26  ESAssasain	38      29 37
+summon-structure = 27  ESAssasain	38      43 28
+summon-structure = 28  ESAssasain	38      52 28
+summon-structure = 29  ESAssasain	38      61 34
+summon-structure = 30  ESAssasain	38      61 41
+summon-structure = 31  ESAssasain	38      41 35
+summon-structure = 32  ESAssasain	38      37 42
+summon-structure = 33  ESAssasain	38      51 35

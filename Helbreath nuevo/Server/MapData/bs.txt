@@ -1,0 +1,14 @@
+[MAP-INFO]
+
+map-location  = bs
+initial-point = 1  59 75
+
+waypoint          =     1      76 70
+
+npc               =   Tom	 1           1 1 1 1 1 1 1 1 1 1         1  
+
+no-attack-area           = 1       -10 -10 -10 -10
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

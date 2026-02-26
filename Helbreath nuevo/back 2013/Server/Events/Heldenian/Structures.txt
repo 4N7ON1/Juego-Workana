@@ -1,0 +1,105 @@
+//------------------Num-MapName-------Type---Ciudad---X-----Y---
+
+structure = 1  BTField        87      53  212
+structure = 2  BTField        87      48  214 
+structure = 3  BTField        87      53  220 
+structure = 4  BTField        87      48  222 
+structure = 5  BTField        87      53  228 
+structure = 6  BTField        87      48  230 
+structure = 7  BTField        87      53  236 
+structure = 8  BTField        87      48  240 
+structure = 9  BTField        87      53  244
+ 
+structure = 10  BTField        87      57  248 
+structure = 11  BTField        87      62  252 
+structure = 12  BTField        87      67  248 
+structure = 13  BTField        87      70  252 
+structure = 14  BTField        87      77  248 
+structure = 15  BTField        87      80  252 
+structure = 16  BTField        87      87  248
+structure = 17  BTField        87      95  252
+structure = 18  BTField        87      97  248
+
+structure = 19  BTField        87     117  144
+structure = 20  BTField        87     114  136
+structure = 21  BTField        87     180  180
+structure = 22  BTField        87     182  188
+
+structure = 23  BTField        89      48  210 
+structure = 24  BTField        89      53  216 
+structure = 25  BTField        89      48  218 
+structure = 26  BTField        89      53  224 
+structure = 27  BTField        89      48  226 
+structure = 28  BTField        89      53  232 
+structure = 29  BTField        89      48  234
+structure = 30  BTField        89      48  238
+structure = 31  BTField        89      53  240
+structure = 32  BTField        89      48  246
+
+structure = 33  BTField        89      55  252
+structure = 34  BTField        89      62  248
+structure = 35  BTField        89      65  252
+structure = 36  BTField        89      72  248 
+structure = 37  BTField        89      75  252 
+structure = 38  BTField        89      82  248 
+structure = 39  BTField        89      85  252 
+structure = 40  BTField        89      90  252 
+structure = 41  BTField        89      92  248
+structure = 42  BTField        89     100  252
+
+structure = 43  BTField        89     120  141
+structure = 44  BTField        89     111  139
+structure = 45  BTField        89     177  183
+structure = 46  BTField        89     185  185
+
+structurs = 1  BTField        87      195  62
+structurs = 2  BTField        87      197  58
+structurs = 3  BTField        87      205  62
+structurs = 4  BTField        87      207  58
+structurs = 5  BTField        87      215  62
+structurs = 6  BTField        87      222  58
+structurs = 7  BTField        87      225  62
+structurs = 8  BTField        87      232  58
+structurs = 9  BTField        87      235  62
+
+structurs = 10  BTField        87      241  69
+structurs = 11  BTField        87      246  71
+structurs = 12  BTField        87      241  77
+structurs = 13  BTField        87      246  79
+structurs = 14  BTField        87      241  85
+structurs = 15  BTField        87      246  91
+structurs = 16  BTField        87      241  93
+structurs = 17  BTField        87      246  99
+structurs = 18  BTField        87      241  101
+
+structurs = 19  BTField        87      203  163
+structurs = 20  BTField        87      205  171
+structurs = 21  BTField        87      134  122
+structurs = 22  BTField        87      142  124
+
+structurs = 23  BTField        89      192  58
+structurs = 24  BTField        89      200  62
+structurs = 25  BTField        89      202  58
+structurs = 26  BTField        89      210  62
+structurs = 27  BTField        89      212  58
+structurs = 28  BTField        89      217  58
+structurs = 29  BTField        89      220  62
+structurs = 30  BTField        89      227  58
+structurs = 31  BTField        89      230  62
+structurs = 32  BTField        89      237  58
+
+structurs = 33  BTField        89      246  67
+structurs = 34  BTField        89      241  73
+structurs = 35  BTField        89      246  75
+structurs = 36  BTField        89      241  81
+structurs = 37  BTField        89      246  83
+structurs = 38  BTField        89      246  87
+structurs = 39  BTField        89      241  89
+structurs = 40  BTField        89      246  95
+structurs = 41  BTField        89      241  97
+structurs = 42  BTField        89      246  103
+
+structurs = 43  BTField        89      200  166
+structurs = 44  BTField        89      208  168
+structurs = 45  BTField        89      137  119
+structurs = 46  BTField        89      139  127

@@ -1,0 +1,43 @@
+// Armas / Wands
+item = 1 BattleHammer
+item = 2 WizMagicWand(MS20)
+item = 3 DemonSlayer
+item = 4 BlackMageTemple
+item = 5 DarkExecutor
+item = 6 KlonessWand(MS.30)
+item = 7 GiantBattleHammer
+item = 8 KlonessWand(MS.30)
+item = 9 KlonessBlade
+item = 10 KlonessWand(MS.30)
+item = 11 BlackHammer
+item = 12 BerserkWand(MS.30)
+item = 13 The_Devastator
+item = 14 KlonessWand(MS.30)
+item = 15 PowerHeroSword 
+item = 16 PowerHeroWand
+item = 17 StripIceHammer
+item = 18 PowerHeroWand
+
+// Armaduras W
+item = 30 Wizard-Hat(W)
+item = 31 WizardHauberk(W)
+item = 32 KnightHauberk(W)
+item = 33 ChainMail(W)
+item = 34 PlateMail(W)
+item = 35 ChainHose(W)
+item = 36 Wings-Helm(W)
+
+// Armaduras M
+item = 50 Wizard-Hat(M)
+item = 51 WizardHauberk(M)
+item = 52 KnightHauberk(M)
+item = 53 ChainMail(M)
+item = 54 PlateMail(M)
+item = 55 ChainHose(M)
+item = 56 Wings-Helm(M)
+
+// Armaduras S/S
+item = 70 Cape
+item = 71 TowerShield
+item = 72 WizMagicWand(MS20)
+

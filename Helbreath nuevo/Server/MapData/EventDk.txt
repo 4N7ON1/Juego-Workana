@@ -1,0 +1,26 @@
+[MAP-INFO]
+
+map-location  = EventDk
+initial-point = 1  29 44
+initial-point = 2  29 47
+initial-point = 3  51 63
+initial-point = 4  56 63
+initial-point = 5  51 28
+initial-point = 6  56 28
+initial-point = 7  77 44
+initial-point = 8  77 47
+
+type          = 1
+
+//-No-Attack-Area----------Num-----RECT-------------
+
+no-attack-area           = 1	26 25	81 37
+no-attack-area           = 2	26 38	44 66
+no-attack-area           = 3	63 38	81 53
+no-attack-area           = 4	45 54	81 66
+
+maximum-object = 500
+
+fixed-dayornight-mode	= 1
+
+[END-MAP-INFO]

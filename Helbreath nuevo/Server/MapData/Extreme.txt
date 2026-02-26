@@ -1,0 +1,21 @@
+[MAP-INFO]
+
+map-location  = Extreme
+initial-point = 1  69 69
+initial-point = 2  69 74
+initial-point = 3  69 79
+initial-point = 4  63 74
+initial-point = 5  63 79
+initial-point = 6  63 69
+initial-point = 7  77 69
+initial-point = 8  56 79
+initial-point = 9  77 79
+initial-point = 10 56 69
+initial-point = 11 77 74
+initial-point = 12 56 74
+
+maximum-object		= 200
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

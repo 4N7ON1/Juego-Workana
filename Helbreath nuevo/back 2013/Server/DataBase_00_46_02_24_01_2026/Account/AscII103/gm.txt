@@ -1,0 +1,15 @@
+Account-generated: Time(2026:1/22/16/11) IP(192.168.1.100)
+[Account Info]
+account-name     = gm
+account-password = asd
+account-Email    = asd@asd.asd
+account-Quiz =  
+account-Answer = -
+account-change-password = 2026 1 22
+
+[CHARACTERS]
+
+account-character-YAP  = gm
+account-character-YAP  = asdasd
+account-character-YAP  = jas
+account-character-YAP  = kaka

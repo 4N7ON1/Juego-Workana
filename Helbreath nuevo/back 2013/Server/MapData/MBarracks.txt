@@ -1,0 +1,44 @@
+[MAP-INFO]
+
+map-location  = MBarracks
+initial-point = 1  79 69
+upper-level-limit = 199
+
+//-Teleportation-Set----SX-----SY-----DestMapName---------DX-----DY----Dir---;
+teleport-loc     =      64     33     gshop_1             -1 	-1 	4
+teleport-loc     =      65     33     gshop_1             -1 	-1 	4
+teleport-loc     =      64     32     gshop_1             -1 	-1 	4
+teleport-loc     =      65     32     gshop_1             -1 	-1 	4
+
+teleport-loc     =      82    100     gshop_2             -1 	-1 	4
+teleport-loc     =      82    101     gshop_2             -1 	-1 	4
+teleport-loc     =      83    100     gshop_2             -1 	-1 	4
+teleport-loc     =      83    101     gshop_2             -1 	-1 	4
+
+//-WayPoint-Set---------Num-----X-----Y----;
+waypoint          =     1      55    39
+waypoint          =     2      50    40
+waypoint          =     3      60    38
+waypoint          =     4      65    40
+waypoint          =     5      63    44
+waypoint          =     6      58    47
+waypoint          =     7      52    48
+waypoint          =     8      49    44
+waypoint          =     9      47    41
+waypoint          =     10     55    41
+
+maximum-object = 400
+
+//------------------------Num-Type-waypoints--------------Mob-MobNum
+spot-mob-generator	= 1   1    29 59  122 86          34  20
+spot-mob-generator	= 2   1    64 36  107 96          34  20
+spot-mob-generator	= 3   1    70 31  124 85          35  20
+spot-mob-generator	= 4   1    22 51  129 92	  34  20
+spot-mob-generator	= 5   1    51 22  107 115	  35  20
+spot-mob-generator	= 6   1    59 102 95 112          34  10
+spot-mob-generator	= 7   1    67 27  95 44           34  10
+
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

@@ -1,0 +1,25 @@
+[MAP-INFO]
+
+map-location  = gg
+initial-point = 1  112 138
+initial-point = 2  126 128
+
+initial-point = 3  139 121
+
+initial-point = 4  155 123
+initial-point = 5  173 134
+
+initial-point = 6  198 143
+
+initial-point = 7  182 153
+
+initial-point = 8  162 151
+
+initial-point = 9  142 153
+
+initial-point = 10  143 140
+initial-point = 11  159 137
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

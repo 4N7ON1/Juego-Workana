@@ -1,0 +1,8 @@
+[MAP-INFO]
+
+map-location  = icemap
+
+initial-point = 1  126 125
+
+fixed-dayornight-mode = 1
+[END-MAP-INFO]

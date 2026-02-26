@@ -1,0 +1,17 @@
+[MAP-INFO]
+
+map-location  = dungeon2
+initial-point = 1  83 33
+
+//mine zone tps
+//mine zone elvine side to elvine
+teleport-loc       = 78 29 dungeon 99 39 4
+teleport-loc       = 79 29 dungeon 99 39 4
+teleport-loc       = 80 29 dungeon 99 39 4
+teleport-loc       = 78 30 dungeon 99 39 4
+
+maximum-object		= 600
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]

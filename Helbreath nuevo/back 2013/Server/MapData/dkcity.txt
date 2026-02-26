@@ -1,0 +1,12 @@
+[MAP-INFO]
+
+map-location  = dkcity
+
+initial-point = 1 155 154
+
+maximum-object		= 2000
+
+fixed-dayornight-mode = 1
+
+[END-MAP-INFO]
+

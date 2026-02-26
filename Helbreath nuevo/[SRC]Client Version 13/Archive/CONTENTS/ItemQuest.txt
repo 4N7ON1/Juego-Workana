@@ -1,0 +1,21 @@
+//Quest	=	ID	City	Bicho	C/Bicho	MinLvl	MaxLvl	Premio	Mapa
+//solo	ares								
+quest	=	101	1	76	10000	20	376	RingoftheAbaddon	Neutral Garden
+quest	=	102	1	61	10000	20	376	RingofArcmage	Neutral Garden
+quest	=	103	1	33	15000	20	376	MagicNecklace(DM+5)	Middleland
+quest	=	104	1	13	15000	20	376	MagicNecklace(MS18)	Middleland
+quest	=	105	1	29	30000	20	376	NecklaceOfMerien	Middleland
+quest	=	106	1	59	30000	20	376	NecklaceOfXelima	Middleland
+//solo	elv								
+quest	=	107	2	76	10000	20	376	RingoftheAbaddon	Neutral Garden
+quest	=	108	2	61	10000	20	376	RingofArcmage	Neutral Garden
+quest	=	109	2	33	15000	20	376	MagicNecklace(DM+5)	Middleland
+quest	=	110	2	13	15000	20	376	MagicNecklace(MS18)	Middleland
+quest	=	111	2	29	30000	20	376	NecklaceOfMerien	Middleland
+quest	=	112	2	59	30000	20	376	NecklaceOfXelima	Middleland
+//solo	ares								
+quest	=	113	1	33	50000	20	376	KlonessWand(MS.30)	Middleland
+quest	=	114	1	33	50000	20	376	DemonSlayer	Middleland
+//solo	elv								
+quest	=	115	2	33	50000	20	376	KlonessWand(MS.30)	Middleland
+quest	=	116	2	33	50000	20	376	DemonSlayer	Middleland

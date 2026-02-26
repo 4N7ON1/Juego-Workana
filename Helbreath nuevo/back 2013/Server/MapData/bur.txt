@@ -1,0 +1,6 @@
+[MAP-INFO]
+
+map-location  = bur
+initial-point = 1 	156 40
+
+[END-MAP-INFO]

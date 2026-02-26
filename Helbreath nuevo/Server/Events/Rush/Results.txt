@@ -1,0 +1,4 @@
+Aresden-Win = 8
+Elvine-Win = 3
+Draw = 4
+Last-Win = 1

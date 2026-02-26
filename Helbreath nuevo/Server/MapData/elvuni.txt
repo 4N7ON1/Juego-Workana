@@ -1,0 +1,63 @@
+[MAP-INFO]
+
+map-location  = garden
+initial-point = 1  173 24
+initial-point = 2  173 23
+initial-point = 3  173 22
+
+
+//-Teleportation-Set----SX-----SY-----DestMapName---------DX-----DY----Dir---;
+teleport-loc     =      176    20     Whouse              -1     -1     1
+teleport-loc     =      176    21     Whouse              -1     -1     1
+teleport-loc     =      176    22     Whouse              -1     -1     1
+teleport-loc     =      176    23     Whouse              -1     -1     1
+teleport-loc     =      176    24     Whouse              -1     -1     1
+teleport-loc     =      176    25     Whouse              -1     -1     1
+teleport-loc     =      176    26     Whouse              -1     -1     1
+teleport-loc     =      176    27     Whouse              -1     -1     1
+teleport-loc     =      176    28     Whouse              -1     -1     1
+
+
+//-WayPoint-Set---------Num-----X-----Y----;
+waypoint          =     0       55    94
+waypoint          =     1       113   76
+waypoint          =     2       156   104
+waypoint          =     3       187   140
+waypoint          =     4       161   164
+waypoint          =     5       135   169
+waypoint          =     6       109   191
+waypoint          =     7       98    162
+waypoint          =     8       64    137
+waypoint          =     9       198   105
+
+maximum-object		= 500
+
+spot-mob-generator	=	1	1	97	104	111	112	27	10 //Hellbound
+spot-mob-generator	=	2	1	97	104	111	112	27	10 //Hellbound
+spot-mob-generator	=	3	1	109	127	125	136	28	15 //Troll
+spot-mob-generator	=	4	1	109	127	125	136	28	10 //Troll
+spot-mob-generator	=	5	1	131	99	143	111	60	8 //Cannibal-Plant
+spot-mob-generator	=	6	1	131	99	143	111	60	8 //Cannibal-Plant
+spot-mob-generator	=	7	1	131	99	143	111	60	8 //Cannibal-Plant
+spot-mob-generator	=	8	1	103	81	119	92	61	8 //Rudolph
+spot-mob-generator	=	9	1	103	81	119	92	61	8 //Rudolph
+spot-mob-generator	=	10	1	103	81	119	92	61	8 //Rudolph
+spot-mob-generator	=	11	1	68	140	83	148	18	10 //zombie
+spot-mob-generator	=	12	1	68	140	83	148	18	10 //Zombie
+spot-mob-generator	=	13	1	69	75	75	85	13	6 //Cyclops
+spot-mob-generator	=	14	1	69	75	75	85	13	6 //Cyclops
+spot-mob-generator	=	15	1	51	116	66	124	76	8 //Giant-Plant
+spot-mob-generator	=	16	1	51	116	66	124	76	8 //Giant-Plant
+spot-mob-generator	=	17	1	23	31	166	171	14	10 //Orc-Mage
+spot-mob-generator	=	18	1	23	31	166	171	14	10 //Orc-Mage
+spot-mob-generator	=	19	1	23	31	166	171	94	10 //Orc-Mage
+spot-mob-generator	=	20	1	91	22	103	28	57	10 //Giant-Frog
+
+
+[END-MAP-INFO]
+
+
+
+
+
+
