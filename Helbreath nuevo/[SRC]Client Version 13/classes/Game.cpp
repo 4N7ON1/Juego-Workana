@@ -18430,7 +18430,7 @@ void CGame::DrawBackground(short sDivX, short sModX, short sDivY, short sModY)
 	{
 		if (DecriptInt(m_iConstructLocX) != -1) DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_CRUSADE, DecriptInt(m_iConstructLocX) * 32 - m_sViewPointX, DecriptInt(m_iConstructLocY) * 32 - m_sViewPointY, 41);
 		if (DecriptInt(m_iTeleportLocX) != -1) DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_CRUSADE, DecriptInt(m_iTeleportLocX) * 32 - m_sViewPointX, DecriptInt(m_iTeleportLocY) * 32 - m_sViewPointY, 42);
-	}
+	
 }*/
 
 //god heaton
