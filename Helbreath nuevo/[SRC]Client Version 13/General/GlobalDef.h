@@ -13,12 +13,12 @@
 //#define DEF_SERVER_IP	 		"149.104.76.237" 
 //#define DEF_SERVER_IP	 		"38.60.242.233" 
 //#define DEF_SERVER_IP	 		"35.235.114.103"//usa host
-#define DEF_SERVER_IP	 		"192.168.0.59" //LAN
+#define DEF_SERVER_IP	 		"192.168.0.3" //LAN
 //#define DEF_SERVER_IP	 		"192.168.0.116"
 //#define DEF_SERVERCOR_IP 		"38.54.40.231"
-#define DEF_SERVERBR_IP			"192.168.0.59" //br
+#define DEF_SERVERBR_IP			"192.168.0.3" //brb
 //#define DEF_SERVERARG_IP 		"149.104.76.237"
-#define DEF_SERVERARG_IP 		"192.168.0.59" //arg
+#define DEF_SERVERARG_IP 		"192.168.0.3b" //arg
 //#define DEF_SERVERMAL_IP 		"38.60.192.46"
 
 #define DEF_SERVER_PORT			9735
