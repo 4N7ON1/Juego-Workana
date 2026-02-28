@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11430.68 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Game", "[SRC]Client Version 13\Client.vcxproj", "{91B364CE-2BE3-4681-B1E5-4A0908AA27F8}"
 EndProject
@@ -12,6 +12,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{E26A52
 		Shared\netmsg.h = Shared\netmsg.h
 		Shared\Random.h = Shared\Random.h
 		Shared\shared.h = Shared\shared.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementos de la solución", "Elementos de la solución", "{C238C506-1826-4628-8782-C23EB0595F75}"
+	ProjectSection(SolutionItems) = preProject
+		IRenderBackend.h = IRenderBackend.h
 	EndProjectSection
 EndProject
 Global

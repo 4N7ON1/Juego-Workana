@@ -14,6 +14,7 @@
 #include <gdiplus.h>
 #include <direct.h>
 #pragma comment(lib, "gdiplus.lib")
+#include "RenderBackend_DDraw.h"
 
 using namespace Gdiplus;
 
@@ -65,6 +66,7 @@ extern void SetKeyboardHook(bool enable);
 CGame::CGame()
 {
 	int i;
+	m_pRenderBackend = nullptr;
 	m_bRelaySelected = false;
 	m_bRecording = false;      
 	m_iGrabShotIndex = 0;      
@@ -732,9 +734,14 @@ else if (m_sViewDY < -4) m_sViewDY = -4;
 m_sViewPointY += m_sViewDY;
 }
 }*/
-
+static DWORD s_dwLastCalcTime = 0;
 void CGame::CalcViewPoint()
 {
+	DWORD dwNow = timeGetTime();
+	if (s_dwLastCalcTime == 0) s_dwLastCalcTime = dwNow;
+	float fDeltaTime = (dwNow - s_dwLastCalcTime) / 1000.0f;
+	if (fDeltaTime > 0.1f) fDeltaTime = 0.1f; // máximo 100ms por frame
+	s_dwLastCalcTime = dwNow;
 	if (m_bModernMovement)
 	{
 
@@ -778,7 +785,7 @@ void CGame::CalcViewPoint()
 
 		// 2. Suavizado en píxeles (solo si hay movimiento activo)
 		if (m_bIsInterpolating) {
-			const float decayFactor = 0.9f; // Ajusta este valor para mayor/menor suavidad
+			const float decayFactor = powf(0.9f, fDeltaTime * 60.0f); // Ajusta este valor para mayor/menor suavidad
 
 			// Interpolación no lineal (decaimiento exponencial)
 			m_fRenderOffsetX *= decayFactor;
@@ -54677,6 +54684,9 @@ BOOL CGame::bInit(HWND hWnd, HINSTANCE hInst, char * pCmdLine)
 		MessageBox(m_hWnd, "This program requires DirectX7.0a!", "ERROR", MB_ICONEXCLAMATION | MB_OK);
 		return FALSE;
 	}
+	// FASE 6 - Render Abstraction Layer
+	m_pRenderBackend = new RenderBackend_DDraw(m_DDraw);
+	m_pRenderBackend->Init(m_hWnd, 800, 600, false);
 
 	if (m_DInput.bInit(hWnd, hInst) == FALSE) {
 		MessageBox(m_hWnd, "This program requires DirectX7.0a!", "ERROR", MB_ICONEXCLAMATION | MB_OK);

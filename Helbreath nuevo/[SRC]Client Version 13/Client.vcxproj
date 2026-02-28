@@ -76,7 +76,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <PreprocessorDefinitions>ZLIB_WINAPI;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ZLIB_WINAPI;WIN32;NDEBUG;_WINDOWS;SFML_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -86,7 +86,7 @@
       <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <WarningLevel>Level1</WarningLevel>
-      <AdditionalIncludeDirectories>..\zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Headers;$(ProjectDir)Motor;$(ProjectDir)Libs\SFML-2.6.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -94,7 +94,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/FORCE:UNRESOLVED %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>zlibstat.lib;search.lib;ACHEV.LIB;wsock32.lib;DINPUT.LIB;DSOUND.LIB;DXGUID.LIB;IMM32.LIB;winmm.lib;Cint.lib;cximage/release/cximage.lib;jpeg/release/Jpeg.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>sfml-graphics-s.lib;sfml-window-s.lib;sfml-system-s.lib;freetype.lib;opengl32.lib;winmm.lib;gdi32.lib;zlibstat.lib;Cint.lib;ACHEV.LIB;CxImage.lib;DDRAW.LIB;DINPUT.LIB;DSOUND.LIB;DXGUID.LIB;HBSS.LIB;IMM32.LIB;jpeg.lib;LIBCP.LIB;SEARCH.LIB;StrTok.lib;WINMM.LIB;WS2_32.LIB;WSOCK32.LIB;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>Archive/Helbreath Cursed.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <IgnoreSpecificDefaultLibraries>MSVCRTD;LIBC;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -103,7 +103,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\\zlib\\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)Libs\SFML-2.6.1\lib;$(ProjectDir)Libs;$(ProjectDir)zlib\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
@@ -155,14 +155,14 @@
       <OutputFile>Archive/Helbreath Cursed.exe</OutputFile>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>MSVCRTD;LIBC;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <AdditionalDependencies>zlibstat.lib;Libs\search.lib;Libs\ACHEV.LIB;Libs\wsock32.lib;Libs\DINPUT.LIB;Libs\DSOUND.LIB;Libs\DXGUID.LIB;Libs\ddraw.lib;Libs\IMM32.LIB;Libs\winmm.lib;Libs\Cint.lib;Libs\cximage.lib;Libs\Jpeg.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>sfml-graphics-s.lib;sfml-window-s.lib;sfml-system-s.lib;freetype.lib;opengl32.lib;winmm.lib;gdi32.lib;zlibstat.lib;Cint.lib;ACHEV.LIB;CxImage.lib;DDRAW.LIB;DINPUT.LIB;DSOUND.LIB;DXGUID.LIB;HBSS.LIB;IMM32.LIB;jpeg.lib;LIBCP.LIB;SEARCH.LIB;StrTok.lib;WINMM.LIB;WS2_32.LIB;WSOCK32.LIB;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\\zlib\\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)Libs\SFML-2.6.1\lib;$(ProjectDir)Libs;$(ProjectDir)zlib\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <ClCompile>
-      <PreprocessorDefinitions>ZLIB_WINAPI;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\zlib</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ZLIB_WINAPI;WIN32;NDEBUG;_WINDOWS;SFML_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)Headers;$(ProjectDir)Motor;$(ProjectDir)Libs\SFML-2.6.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Desbug|x64'">
@@ -197,6 +197,7 @@
     <ClInclude Include="Headers\Event.h" />
     <ClInclude Include="Headers\Game.h" />
     <ClInclude Include="Headers\GameMonitor.h" />
+    <ClInclude Include="Headers\IRenderBackend.h" />
     <ClInclude Include="Headers\Item.h" />
     <ClInclude Include="Headers\ItemName.h" />
     <ClInclude Include="Headers\Magic.h" />
@@ -225,6 +226,7 @@
     <ClInclude Include="Motor\DXC_ddraw.h" />
     <ClInclude Include="Motor\DXC_dinput.h" />
     <ClInclude Include="Motor\DXC_dsound.h" />
+    <ClInclude Include="Headers\RenderBackend_DDraw.h" />
     <ClInclude Include="Resolution\Resolution.h" />
     <ClInclude Include="Ressources\resource.h" />
     <ClInclude Include="UDPClient.h" />
@@ -267,6 +269,7 @@
     <ClCompile Include="Motor\DXC_ddraw_d3d9.cpp" />
     <ClCompile Include="Motor\DXC_dinput.cpp" />
     <ClCompile Include="Motor\DXC_dsound.cpp" />
+    <ClCompile Include="Motor\RenderBackend_DDraw.cpp" />
     <ClCompile Include="Resolution\Resolution.cpp" />
   </ItemGroup>
   <ItemGroup>

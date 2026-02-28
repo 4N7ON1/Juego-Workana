@@ -51,6 +51,7 @@
 #ifdef DEF_USING_WIN_IME
 	#include <RICHEDIT.H>
 #endif
+#include "IRenderBackend.h"
 
 //Snoopy: Implementation JPG sreenshots
 #include "../cximage/ximage.h" // Snoopy
@@ -840,6 +841,7 @@ public:
 	class CMisc      m_Misc;
 	class DXC_dinput m_DInput;
 	class DXC_ddraw  m_DDraw;
+	IRenderBackend* m_pRenderBackend;
 
 	class CMsg    * m_pChatMsgList[DEF_MAXCHATMSGS];
 	char * m_pInputBuffer;
