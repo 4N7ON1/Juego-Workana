@@ -94,7 +94,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/FORCE:UNRESOLVED %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>sfml-graphics-s.lib;sfml-window-s.lib;sfml-system-s.lib;freetype.lib;opengl32.lib;winmm.lib;gdi32.lib;zlibstat.lib;Cint.lib;ACHEV.LIB;CxImage.lib;DDRAW.LIB;DINPUT.LIB;DSOUND.LIB;DXGUID.LIB;HBSS.LIB;IMM32.LIB;jpeg.lib;LIBCP.LIB;SEARCH.LIB;StrTok.lib;WINMM.LIB;WS2_32.LIB;WSOCK32.LIB;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;sfml-graphics-s.lib;sfml-window-s.lib;sfml-system-s.lib;freetype.lib;opengl32.lib;winmm.lib;gdi32.lib;zlibstat.lib;Cint.lib;ACHEV.LIB;CxImage.lib;DDRAW.LIB;DINPUT.LIB;DSOUND.LIB;DXGUID.LIB;HBSS.LIB;IMM32.LIB;jpeg.lib;SEARCH.LIB;StrTok.lib;WINMM.LIB;WS2_32.LIB;WSOCK32.LIB;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>Archive/Helbreath Cursed.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <IgnoreSpecificDefaultLibraries>MSVCRTD;LIBC;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -106,6 +106,7 @@
       <AdditionalLibraryDirectories>$(ProjectDir)Libs\SFML-2.6.1\lib;$(ProjectDir)Libs;$(ProjectDir)zlib\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <DelayLoadDLLs>
       </DelayLoadDLLs>
+      <ForceFileOutput>Enabled</ForceFileOutput>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -155,10 +156,13 @@
       <OutputFile>Archive/Helbreath Cursed.exe</OutputFile>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>MSVCRTD;LIBC;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <AdditionalDependencies>sfml-graphics-s.lib;sfml-window-s.lib;sfml-system-s.lib;freetype.lib;opengl32.lib;winmm.lib;gdi32.lib;zlibstat.lib;Cint.lib;ACHEV.LIB;CxImage.lib;DDRAW.LIB;DINPUT.LIB;DSOUND.LIB;DXGUID.LIB;HBSS.LIB;IMM32.LIB;jpeg.lib;LIBCP.LIB;SEARCH.LIB;StrTok.lib;WINMM.LIB;WS2_32.LIB;WSOCK32.LIB;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>legacy_stdio_definitions.lib;sfml-graphics-s.lib;sfml-window-s.lib;sfml-system-s.lib;freetype.lib;opengl32.lib;winmm.lib;gdi32.lib;zlibstat.lib;Cint.lib;ACHEV.LIB;CxImage.lib;DDRAW.LIB;DINPUT.LIB;DSOUND.LIB;DXGUID.LIB;HBSS.LIB;IMM32.LIB;jpeg.lib;SEARCH.LIB;StrTok.lib;WINMM.LIB;WS2_32.LIB;WSOCK32.LIB;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)Libs\SFML-2.6.1\lib;$(ProjectDir)Libs;$(ProjectDir)zlib\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /FORCE:UNRESOLVED
+</AdditionalOptions>
+      <ForceFileOutput>Enabled</ForceFileOutput>
     </Link>
     <ClCompile>
       <PreprocessorDefinitions>ZLIB_WINAPI;WIN32;NDEBUG;_WINDOWS;SFML_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -261,6 +265,7 @@
     <ClCompile Include="classes\XSocketUDP.cpp" />
     <ClCompile Include="ClientUDP.cpp" />
     <ClCompile Include="EmbeddedDDraw.cpp" />
+    <ClCompile Include="LegacyStdioFix.c" />
     <ClCompile Include="Library\YWSound.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>

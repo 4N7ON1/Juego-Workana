@@ -49679,6 +49679,16 @@ void CGame::UpdateScreen_OnGame()
 
 
 
+		// FASE 7: Dibujar sprite real Bm frame 0 via SFML como validacion de pipeline
+		{
+			RenderBackend_SFML* pSFML = static_cast<RenderBackend_SFML*>(m_pRenderBackend);
+			if (pSFML && pSFML->IsTextureLoaded(0) && m_pSprite[500] && m_pSprite[500]->m_stBrush)
+			{
+				stBrush& br = m_pSprite[500]->m_stBrush[0]; // frame 0 del cuerpo Bm
+				pSFML->DrawSprite(400 - br.szx / 2, 300 - br.szy / 2,
+				                  br.sx, br.sy, br.szx, br.szy, 0);
+			}
+		}
 		// FASE 7: SFML blitea sus sprites al backbuffer DDraw antes del flip
 		if (m_pRenderBackend) m_pRenderBackend->EndFrame();
 
@@ -60782,6 +60792,29 @@ void CGame::UpdateScreen_OnLoading(bool bActive)
 			MakeSprite("Bm", 500 + 15 * 8 * 0, 96, TRUE);// Black Man (Type: 1)
 			MakeSprite("Wm", 500 + 15 * 8 * 1, 96, TRUE);// White Man (Type: 2)
 			MakeSprite("Ym", 500 + 15 * 8 * 2, 96, TRUE);// White Man (Type: 3)
+			// FASE 7: Cargar sprite Bm (cuerpo jugador) en SFML para validar pixels reales
+			{
+				RenderBackend_SFML* pSFML = static_cast<RenderBackend_SFML*>(m_pRenderBackend);
+				if (pSFML && m_pSprite[500] && !pSFML->IsTextureLoaded(0))
+				{
+					CSprite* pSpr = m_pSprite[500];
+					if (pSpr->_iOpenSprite())
+					{
+						int w = pSpr->m_wBitmapSizeX;
+						int h = pSpr->m_wBitmapSizeY;
+						int pitch = pSpr->m_sPitch; // en WORDs (shorts)
+						if (w > 0 && h > 0 && pSpr->m_pSurfaceAddr)
+						{
+							unsigned short* pBuf = new unsigned short[w * h];
+							for (int row = 0; row < h; row++)
+								memcpy(&pBuf[row * w], pSpr->m_pSurfaceAddr + row * pitch, w * 2);
+							pSFML->LoadSpriteTexture(0, pBuf, w, h);
+							delete[] pBuf;
+						}
+						pSpr->_iCloseSprite();
+					}
+				}
+			}
 			//
 			m_cLoading = 20;
 			break;

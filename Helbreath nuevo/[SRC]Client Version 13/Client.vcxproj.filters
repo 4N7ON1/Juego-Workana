@@ -174,9 +174,8 @@
     <ClInclude Include="Headers\IRenderBackend.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="RenderBackend_DDraw.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
+    <ClInclude Include="Headers\RenderBackend_SFML.h" />
+    <ClInclude Include="Headers\RenderBackend_DDraw.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Library\YWSound.cpp">
@@ -281,6 +280,8 @@
     <ClCompile Include="Motor\RenderBackend_DDraw.cpp">
       <Filter>Motor</Filter>
     </ClCompile>
+    <ClCompile Include="Motor\RenderBackend_SFML.cpp" />
+    <ClCompile Include="LegacyStdioFix.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="icon1.ico" />
