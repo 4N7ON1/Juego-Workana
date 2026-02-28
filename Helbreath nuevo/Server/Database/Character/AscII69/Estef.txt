@@ -1,20 +1,20 @@
 [FILE-DATE]
 
-file-saved-date: 2026 2 28 19 20
+file-saved-date: 2026 2 28 18 39
 
 [NAME-ACCOUNT]
 
-character-name     = TETRICO
+character-name     = Estef
 account-name       = tetrico
 Hour-Play = 0
-Min-Play = 27
+Min-Play = 40
 
 CheckProcess = OFF
 
 [NAME-ACCOUNT]
 
 character-profile 	=__________
-character-location   = elvine
+character-location   = NONE
 character-guild-name = NONE
 character-guild-GUID = -1
 character-guild-rank = -1
@@ -22,9 +22,9 @@ character-guild-rank = -1
 
 [MAP-DATA]
 
-character-loc-map = elvine
-character-loc-x   = 157
-character-loc-y   = 66
+character-loc-map = default
+character-loc-x   = 109
+character-loc-y   = 59
 
 locked-map-name = NONE
 locked-map-time = 0
@@ -35,24 +35,24 @@ locked-map-time = 0
 character-EXP      = 0
 character-LEVEL    = 1
 character-LU_Pool  = 3
-character-STR      = 14
-character-INT      = 10
-character-VIT      = 12
+character-STR      = 10
+character-INT      = 12
+character-VIT      = 10
 character-DEX      = 14
-character-MAG      = 10
+character-MAG      = 14
 character-CHARISMA = 10
 
 
 [STATUS]
 
-character-HP       = 42
-character-MP       = 27
-character-SP       = 30
-sex-status       = 1
-skin-status      = 3
-hairstyle-status = 4
-haircolor-status = 11
-underwear-status = 3
+character-HP       = 35
+character-MP       = 36
+character-SP       = 22
+sex-status       = 2
+skin-status      = 2
+hairstyle-status = 7
+haircolor-status = 10
+underwear-status = 2
 hunger-status    = 100
 admin-user-level = 0
 party-id = 0
@@ -108,7 +108,7 @@ stated-reward-type     = 0
 [ACHIVEMENTS]
 
 Total-Mobs-Killed = 0
-Total-Death = 1
+Total-Death = 0
 Total-Client-Killed = 0
 Total-Quest-Completed = 0
 
@@ -128,16 +128,16 @@ Event-Time-Playing = 0
 
 [OTHER-DATA]
 
-character-IDnum1 = -8645
-character-IDnum2 = 539
+character-IDnum1 = 6539
+character-IDnum2 = 504
 character-IDnum3 = 1
 reserved-fightzone-id = 0 0 0
 character-reward-gold = 0
 character-downskillindex = -1
-ip-muerte = appr1
+ip-muerte = 
 
 
-appr1 = 1203
+appr1 = 1954
 appr2 = 32
 appr3 = 0
 appr4 = 0
@@ -265,7 +265,7 @@ character-item = Gold                 1000000 0 0 0 0 0 0 0 0 600 0 138 89
 
 //------------------012345678901234567890123456789012345678901234567890
 magic-mastery     = 0000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-skill-mastery     = 28 28 20 0 20 28 28 28 28 28 28 28 20 28 28 0 0 0 0 0 0 20 0 20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+skill-mastery     = 20 28 24 0 28 20 28 28 28 28 28 28 24 20 28 0 0 0 0 0 0 28 0 20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
 skill-SSN     = 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
 
 Achivements     = 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 

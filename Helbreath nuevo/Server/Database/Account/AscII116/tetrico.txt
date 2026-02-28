@@ -10,3 +10,4 @@ account-change-password = 2026 2 26
 [CHARACTERS]
 
 account-character-YAP  = TETRICO
+account-character-YAP  = Estef
