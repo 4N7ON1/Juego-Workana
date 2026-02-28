@@ -67,12 +67,14 @@ public:
     // API especifica de SFML (usada desde Game.cpp para cargar sprites)
     // --------------------------------------------------------
 
-    // Carga una textura desde pixels DDraw 16-bit (RGB565, colorkey 0x0000 = transparente)
+    // Carga una textura desde pixels DDraw 16-bit
+    // wColorKey: valor de pixel que se trata como transparente (viene de CSprite::m_wColorKey)
     // iSpriteIndex: indice en el array interno (0..MAX_SFML_SPRITES-1)
     // Retorna true si cargo correctamente
     bool LoadSpriteTexture(int iSpriteIndex,
                            const unsigned short* pPixels16,
-                           int iWidth, int iHeight);
+                           int iWidth, int iHeight,
+                           unsigned short wColorKey = 0x0000);
 
     // Verifica si un indice tiene textura cargada
     bool IsTextureLoaded(int iSpriteIndex) const;
@@ -92,9 +94,9 @@ private:
     bool               m_bTextureLoaded[MAX_SFML_SPRITES];
 
     // Convierte un pixel DDraw 16-bit a sf::Color RGBA
-    // Formato DDraw: RGB565 (R=bits15-11, G=bits10-5, B=bits4-0)
-    // Colorkey: 0x0000 = transparente
-    sf::Color ConvertPixel16ToRGBA(unsigned short pixel16) const;
+    // wColorKey: valor transparente real del sprite (de CSprite::m_wColorKey)
+    // Usa m_DDraw.m_cPixelFormat para detectar RGB565/RGB555/BGR565
+    sf::Color ConvertPixel16ToRGBA(unsigned short pixel16, unsigned short wColorKey) const;
 
     // Blitea los pixels del RenderTexture al backbuffer DDraw
     // Se llama desde EndFrame()

@@ -164,17 +164,18 @@ void RenderBackend_SFML::Clear()
 
 bool RenderBackend_SFML::LoadSpriteTexture(int iSpriteIndex,
                                             const unsigned short* pPixels16,
-                                            int iWidth, int iHeight)
+                                            int iWidth, int iHeight,
+                                            unsigned short wColorKey)
 {
     if (iSpriteIndex < 0 || iSpriteIndex >= MAX_SFML_SPRITES) return false;
     if (!pPixels16 || iWidth <= 0 || iHeight <= 0)            return false;
 
-    // Convertir de 16-bit DDraw (RGB565, colorkey 0x0000) a RGBA 32-bit
+    // Convertir de 16-bit DDraw a RGBA 32-bit usando el colorkey real del sprite
     std::vector<sf::Uint8> pixels32(iWidth * iHeight * 4);
 
     for (int i = 0; i < iWidth * iHeight; i++)
     {
-        sf::Color c = ConvertPixel16ToRGBA(pPixels16[i]);
+        sf::Color c = ConvertPixel16ToRGBA(pPixels16[i], wColorKey);
         pixels32[i * 4 + 0] = c.r;
         pixels32[i * 4 + 1] = c.g;
         pixels32[i * 4 + 2] = c.b;
@@ -203,19 +204,37 @@ bool RenderBackend_SFML::IsTextureLoaded(int iSpriteIndex) const
 // Conversion de pixel DDraw 16-bit a RGBA 32-bit
 // ============================================================
 
-sf::Color RenderBackend_SFML::ConvertPixel16ToRGBA(unsigned short pixel16) const
+sf::Color RenderBackend_SFML::ConvertPixel16ToRGBA(unsigned short pixel16,
+                                                    unsigned short wColorKey) const
 {
-    // Colorkey DDraw: 0x0000 (negro puro) = transparente
-    if (pixel16 == 0x0000)
+    // Colorkey real del sprite (primer pixel del sheet = fondo transparente)
+    if (pixel16 == wColorKey)
         return sf::Color::Transparent;
 
-    // Formato RGB565: RRRRR GGGGGG BBBBB
-    //   R = bits [15..11]  -> escalar a 8-bit: << 3
-    //   G = bits [10.. 5]  -> escalar a 8-bit: << 2
-    //   B = bits [ 4.. 0]  -> escalar a 8-bit: << 3
-    sf::Uint8 r = static_cast<sf::Uint8>((pixel16 >> 11) & 0x1F) << 3;
-    sf::Uint8 g = static_cast<sf::Uint8>((pixel16 >>  5) & 0x3F) << 2;
-    sf::Uint8 b = static_cast<sf::Uint8>( pixel16        & 0x1F) << 3;
+    sf::Uint8 r, g, b;
+
+    // Detectar formato de pixel desde DXC_ddraw::m_cPixelFormat:
+    //   1 = RGB565  (dwRBitMask = 0xF800)  RRRRRGGGGGGBBBBB
+    //   2 = RGB555  (dwRBitMask = 0x7C00)  xRRRRRGGGGGBBBBB
+    //   3 = BGR565  (dwRBitMask = 0x001F)  BBBBBGGGGGGRRRRR
+    if (m_DDraw.m_cPixelFormat == 2)        // RGB555
+    {
+        r = static_cast<sf::Uint8>(((pixel16 >> 10) & 0x1F) * 255 / 31);
+        g = static_cast<sf::Uint8>(((pixel16 >>  5) & 0x1F) * 255 / 31);
+        b = static_cast<sf::Uint8>(( pixel16        & 0x1F) * 255 / 31);
+    }
+    else if (m_DDraw.m_cPixelFormat == 3)   // BGR565
+    {
+        b = static_cast<sf::Uint8>(((pixel16 >> 11) & 0x1F) * 255 / 31);
+        g = static_cast<sf::Uint8>(((pixel16 >>  5) & 0x3F) * 255 / 63);
+        r = static_cast<sf::Uint8>(( pixel16        & 0x1F) * 255 / 31);
+    }
+    else                                    // RGB565 (formato 1 o desconocido)
+    {
+        r = static_cast<sf::Uint8>(((pixel16 >> 11) & 0x1F) * 255 / 31);
+        g = static_cast<sf::Uint8>(((pixel16 >>  5) & 0x3F) * 255 / 63);
+        b = static_cast<sf::Uint8>(( pixel16        & 0x1F) * 255 / 31);
+    }
 
     return sf::Color(r, g, b, 255);
 }

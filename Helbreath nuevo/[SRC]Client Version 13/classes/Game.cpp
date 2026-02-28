@@ -60798,20 +60798,51 @@ void CGame::UpdateScreen_OnLoading(bool bActive)
 				if (pSFML && m_pSprite[500] && !pSFML->IsTextureLoaded(0))
 				{
 					CSprite* pSpr = m_pSprite[500];
-					if (pSpr->_iOpenSprite())
+					bool bWasEmpty = pSpr->m_bIsSurfaceEmpty;
+
+					// Cargar la superficie si aun no fue abierta
+					if (bWasEmpty)
+						pSpr->_iOpenSprite();
+
+					// Bloquear la superficie nosotros mismos (puntero garantizado)
+					if (pSpr->m_lpSurface)
 					{
-						int w = pSpr->m_wBitmapSizeX;
-						int h = pSpr->m_wBitmapSizeY;
-						int pitch = pSpr->m_sPitch; // en WORDs (shorts)
-						if (w > 0 && h > 0 && pSpr->m_pSurfaceAddr)
+						DDSURFACEDESC2 ddsd2;
+						ZeroMemory(&ddsd2, sizeof(ddsd2));
+						ddsd2.dwSize = sizeof(ddsd2);
+
+						if (pSpr->m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK)
 						{
-							unsigned short* pBuf = new unsigned short[w * h];
-							for (int row = 0; row < h; row++)
-								memcpy(&pBuf[row * w], pSpr->m_pSurfaceAddr + row * pitch, w * 2);
-							pSFML->LoadSpriteTexture(0, pBuf, w, h);
-							delete[] pBuf;
+							int w     = pSpr->m_wBitmapSizeX;
+							int h     = pSpr->m_wBitmapSizeY;
+							int pitch = (int)(ddsd2.lPitch / 2); // pitch en WORDs
+							WORD* pPixels = (WORD*)ddsd2.lpSurface;
+
+							if (w > 0 && h > 0 && pPixels)
+							{
+								// DEBUG FASE 7: escribir colorkey a archivo
+								if (w > 0 && h > 0 && pPixels)
+								{
+									unsigned short* pBuf = new unsigned short[w * h];
+									for (int row = 0; row < h; row++)
+										memcpy(&pBuf[row * w], pPixels + row * pitch, w * 2);
+									pSFML->LoadSpriteTexture(0, pBuf, w, h, pSpr->m_wColorKey);
+									delete[] pBuf;
+								}
+
+								unsigned short* pBuf = new unsigned short[w * h];
+								for (int row = 0; row < h; row++)
+									memcpy(&pBuf[row * w], pPixels + row * pitch, w * 2);
+								// Pasar el colorkey real del sprite (no asumir 0x0000)
+								pSFML->LoadSpriteTexture(0, pBuf, w, h, pSpr->m_wColorKey);
+								delete[] pBuf;
+							}
+							pSpr->m_lpSurface->Unlock(NULL);
 						}
-						pSpr->_iCloseSprite();
+
+						// Si la abrimos nosotros, la cerramos para que el juego la recargue limpia
+						if (bWasEmpty)
+							pSpr->_iCloseSprite();
 					}
 				}
 			}
