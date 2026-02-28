@@ -18353,6 +18353,62 @@ void CGame::ReleaseTimeoverChatMsg()
 			}
 	}	
 }
+
+// ============================================================
+// FASE 8: EnsureSFMLSprite
+// ============================================================
+void CGame::EnsureSFMLSprite(int iSpriteIndex)
+{
+	RenderBackend_SFML* pSFML = static_cast<RenderBackend_SFML*>(m_pRenderBackend);
+	if (!pSFML) return;
+	if (pSFML->IsTextureLoaded(iSpriteIndex)) return;
+	if (iSpriteIndex < 0 || !m_pSprite[iSpriteIndex]) return;
+	CSprite* pSpr = m_pSprite[iSpriteIndex];
+	bool bWasEmpty = pSpr->m_bIsSurfaceEmpty;
+	if (bWasEmpty) pSpr->_iOpenSprite();
+	if (pSpr->m_lpSurface)
+	{
+		DDSURFACEDESC2 ddsd2;
+		ZeroMemory(&ddsd2, sizeof(ddsd2));
+		ddsd2.dwSize = sizeof(ddsd2);
+		if (pSpr->m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK)
+		{
+			int w = pSpr->m_wBitmapSizeX;
+			int h = pSpr->m_wBitmapSizeY;
+			int pitch = (int)(ddsd2.lPitch / 2);
+			WORD* pPixels = (WORD*)ddsd2.lpSurface;
+			if (w > 0 && h > 0 && pPixels)
+			{
+				unsigned short* pBuf = new unsigned short[w * h];
+				for (int row = 0; row < h; row++)
+					memcpy(&pBuf[row * w], pPixels + row * pitch, w * 2);
+				pSFML->LoadSpriteTexture(iSpriteIndex, pBuf, w, h, pSpr->m_wColorKey);
+				delete[] pBuf;
+			}
+			pSpr->m_lpSurface->Unlock(NULL);
+		}
+	}
+	if (bWasEmpty) pSpr->_iCloseSprite();
+}
+
+// ============================================================
+// FASE 8: DrawSFMLFrame
+// ============================================================
+void CGame::DrawSFMLFrame(int iSpriteIndex, int iDstX, int iDstY, int iFrame)
+{
+	RenderBackend_SFML* pSFML = static_cast<RenderBackend_SFML*>(m_pRenderBackend);
+	if (!pSFML) return;
+	EnsureSFMLSprite(iSpriteIndex);
+	if (!pSFML->IsTextureLoaded(iSpriteIndex)) return;
+	CSprite* pSpr = m_pSprite[iSpriteIndex];
+	if (!pSpr || !pSpr->m_stBrush) return;
+	if (iFrame < 0 || iFrame >= pSpr->m_iTotalFrame) return;
+	stBrush& br = pSpr->m_stBrush[iFrame];
+	pSFML->DrawSprite(iDstX - br.pvx, iDstY - br.pvy,
+		br.sx, br.sy, br.szx, br.szy, iSpriteIndex);
+}
+
+
 /*
 
 //Lalo Ramos
@@ -60792,61 +60848,9 @@ void CGame::UpdateScreen_OnLoading(bool bActive)
 			MakeSprite("Bm", 500 + 15 * 8 * 0, 96, TRUE);// Black Man (Type: 1)
 			MakeSprite("Wm", 500 + 15 * 8 * 1, 96, TRUE);// White Man (Type: 2)
 			MakeSprite("Ym", 500 + 15 * 8 * 2, 96, TRUE);// White Man (Type: 3)
-			// FASE 7: Cargar sprite Bm (cuerpo jugador) en SFML para validar pixels reales
-			{
-				RenderBackend_SFML* pSFML = static_cast<RenderBackend_SFML*>(m_pRenderBackend);
-				if (pSFML && m_pSprite[500] && !pSFML->IsTextureLoaded(0))
-				{
-					CSprite* pSpr = m_pSprite[500];
-					bool bWasEmpty = pSpr->m_bIsSurfaceEmpty;
+			// FASE 8: sprites se cargan bajo demanda via EnsureSFMLSprite()
 
-					// Cargar la superficie si aun no fue abierta
-					if (bWasEmpty)
-						pSpr->_iOpenSprite();
-
-					// Bloquear la superficie nosotros mismos (puntero garantizado)
-					if (pSpr->m_lpSurface)
-					{
-						DDSURFACEDESC2 ddsd2;
-						ZeroMemory(&ddsd2, sizeof(ddsd2));
-						ddsd2.dwSize = sizeof(ddsd2);
-
-						if (pSpr->m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK)
-						{
-							int w     = pSpr->m_wBitmapSizeX;
-							int h     = pSpr->m_wBitmapSizeY;
-							int pitch = (int)(ddsd2.lPitch / 2); // pitch en WORDs
-							WORD* pPixels = (WORD*)ddsd2.lpSurface;
-
-							if (w > 0 && h > 0 && pPixels)
-							{
-								// DEBUG FASE 7: escribir colorkey a archivo
-								if (w > 0 && h > 0 && pPixels)
-								{
-									unsigned short* pBuf = new unsigned short[w * h];
-									for (int row = 0; row < h; row++)
-										memcpy(&pBuf[row * w], pPixels + row * pitch, w * 2);
-									pSFML->LoadSpriteTexture(0, pBuf, w, h, pSpr->m_wColorKey);
-									delete[] pBuf;
-								}
-
-								unsigned short* pBuf = new unsigned short[w * h];
-								for (int row = 0; row < h; row++)
-									memcpy(&pBuf[row * w], pPixels + row * pitch, w * 2);
-								// Pasar el colorkey real del sprite (no asumir 0x0000)
-								pSFML->LoadSpriteTexture(0, pBuf, w, h, pSpr->m_wColorKey);
-								delete[] pBuf;
-							}
-							pSpr->m_lpSurface->Unlock(NULL);
-						}
-
-						// Si la abrimos nosotros, la cerramos para que el juego la recargue limpia
-						if (bWasEmpty)
-							pSpr->_iCloseSprite();
-					}
-				}
-			}
-			//
+			
 			m_cLoading = 20;
 			break;
 

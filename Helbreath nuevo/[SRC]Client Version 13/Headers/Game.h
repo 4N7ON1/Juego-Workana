@@ -1339,6 +1339,9 @@ public:
 	BOOL bEffectFrameCounter();
 	void ClearGuildNameList();
 	void DrawBackground(short sDivX, short sModX, short sDivY, short sModY);
+	void EnsureSFMLSprite(int iSpriteIndex);
+	void DrawSFMLFrame(int iSpriteIndex, int iDstX, int iDstY, int iFrame);
+
 	void DrawChatMsgBox(short sX, short sY, int iChatIndex, BOOL bIsPreDC);
 	void ReleaseTimeoverChatMsg();
 	void ChatMsgHandler(char * pData);

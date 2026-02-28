@@ -23,7 +23,7 @@ RenderBackend_SFML::RenderBackend_SFML(DXC_ddraw& ddraw)
     , m_iHeight(600)
     , m_bInitialized(false)
 {
-    memset(m_bTextureLoaded, 0, sizeof(m_bTextureLoaded));
+   
 }
 
 RenderBackend_SFML::~RenderBackend_SFML()
@@ -106,10 +106,10 @@ void RenderBackend_SFML::DrawSprite(int iDstX, int iDstY,
     int iSpriteIndex)
 {
     if (!m_bInitialized) return;
-    if (iSpriteIndex < 0 || iSpriteIndex >= MAX_SFML_SPRITES) return;
-    if (!m_bTextureLoaded[iSpriteIndex]) return;
+    if (m_mapTextures.find(iSpriteIndex) == m_mapTextures.end()) return;
 
-    sf::Sprite spr(m_aTextures[iSpriteIndex]);
+    sf::Sprite spr(m_mapTextures.at(iSpriteIndex));
+
     spr.setTextureRect(sf::IntRect(iSrcX, iSrcY, iSrcW, iSrcH));
     spr.setPosition(static_cast<float>(iDstX), static_cast<float>(iDstY));
 
@@ -167,7 +167,7 @@ bool RenderBackend_SFML::LoadSpriteTexture(int iSpriteIndex,
                                             int iWidth, int iHeight,
                                             unsigned short wColorKey)
 {
-    if (iSpriteIndex < 0 || iSpriteIndex >= MAX_SFML_SPRITES) return false;
+    
     if (!pPixels16 || iWidth <= 0 || iHeight <= 0)            return false;
 
     // Convertir de 16-bit DDraw a RGBA 32-bit usando el colorkey real del sprite
@@ -181,23 +181,23 @@ bool RenderBackend_SFML::LoadSpriteTexture(int iSpriteIndex,
         pixels32[i * 4 + 2] = c.b;
         pixels32[i * 4 + 3] = c.a;
     }
-
-    if (!m_aTextures[iSpriteIndex].create(
-            static_cast<unsigned int>(iWidth),
-            static_cast<unsigned int>(iHeight)))
+    sf::Texture tex;
+    if (!tex.create(static_cast<unsigned int>(iWidth),
+        static_cast<unsigned int>(iHeight)))
         return false;
 
-    m_aTextures[iSpriteIndex].update(pixels32.data());
-    m_aTextures[iSpriteIndex].setSmooth(false); // pixelart: sin blur
+    tex.update(pixels32.data());
+    tex.setSmooth(false);
 
-    m_bTextureLoaded[iSpriteIndex] = true;
+    m_mapTextures[iSpriteIndex] = std::move(tex);
     return true;
+
 }
 
 bool RenderBackend_SFML::IsTextureLoaded(int iSpriteIndex) const
 {
-    if (iSpriteIndex < 0 || iSpriteIndex >= MAX_SFML_SPRITES) return false;
-    return m_bTextureLoaded[iSpriteIndex];
+    return m_mapTextures.count(iSpriteIndex) > 0;
+
 }
 
 // ============================================================

@@ -1,20 +1,20 @@
 [FILE-DATE]
 
-file-saved-date: 2026 2 27 12 39
+file-saved-date: 2026 2 28 8 18
 
 [NAME-ACCOUNT]
 
 character-name     = TETRICO
 account-name       = tetrico
 Hour-Play = 0
-Min-Play = 6
+Min-Play = 10
 
 CheckProcess = OFF
 
 [NAME-ACCOUNT]
 
 character-profile 	=__________
-character-location   = NONE
+character-location   = elvine
 character-guild-name = NONE
 character-guild-GUID = -1
 character-guild-rank = -1
@@ -22,9 +22,9 @@ character-guild-rank = -1
 
 [MAP-DATA]
 
-character-loc-map = default
-character-loc-x   = 111
-character-loc-y   = 65
+character-loc-map = EBarracks
+character-loc-x   = 102
+character-loc-y   = 37
 
 locked-map-name = NONE
 locked-map-time = 0
@@ -66,7 +66,7 @@ timeleft-force-recall  = 0
 timeleft-firm-staminar = 0
 dead-penalty-time = 0
 penalty-block-date = 0 0 0
-special-ability-time = 645
+special-ability-time = 303
 
 
 [POINTS]

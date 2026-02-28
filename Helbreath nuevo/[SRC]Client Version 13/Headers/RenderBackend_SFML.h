@@ -16,10 +16,10 @@
 
 #include "IRenderBackend.h"
 #include "DXC_ddraw.h"
-
 #include <SFML/Graphics.hpp>
 #include <windows.h>
 #include <vector>
+#include <unordered_map>
 
 class RenderBackend_SFML : public IRenderBackend
 {
@@ -79,8 +79,7 @@ public:
     // Verifica si un indice tiene textura cargada
     bool IsTextureLoaded(int iSpriteIndex) const;
 
-    // Maximo de sprites que puede manejar este backend en Fase 7
-    static const int MAX_SFML_SPRITES = 128;
+    
 
 private:
     DXC_ddraw&         m_DDraw;            // referencia al DDraw de CGame - NO es dueno
@@ -88,10 +87,11 @@ private:
     int                m_iWidth;
     int                m_iHeight;
     bool               m_bInitialized;
+    
+    // Mapa dinamico: indice real del sprite -> textura SFML
+// Sin limite fijo - soporta todos los sprites del juego
+    std::unordered_map<int, sf::Texture> m_mapTextures;
 
-    // Texturas de sprites cargadas (indexadas por iSpriteIndex)
-    sf::Texture        m_aTextures[MAX_SFML_SPRITES];
-    bool               m_bTextureLoaded[MAX_SFML_SPRITES];
 
     // Convierte un pixel DDraw 16-bit a sf::Color RGBA
     // wColorKey: valor transparente real del sprite (de CSprite::m_wColorKey)
