@@ -15,6 +15,7 @@
 #include <direct.h>
 #pragma comment(lib, "gdiplus.lib")
 #include "RenderBackend_DDraw.h"
+#include "RenderBackend_SFML.h"
 
 using namespace Gdiplus;
 
@@ -47924,7 +47925,10 @@ void CGame::UpdateScreen_OnGame()
 
 		
 		//UpdateRadius(); // Reducir el radio
-		
+
+		// FASE 7: SFML limpia su canvas antes del frame
+		if (m_pRenderBackend) m_pRenderBackend->BeginFrame();
+
 		DrawBackground(sDivX, sModX, sDivY, sModY);
 
 		if (isInMap("mines2"))
@@ -49672,8 +49676,11 @@ void CGame::UpdateScreen_OnGame()
 				m_dwLastGrabShot = now;
 			}
 		}
-		
 
+
+
+		// FASE 7: SFML blitea sus sprites al backbuffer DDraw antes del flip
+		if (m_pRenderBackend) m_pRenderBackend->EndFrame();
 
 		if (m_DDraw.iFlip() == DDERR_SURFACELOST) RestoreSprites();
 	}
@@ -54684,9 +54691,10 @@ BOOL CGame::bInit(HWND hWnd, HINSTANCE hInst, char * pCmdLine)
 		MessageBox(m_hWnd, "This program requires DirectX7.0a!", "ERROR", MB_ICONEXCLAMATION | MB_OK);
 		return FALSE;
 	}
-	// FASE 6 - Render Abstraction Layer
-	m_pRenderBackend = new RenderBackend_DDraw(m_DDraw);
-	m_pRenderBackend->Init(m_hWnd, 800, 600, false);
+	// FASE 7 - Render Abstraction Layer: SFML backend
+	// Para volver a DDraw: cambiar RenderBackend_SFML por RenderBackend_DDraw
+	m_pRenderBackend = new RenderBackend_SFML(m_DDraw);
+	m_pRenderBackend->Init(m_hWnd, m_DDraw.res_x, m_DDraw.res_y, false);
 
 	if (m_DInput.bInit(hWnd, hInst) == FALSE) {
 		MessageBox(m_hWnd, "This program requires DirectX7.0a!", "ERROR", MB_ICONEXCLAMATION | MB_OK);

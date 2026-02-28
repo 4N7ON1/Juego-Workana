@@ -198,6 +198,7 @@
     <ClInclude Include="Headers\Game.h" />
     <ClInclude Include="Headers\GameMonitor.h" />
     <ClInclude Include="Headers\IRenderBackend.h" />
+    <ClInclude Include="Headers\RenderBackend_SFML.h" />
     <ClInclude Include="Headers\Item.h" />
     <ClInclude Include="Headers\ItemName.h" />
     <ClInclude Include="Headers\Magic.h" />
@@ -270,6 +271,7 @@
     <ClCompile Include="Motor\DXC_dinput.cpp" />
     <ClCompile Include="Motor\DXC_dsound.cpp" />
     <ClCompile Include="Motor\RenderBackend_DDraw.cpp" />
+    <ClCompile Include="Motor\RenderBackend_SFML.cpp" />
     <ClCompile Include="Resolution\Resolution.cpp" />
   </ItemGroup>
   <ItemGroup>
