@@ -50,6 +50,11 @@ public:
     virtual bool IsTextureLoaded(int iSpriteIndex) = 0;
     virtual bool LoadSpriteFromPixels16(int iSpriteIndex, const unsigned short* pPixels, int iW, int iH, DWORD dwColorKey) = 0;
 
+    // Devuelve true si estamos entre BeginFrame() y EndFrame()
+    // Usado por PutSpriteFast/PutSpriteFastNoColorKeyDst para decidir si
+    // usar SFML (en juego) o caer a DDraw BltFast (login/menus/seleccion)
+    virtual bool IsFrameActive() const = 0;
+
 
 };
 

@@ -195,8 +195,10 @@ void CSprite::PutSpriteFast(int sX, int sY, int sFrame, DWORD dwTime)
 
 	// ============================================================
 	// FASE 8.C v2: Auto-carga y redireccion a SFML
+	// Solo activo cuando BeginFrame() fue llamado (en juego).
+	// En login/menus/seleccion IsFrameActive()==false -> cae a DDraw BltFast.
 	// ============================================================
-	if (g_pRenderBackend != nullptr && m_iSpriteIndex >= 0)
+	if (g_pRenderBackend != nullptr && m_iSpriteIndex >= 0 && g_pRenderBackend->IsFrameActive())
 	{
 		// Si el sprite no esta aun en SFML, cargarlo ahora
 		// (la superficie ya esta abierta en este punto)
@@ -579,7 +581,8 @@ void CSprite::PutSpriteFastNoColorKeyDst(LPDIRECTDRAWSURFACE7 lpDstS, int sX, in
 	m_rcBound.bottom = dY + szy;
 
 	// === SFML INTERCEPT (Fase 8.D - Tiles) ===
-	if (g_pRenderBackend != nullptr && m_iSpriteIndex >= 0)
+	// IsFrameActive() garantiza que solo tiles dentro de BeginFrame/EndFrame van a SFML
+	if (g_pRenderBackend != nullptr && m_iSpriteIndex >= 0 && g_pRenderBackend->IsFrameActive())
 	{
 		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex))
 		{

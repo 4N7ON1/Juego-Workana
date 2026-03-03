@@ -80,6 +80,11 @@ public:
     virtual bool IsTextureLoaded(int iSpriteIndex) override;
     virtual bool LoadSpriteFromPixels16(int iSpriteIndex, const unsigned short* pPixels, int iW, int iH, DWORD dwColorKey) override;
 
+    // Devuelve true entre BeginFrame() y EndFrame()
+    // Sprites con m_iSpriteIndex>=0 solo van a SFML si el frame esta activo.
+    // Fuera del frame (login, menus, seleccion) caen a DDraw BltFast.
+    virtual bool IsFrameActive() const override { return m_bFrameActive; }
+
 
 
     
@@ -90,6 +95,7 @@ private:
     int                m_iWidth;
     int                m_iHeight;
     bool               m_bInitialized;
+    bool               m_bFrameActive;    // true entre BeginFrame() y EndFrame()
     
     // Mapa dinamico: indice real del sprite -> textura SFML
 // Sin limite fijo - soporta todos los sprites del juego

@@ -22,8 +22,9 @@ RenderBackend_SFML::RenderBackend_SFML(DXC_ddraw& ddraw)
     , m_iWidth(800)
     , m_iHeight(600)
     , m_bInitialized(false)
+    , m_bFrameActive(false)
 {
-   
+
 }
 
 RenderBackend_SFML::~RenderBackend_SFML()
@@ -87,6 +88,7 @@ void RenderBackend_SFML::BeginFrame()
     m_pRenderTex->setActive(true);
     m_pRenderTex->clear(sf::Color(0, 1, 0, 255)); // Centinela: imposible en RGB565
     // NO setActive(false): el contexto permanece activo hasta EndFrame()
+    m_bFrameActive = true; // Habilita ruta SFML en PutSpriteFast/PutSpriteFastNoColorKeyDst
 }
 
 
@@ -102,6 +104,7 @@ void RenderBackend_SFML::EndFrame()
     BlitRenderTextureToDDraw();
 
     // Liberar contexto OpenGL AHORA para que cnc-ddraw pueda usarlo en iFlip()
+    m_bFrameActive = false; // Deshabilita ruta SFML: sprites post-EndFrame van a DDraw
     m_pRenderTex->setActive(false);
 }
 

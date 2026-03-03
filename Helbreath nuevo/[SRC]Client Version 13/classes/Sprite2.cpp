@@ -188,6 +188,44 @@ void CSprite::PutSpriteFast(int sX, int sY, int sFrame, DWORD dwTime)
 	m_rcBound.right  = dX + szx;
 	m_rcBound.bottom = dY + szy;
 
+	// === SFML INTERCEPT (Fase 8.D - Sprites con colorkey - Sprite2) ===
+	// IsFrameActive(): solo activo en juego (entre BeginFrame/EndFrame).
+	// En login/seleccion de personaje -> false -> cae a DDraw BltFast correcto.
+	// Esto arregla: personaje erroneo (tiles SFML sobreescribian el personaje DDraw).
+	if (g_pRenderBackend != nullptr && m_iSpriteIndex >= 0 && g_pRenderBackend->IsFrameActive())
+	{
+		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex))
+		{
+			DDSURFACEDESC2 ddsd2;
+			ZeroMemory(&ddsd2, sizeof(ddsd2));
+			ddsd2.dwSize = sizeof(ddsd2);
+			if (m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK)
+			{
+				int w = m_wBitmapSizeX;
+				int h = m_wBitmapSizeY;
+				int pitch = (int)(ddsd2.lPitch / 2);
+				WORD* pPixs = (WORD*)ddsd2.lpSurface;
+				if (w > 0 && h > 0 && pPixs)
+				{
+					unsigned short* pBuf = new unsigned short[w * h];
+					for (int row = 0; row < h; row++)
+						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					g_pRenderBackend->LoadSpriteFromPixels16(
+						m_iSpriteIndex, pBuf, w, h, m_wColorKey);
+					delete[] pBuf;
+				}
+				m_lpSurface->Unlock(NULL);
+			}
+		}
+		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex))
+		{
+			g_pRenderBackend->DrawSprite(dX, dY, sx, sy, szx, szy, m_iSpriteIndex);
+			m_bOnCriticalSection = FALSE;
+			return;
+		}
+	}
+	// === FIN SFML INTERCEPT ===
+
 	m_pDDraw->m_lpBackB4->BltFast( dX, dY, m_lpSurface, &rcRect, DDBLTFAST_SRCCOLORKEY | DDBLTFAST_WAIT );
 
 	m_bOnCriticalSection = FALSE;
@@ -443,7 +481,8 @@ void CSprite::PutSpriteFastNoColorKeyDst(LPDIRECTDRAWSURFACE7 lpDstS, int sX, in
 	m_rcBound.bottom = dY + szy;
 
 	// === SFML INTERCEPT (Fase 8.D - Tiles - Sprite2) ===
-	if (g_pRenderBackend != nullptr && m_iSpriteIndex >= 0)
+	// IsFrameActive(): solo activo en juego (entre BeginFrame/EndFrame)
+	if (g_pRenderBackend != nullptr && m_iSpriteIndex >= 0 && g_pRenderBackend->IsFrameActive())
 	{
 		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex))
 		{
