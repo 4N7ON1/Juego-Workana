@@ -119,6 +119,7 @@ void RenderBackend_SFML::DrawSprite(int iDstX, int iDstY,
     int iSpriteIndex)
 {
     if (!m_bInitialized) return;
+    if (!m_bFrameActive) return;  // Solo dibujar entre BeginFrame/EndFrame (contexto activo)
     if (m_mapTextures.find(iSpriteIndex) == m_mapTextures.end()) return;
 
     // Sin setActive(true/false): el contexto ya esta activo desde BeginFrame().
@@ -291,16 +292,10 @@ void RenderBackend_SFML::BlitRenderTextureToDDraw()
 
     int iW = min(m_iWidth,  static_cast<int>(img.getSize().x));
     int iH = min(m_iHeight, static_cast<int>(img.getSize().y));
-
-    // Limitar el blit SFML al area del viewport (excluye el HUD del fondo).
-    // El HUD es dibujado via DDraw BltFast directo (m_iSpriteIndex=-1),
-    // no pasa por SFML. Si los tiles SFML sobreescriben esa zona, el HUD desaparece.
-    // m_rcClipArea.bottom = limite inferior del area de juego (sin HUD).
-    if (m_DDraw.m_rcClipArea.bottom > 0 &&
-        m_DDraw.m_rcClipArea.bottom < iH)
-    {
-        iH = static_cast<int>(m_DDraw.m_rcClipArea.bottom);
-    }
+    // Nota: EndFrame() ahora se llama ANTES de DrawDialogBoxs en Game.cpp.
+    // Por eso el canvas SFML solo contiene tiles + personajes (no HUD).
+    // La restriccion m_rcClipArea.bottom ya no es necesaria:
+    // el HUD se dibuja DESPUES de EndFrame via DDraw BltFast directo.
 
     for (int y = 0; y < iH; y++)
     {

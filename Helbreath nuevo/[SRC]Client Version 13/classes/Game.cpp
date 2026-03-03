@@ -48157,6 +48157,13 @@ void CGame::UpdateScreen_OnGame()
 	m_sViewPointX = sVPXsave;
 	m_sViewPointY = sVPYsave;
 
+	// Fase 8.D HUD fix: blit SFML (tiles + personajes) a DDraw ANTES del HUD.
+	// EndFrame aqui -> IsFrameActive=false para todo lo que sigue:
+	//   PutSpriteFast del HUD, cursor, iconos -> DDraw BltFast directo (encima de tiles)
+	//   DrawShadowBox, strings -> DDraw directo
+	// Resultado: HUD correcto sin necesitar restriccion de clip area.
+	if (m_pRenderBackend) m_pRenderBackend->EndFrame();
+
 	if (iUpdateRet != 0)
 		DrawDialogBoxs(msX, msY, msZ, cLB);
 
@@ -49753,19 +49760,6 @@ void CGame::UpdateScreen_OnGame()
 		}
 
 
-
-		// FASE 7: Dibujar sprite real Bm frame 0 via SFML como validacion de pipeline
-		{
-			RenderBackend_SFML* pSFML = static_cast<RenderBackend_SFML*>(m_pRenderBackend);
-			if (pSFML && pSFML->IsTextureLoaded(0) && m_pSprite[500] && m_pSprite[500]->m_stBrush)
-			{
-				stBrush& br = m_pSprite[500]->m_stBrush[0]; // frame 0 del cuerpo Bm
-				pSFML->DrawSprite(400 - br.szx / 2, 300 - br.szy / 2,
-				                  br.sx, br.sy, br.szx, br.szy, 0);
-			}
-		}
-		// FASE 7: SFML blitea sus sprites al backbuffer DDraw antes del flip
-		if (m_pRenderBackend) m_pRenderBackend->EndFrame();
 
 		if (m_DDraw.iFlip() == DDERR_SURFACELOST) RestoreSprites();
 	}
