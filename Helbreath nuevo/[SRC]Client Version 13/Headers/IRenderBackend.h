@@ -14,7 +14,7 @@ class IRenderBackend
 public:
     virtual ~IRenderBackend() {}
 
-    // Inicialización y shutdown
+    // Inicializaciï¿½n y shutdown
     virtual bool Init(HWND hWnd, int iWidth, int iHeight, bool bFullscreen) = 0;
     virtual void Shutdown() = 0;
 
@@ -39,13 +39,18 @@ public:
         const char* szText,
         unsigned long dwColor) = 0;
 
-    // Resolución
+    // Resoluciï¿½n
     virtual void SetResolution(int iWidth, int iHeight) = 0;
     virtual int  GetWidth() = 0;
     virtual int  GetHeight() = 0;
 
     // Limpieza de pantalla
     virtual void Clear() = 0;
+    // Comprueba si un sprite esta cargado en SFML
+    virtual bool IsTextureLoaded(int iSpriteIndex) = 0;
+    virtual bool LoadSpriteFromPixels16(int iSpriteIndex, const unsigned short* pPixels, int iW, int iH, DWORD dwColorKey) = 0;
+
+
 };
 
 #endif // IRENDERBACKEND_H

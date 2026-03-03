@@ -63,6 +63,8 @@ int dr = -5, dg = 0, db = 5;
 bool useYellow = true;
 int frameCounter = 0; 
 extern void SetKeyboardHook(bool enable);
+IRenderBackend* g_pRenderBackend = nullptr;
+
 
 CGame::CGame()
 {
@@ -2396,8 +2398,12 @@ void CGame::MakeSprite(char* FileName, short sStart, short sCount, bool bAlphaEf
 	ReadFile(m_hPakFile, (char *)&iTotalimage, 4, &nCount, NULL);
 	if (!Pak) iTotalimage = ((((iTotalimage - 51) / 3) - 17) / 44);
 	for (short i = 0; i < sCount; i++) {
-		if (i < iTotalimage) m_pSprite[i + sStart] = new class CSprite(m_hPakFile, &m_DDraw, FileName, i, bAlphaEffect, Pak);
+		if (i < iTotalimage) {
+			m_pSprite[i + sStart] = new class CSprite(m_hPakFile, &m_DDraw, FileName, i, bAlphaEffect, Pak);
+			m_pSprite[i + sStart]->m_iSpriteIndex = i + sStart;
+		}
 	}
+
 	CloseHandle(m_hPakFile);
 }
 
@@ -2417,8 +2423,12 @@ void CGame::MakeCommonSprite(char* FileName, int sStart, int sCount, bool bAlpha
 	SetFilePointer(m_hPakFile, 20, NULL, FILE_BEGIN);
 	ReadFile(m_hPakFile, (char *)&iTotalimage, 4, &nCount, NULL);
 	for (short i = 0; i < sCount; i++) {
-		if (i < iTotalimage) m_pSprite[i + sStart] = new class CSprite(m_hPakFile, &m_DDraw, FileName, i, bAlphaEffect);
+		if (i < iTotalimage) {
+			m_pSprite[i + sStart] = new class CSprite(m_hPakFile, &m_DDraw, FileName, i, bAlphaEffect);
+			m_pSprite[i + sStart]->m_iSpriteIndex = i + sStart;
+		}
 	}
+
 	CloseHandle(m_hPakFile);
 }
 
@@ -2436,8 +2446,12 @@ void CGame::MakeTileSpr(char* FileName, short sStart, short sCount, bool bAlphaE
 	ReadFile(m_hPakFile, (char *)&iTotalimage, 4, &nCount, NULL);
 	if (!Pak) iTotalimage = ((((iTotalimage - 51) / 3) - 17) / 44);
 	for (short i = 0; i < sCount; i++) {
-		if (i < iTotalimage) m_pTileSpr[i + sStart] = new class CSprite(m_hPakFile, &m_DDraw, FileName, i, bAlphaEffect, Pak);
+		if (i < iTotalimage) {
+			m_pTileSpr[i + sStart] = new class CSprite(m_hPakFile, &m_DDraw, FileName, i, bAlphaEffect, Pak);
+			m_pTileSpr[i + sStart]->m_iSpriteIndex = 100000 + (i + sStart);
+		}
 	}
+
 	CloseHandle(m_hPakFile);
 }
 
@@ -8672,7 +8686,7 @@ BOOL CGame::DrawObject_OnAttack(int indexX, int indexY, int sX, int sY, BOOL bTr
 			else {
 				if ((_tmp_iStatus & 0x40) != 0)
 					m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteRGB(sX, sY, _tmp_cFrame, m_wR[10] - m_wR[0] / 2, m_wG[10] - m_wG[0] / 2, m_wB[10] - m_wB[0] / 2, dwTime);
-				else m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteFast(sX, sY, _tmp_cFrame, dwTime);
+				else if (m_pSprite[iBodyIndex + (_tmp_cDir - 1)] != nullptr) m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteFast(sX, sY, _tmp_cFrame, dwTime);
 
 			}
 
@@ -8859,7 +8873,7 @@ BOOL CGame::DrawObject_OnAttack(int indexX, int indexY, int sX, int sY, BOOL bTr
 			else {
 				if ((_tmp_iStatus & 0x40) != 0)
 					m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteRGB(sX, sY, _tmp_cFrame, m_wR[10] - m_wR[0] / 2, m_wG[10] - m_wG[0] / 2, m_wB[10] - m_wB[0] / 2, dwTime);
-				
+				else if (m_pSprite[iBodyIndex + (_tmp_cDir - 1)] != nullptr) m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteFast(sX, sY, _tmp_cFrame, dwTime);
 			}
 
 			SetRect(&m_rcBodyRect, m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->m_rcBound.left, m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->m_rcBound.top,
@@ -10366,7 +10380,7 @@ BOOL   CGame::DrawObject_OnMagic(int indexX, int indexY, int sX, int sY, BOOL bT
 		else {
 			if ((_tmp_iStatus & 0x40) != 0)
 				m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteRGB(sX, sY, _tmp_cFrame, m_wR[10] - m_wR[0] / 2, m_wG[10] - m_wG[0] / 2, m_wB[10] - m_wB[0] / 2, dwTime);
-			else m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteFast(sX, sY, _tmp_cFrame, dwTime);
+			else if (m_pSprite[iBodyIndex + (_tmp_cDir - 1)] != nullptr) m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteFast(sX, sY, _tmp_cFrame, dwTime);
 
 		}
 		SetRect(&m_rcBodyRect, m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->m_rcBound.left, m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->m_rcBound.top,
@@ -10816,7 +10830,7 @@ BOOL   CGame::DrawObject_OnGetItem(int indexX, int indexY, int sX, int sY, BOOL 
 		else {
 			if ((_tmp_iStatus & 0x40) != 0)
 				m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteRGB(sX, sY, _tmp_cFrame, m_wR[10] - m_wR[0] / 2, m_wG[10] - m_wG[0] / 2, m_wB[10] - m_wB[0] / 2, dwTime);
-			
+			else if (m_pSprite[iBodyIndex + (_tmp_cDir - 1)] != nullptr) m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteFast(sX, sY, _tmp_cFrame, dwTime);
 		}
 		SetRect(&m_rcBodyRect, m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->m_rcBound.left, m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->m_rcBound.top,
 			m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->m_rcBound.right, m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->m_rcBound.bottom);
@@ -16546,7 +16560,7 @@ BOOL   CGame::DrawObject_OnStop(int indexX, int indexY, int sX, int sY, BOOL bTr
 			{
 				if ((_tmp_iStatus & 0x40) != 0)
 					m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteRGB(sX, sY, _tmp_cFrame, m_wR[10] - m_wR[0] / 2, m_wG[10] - m_wG[0] / 2, m_wB[10] - m_wB[0] / 2, dwTime);
-				
+				else if (m_pSprite[iBodyIndex + (_tmp_cDir - 1)] != nullptr) m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteFast(sX, sY, _tmp_cFrame, dwTime);
 			}
 
 			SetRect(&m_rcBodyRect, m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->m_rcBound.left, m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->m_rcBound.top,
@@ -16792,7 +16806,7 @@ BOOL   CGame::DrawObject_OnStop(int indexX, int indexY, int sX, int sY, BOOL bTr
 			{
 				if ((_tmp_iStatus & 0x40) != 0)
 					m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteRGB(sX, sY, _tmp_cFrame, m_wR[10] - m_wR[0] / 2, m_wG[10] - m_wG[0] / 2, m_wB[10] - m_wB[0] / 2, dwTime);
-				
+				else if (m_pSprite[iBodyIndex + (_tmp_cDir - 1)] != nullptr) m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteFast(sX, sY, _tmp_cFrame, dwTime);
 			}
 			//GPT fix
 			int index = iBodyIndex + (_tmp_cDir - 1);
@@ -18533,7 +18547,8 @@ void CGame::DrawBackground(short sDivX, short sModX, short sDivY, short sModY)
 
 		if (sDivX < 0 || sDivY < 0) return;
 
-		if ((m_bIsRedrawPDBGS == TRUE) || (m_iPDBGSdivX != sDivX) || (m_iPDBGSdivY != sDivY))
+		if (g_pRenderBackend != nullptr || (m_bIsRedrawPDBGS == TRUE) || (m_iPDBGSdivX != sDivX) || (m_iPDBGSdivY != sDivY))
+
 		{
 			m_bIsRedrawPDBGS = FALSE;
 			m_iPDBGSdivX = sDivX;
@@ -18586,7 +18601,9 @@ void CGame::DrawBackground(short sDivX, short sModX, short sDivY, short sModY)
 
 		RECT rcRect;
 		SetRect(&rcRect, sModX + offsetX, sModY + offsetY, res_x + sModX + offsetX, res_y + sModY + offsetY);
-		m_DDraw.m_lpBackB4->BltFast(0, 0, m_DDraw.m_lpPDBGS, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
+		if (!g_pRenderBackend)
+			m_DDraw.m_lpBackB4->BltFast(0, 0, m_DDraw.m_lpPDBGS, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
+
 
 		if (m_bGrid)
 		{
@@ -54763,6 +54780,8 @@ BOOL CGame::bInit(HWND hWnd, HINSTANCE hInst, char * pCmdLine)
 	// Para volver a DDraw: cambiar RenderBackend_SFML por RenderBackend_DDraw
 	m_pRenderBackend = new RenderBackend_SFML(m_DDraw);
 	m_pRenderBackend->Init(m_hWnd, m_DDraw.res_x, m_DDraw.res_y, false);
+	g_pRenderBackend = m_pRenderBackend;
+
 
 	if (m_DInput.bInit(hWnd, hInst) == FALSE) {
 		MessageBox(m_hWnd, "This program requires DirectX7.0a!", "ERROR", MB_ICONEXCLAMATION | MB_OK);
@@ -84017,12 +84036,14 @@ BOOL   CGame::DrawObject(int indexX, int indexY, int sX, int sY, BOOL bTrans, DW
 				}
 				else if (bInv == TRUE)
 					m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutTransSprite(sX, sY, _tmp_cFrame, dwTime);
+							else
+			{
+				if ((_tmp_iStatus & 0x40) != 0)
+					m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteRGB(sX, sY, _tmp_cFrame, m_wR[10] - m_wR[0] / 2, m_wG[10] - m_wG[0] / 2, m_wB[10] - m_wB[0] / 2, dwTime);
 				else
-				{
-					if ((_tmp_iStatus & 0x40) != 0)
-						m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteRGB(sX, sY, _tmp_cFrame, m_wR[10] - m_wR[0] / 2, m_wG[10] - m_wG[0] / 2, m_wB[10] - m_wB[0] / 2, dwTime);
-					
-				}
+					m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteFast(sX, sY, _tmp_cFrame, dwTime);
+			}
+
 
 				//GPT fix
 				int index = iBodyIndex + (_tmp_cDir - 1);
@@ -84291,7 +84312,7 @@ BOOL   CGame::DrawObject(int indexX, int indexY, int sX, int sY, BOOL bTrans, DW
 				{
 					if ((_tmp_iStatus & 0x40) != 0)
 						m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteRGB(sX, sY, _tmp_cFrame, m_wR[10] - m_wR[0] / 2, m_wG[10] - m_wG[0] / 2, m_wB[10] - m_wB[0] / 2, dwTime);
-					
+					else if (m_pSprite[iBodyIndex + (_tmp_cDir - 1)] != nullptr) m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteFast(sX, sY, _tmp_cFrame, dwTime);
 				}
 				//GPT fix
 				int index = iBodyIndex + (_tmp_cDir - 1);
@@ -86098,7 +86119,7 @@ BOOL   CGame::DrawObject(int indexX, int indexY, int sX, int sY, BOOL bTrans, DW
 				else {
 					if ((_tmp_iStatus & 0x40) != 0)
 						m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteRGB(sX, sY, _tmp_cFrame, m_wR[10] - m_wR[0] / 2, m_wG[10] - m_wG[0] / 2, m_wB[10] - m_wB[0] / 2, dwTime);
-					
+					else if (m_pSprite[iBodyIndex + (_tmp_cDir - 1)] != nullptr) m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteFast(sX, sY, _tmp_cFrame, dwTime);
 				}
 
 				//GPT fix
@@ -86309,7 +86330,7 @@ BOOL   CGame::DrawObject(int indexX, int indexY, int sX, int sY, BOOL bTrans, DW
 				else {
 					if ((_tmp_iStatus & 0x40) != 0)
 						m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteRGB(sX, sY, _tmp_cFrame, m_wR[10] - m_wR[0] / 2, m_wG[10] - m_wG[0] / 2, m_wB[10] - m_wB[0] / 2, dwTime);
-					
+					else if (m_pSprite[iBodyIndex + (_tmp_cDir - 1)] != nullptr) m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteFast(sX, sY, _tmp_cFrame, dwTime);
 				}
 
 				SetRect(&m_rcBodyRect, m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->m_rcBound.left, m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->m_rcBound.top,
@@ -87937,7 +87958,7 @@ BOOL   CGame::DrawObject(int indexX, int indexY, int sX, int sY, BOOL bTrans, DW
 			else {
 				if ((_tmp_iStatus & 0x40) != 0)
 					m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteRGB(sX, sY, _tmp_cFrame, m_wR[10] - m_wR[0] / 2, m_wG[10] - m_wG[0] / 2, m_wB[10] - m_wB[0] / 2, dwTime);
-				
+				else if (m_pSprite[iBodyIndex + (_tmp_cDir - 1)] != nullptr) m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteFast(sX, sY, _tmp_cFrame, dwTime);
 			}
 			//GPT fix
 			int index = iBodyIndex + (_tmp_cDir - 1);
@@ -90037,7 +90058,7 @@ BOOL   CGame::DrawObject(int indexX, int indexY, int sX, int sY, BOOL bTrans, DW
 			else {
 				if ((_tmp_iStatus & 0x40) != 0)
 					m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteRGB(sX, sY, _tmp_cFrame, m_wR[10] - m_wR[0] / 2, m_wG[10] - m_wG[0] / 2, m_wB[10] - m_wB[0] / 2, dwTime);
-				
+				else if (m_pSprite[iBodyIndex + (_tmp_cDir - 1)] != nullptr) m_pSprite[iBodyIndex + (_tmp_cDir - 1)]->PutSpriteFast(sX, sY, _tmp_cFrame, dwTime);
 			}
 			//GPT fix
 			int index = iBodyIndex + (_tmp_cDir - 1);

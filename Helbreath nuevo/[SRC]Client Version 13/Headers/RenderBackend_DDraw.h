@@ -53,6 +53,9 @@ public:
     virtual int  GetWidth() override;
     virtual int  GetHeight() override;
     virtual void Clear() override;
+    virtual bool IsTextureLoaded(int /*iSpriteIndex*/) override { return false; }
+    virtual bool LoadSpriteFromPixels16(int, const unsigned short*, int, int, DWORD) override { return false; }
+
 
     // Acceso al DDraw subyacente (necesario para Fase 7+)
     DXC_ddraw& GetDDraw() { return m_DDraw; }

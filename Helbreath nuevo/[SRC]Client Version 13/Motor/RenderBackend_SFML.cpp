@@ -79,22 +79,32 @@ void RenderBackend_SFML::BeginFrame()
 {
     if (!m_bInitialized) return;
 
-    // Limpiar el canvas SFML con transparente total
-    // Los pixels que no se dibujen quedan en alpha=0 y no se blit-ean
-    m_pRenderTex->clear(sf::Color(0, 0, 0, 0));
+    // Activar contexto SFML y MANTENERLO activo durante todo el frame.
+    // cnc-ddraw usa shadow buffers CPU para BltFast (no usa OpenGL entre frames),
+    // OpenGL de cnc-ddraw solo se necesita en iFlip() que ocurre DESPUES de EndFrame().
+    // Eliminar el setActive(false) aqui previene 1000+ context-switches por frame
+    // (500 tiles x 2) que corrompian el estado del RenderTexture.
+    m_pRenderTex->setActive(true);
+    m_pRenderTex->clear(sf::Color(0, 1, 0, 255)); // Centinela: imposible en RGB565
+    // NO setActive(false): el contexto permanece activo hasta EndFrame()
 }
+
 
 void RenderBackend_SFML::EndFrame()
 {
     if (!m_bInitialized) return;
 
-    // Finalizar el frame SFML
+    // Contexto SFML ya activo desde BeginFrame() - no necesitamos setActive(true) aqui.
+    // Finalizar el frame: display() sella el RenderTexture para poder leerlo.
     m_pRenderTex->display();
 
-    // Blit del canvas SFML al backbuffer DDraw
-    // Solo los pixels con alpha > 0 sobreescriben el backbuffer
+    // Blit del canvas SFML al backbuffer DDraw (copyToImage necesita contexto activo)
     BlitRenderTextureToDDraw();
+
+    // Liberar contexto OpenGL AHORA para que cnc-ddraw pueda usarlo en iFlip()
+    m_pRenderTex->setActive(false);
 }
+
 
 // ============================================================
 // Dibujo de sprites
@@ -108,11 +118,11 @@ void RenderBackend_SFML::DrawSprite(int iDstX, int iDstY,
     if (!m_bInitialized) return;
     if (m_mapTextures.find(iSpriteIndex) == m_mapTextures.end()) return;
 
+    // Sin setActive(true/false): el contexto ya esta activo desde BeginFrame().
+    // Eliminar estos context-switches fue la solucion al black screen con 500+ tiles.
     sf::Sprite spr(m_mapTextures.at(iSpriteIndex));
-
     spr.setTextureRect(sf::IntRect(iSrcX, iSrcY, iSrcW, iSrcH));
     spr.setPosition(static_cast<float>(iDstX), static_cast<float>(iDstY));
-
     m_pRenderTex->draw(spr);
 }
 
@@ -165,7 +175,7 @@ void RenderBackend_SFML::Clear()
 bool RenderBackend_SFML::LoadSpriteTexture(int iSpriteIndex,
                                             const unsigned short* pPixels16,
                                             int iWidth, int iHeight,
-                                            unsigned short wColorKey)
+                                            DWORD dwColorKey)
 {
     
     if (!pPixels16 || iWidth <= 0 || iHeight <= 0)            return false;
@@ -175,7 +185,7 @@ bool RenderBackend_SFML::LoadSpriteTexture(int iSpriteIndex,
 
     for (int i = 0; i < iWidth * iHeight; i++)
     {
-        sf::Color c = ConvertPixel16ToRGBA(pPixels16[i], wColorKey);
+        sf::Color c = ConvertPixel16ToRGBA(pPixels16[i], dwColorKey);
         pixels32[i * 4 + 0] = c.r;
         pixels32[i * 4 + 1] = c.g;
         pixels32[i * 4 + 2] = c.b;
@@ -194,22 +204,34 @@ bool RenderBackend_SFML::LoadSpriteTexture(int iSpriteIndex,
 
 }
 
-bool RenderBackend_SFML::IsTextureLoaded(int iSpriteIndex) const
+bool RenderBackend_SFML::IsTextureLoaded(int iSpriteIndex)
+
 {
     return m_mapTextures.count(iSpriteIndex) > 0;
 
 }
+bool RenderBackend_SFML::LoadSpriteFromPixels16(int iSpriteIndex,
+    const unsigned short* pPixels,
+    int iW, int iH,
+    DWORD dwColorKey)
+{
+    return LoadSpriteTexture(iSpriteIndex, pPixels, iW, iH, dwColorKey);
+}
+
 
 // ============================================================
 // Conversion de pixel DDraw 16-bit a RGBA 32-bit
 // ============================================================
 
 sf::Color RenderBackend_SFML::ConvertPixel16ToRGBA(unsigned short pixel16,
-                                                    unsigned short wColorKey) const
+                                                    DWORD dwColorKey) const
 {
-    // Colorkey real del sprite (primer pixel del sheet = fondo transparente)
-    if (pixel16 == wColorKey)
+    // dwColorKey: colorkey real del sprite (valor RGB565 del fondo transparente)
+    // dwColorKey > 0xFFFF = "sin colorkey" (tiles opacos - se usa 0x10000 como sentinel)
+    // dwColorKey <= 0xFFFF = colorkey valido (incluye 0xFFFF=blanco, comun en arboles)
+    if (dwColorKey <= 0xFFFF && pixel16 == static_cast<unsigned short>(dwColorKey))
         return sf::Color::Transparent;
+
 
     sf::Uint8 r, g, b;
 
@@ -267,28 +289,40 @@ void RenderBackend_SFML::BlitRenderTextureToDDraw()
     int iW = min(m_iWidth,  static_cast<int>(img.getSize().x));
     int iH = min(m_iHeight, static_cast<int>(img.getSize().y));
 
+    // Limitar el blit SFML al area del viewport (excluye el HUD del fondo).
+    // El HUD es dibujado via DDraw BltFast directo (m_iSpriteIndex=-1),
+    // no pasa por SFML. Si los tiles SFML sobreescriben esa zona, el HUD desaparece.
+    // m_rcClipArea.bottom = limite inferior del area de juego (sin HUD).
+    if (m_DDraw.m_rcClipArea.bottom > 0 &&
+        m_DDraw.m_rcClipArea.bottom < iH)
+    {
+        iH = static_cast<int>(m_DDraw.m_rcClipArea.bottom);
+    }
+
     for (int y = 0; y < iH; y++)
     {
         for (int x = 0; x < iW; x++)
         {
             int srcIdx = (y * img.getSize().x + x) * 4;
-            sf::Uint8 a = pSrc[srcIdx + 3];
 
-            // Solo sobreescribir si el pixel SFML no es transparente
-            if (a > 0)
+            sf::Uint8 a = pSrc[srcIdx + 3];  
+            sf::Uint8 r = pSrc[srcIdx + 0];
+            sf::Uint8 g = pSrc[srcIdx + 1];
+            sf::Uint8 b = pSrc[srcIdx + 2];
+
+            // Solo sobreescribir si el pixel SFML no es negro/transparente
+            if (!(r == 0 && g == 1 && b == 0))
+
             {
-                sf::Uint8 r = pSrc[srcIdx + 0];
-                sf::Uint8 g = pSrc[srcIdx + 1];
-                sf::Uint8 b = pSrc[srcIdx + 2];
-
                 // Convertir RGBA32 -> RGB565 para DDraw
                 unsigned short pixel565 =
                     ((r >> 3) << 11) |
-                    ((g >> 2) <<  5) |
-                    ( b >> 3);
+                    ((g >> 2) << 5) |
+                    (b >> 3);
 
                 pDst[y * iPitch + x] = pixel565;
             }
+
         }
     }
 

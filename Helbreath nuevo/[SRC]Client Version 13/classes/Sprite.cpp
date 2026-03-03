@@ -7,6 +7,9 @@
 #include "..\Headers\Game.h"
 #include "..\Resolution\Resolution.h"
 extern class cResolution * c_reso;
+#include "../Headers/IRenderBackend.h"
+extern IRenderBackend* g_pRenderBackend;
+
 
 extern char G_cSpriteAlphaDegree;
 
@@ -32,6 +35,8 @@ CSprite::CSprite(HANDLE hPakFile, DXC_ddraw *pDDraw, char *cPakFileName, short s
 	m_stBrush	= NULL;
 	m_lpSurface = NULL;
 	m_bIsSurfaceEmpty = TRUE;
+	m_iSpriteIndex = -1;
+
 	ZeroMemory(m_cPakFileName, sizeof(m_cPakFileName));
 
 	m_cAlphaDegree = 1;
@@ -188,6 +193,47 @@ void CSprite::PutSpriteFast(int sX, int sY, int sFrame, DWORD dwTime)
 
 	if (m_lpSurface == NULL) return; // Comprobación del puntero m_lpSurface
 
+	// ============================================================
+	// FASE 8.C v2: Auto-carga y redireccion a SFML
+	// ============================================================
+	if (g_pRenderBackend != nullptr && m_iSpriteIndex >= 0)
+	{
+		// Si el sprite no esta aun en SFML, cargarlo ahora
+		// (la superficie ya esta abierta en este punto)
+		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex))
+		{
+			DDSURFACEDESC2 ddsd2;
+			ZeroMemory(&ddsd2, sizeof(ddsd2));
+			ddsd2.dwSize = sizeof(ddsd2);
+			if (m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK)
+			{
+				int w = m_wBitmapSizeX;
+				int h = m_wBitmapSizeY;
+				int pitch = (int)(ddsd2.lPitch / 2);
+				WORD* pPixs = (WORD*)ddsd2.lpSurface;
+				if (w > 0 && h > 0 && pPixs)
+				{
+					unsigned short* pBuf = new unsigned short[w * h];
+					for (int row = 0; row < h; row++)
+						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					g_pRenderBackend->LoadSpriteFromPixels16(
+						m_iSpriteIndex, pBuf, w, h, m_wColorKey);
+					delete[] pBuf;
+				}
+				m_lpSurface->Unlock(NULL);
+			}
+		}
+
+		// Si ya esta cargado en SFML, dibujar en SFML y NO usar DDraw
+		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex))
+		{
+			g_pRenderBackend->DrawSprite(dX, dY, sx, sy, szx, szy, m_iSpriteIndex);
+			m_bOnCriticalSection = FALSE;
+			return;
+		}
+	}
+	// ============================================================
+
 	HRESULT hr = m_pDDraw->m_lpBackB4->BltFast(dX, dY, m_lpSurface, &rcRect, DDBLTFAST_SRCCOLORKEY | DDBLTFAST_WAIT);
 	if (FAILED(hr)) {
 		// Manejo del error si la operación BltFast falla
@@ -196,6 +242,8 @@ void CSprite::PutSpriteFast(int sX, int sY, int sFrame, DWORD dwTime)
 	}
 
 	m_bOnCriticalSection = FALSE;
+
+
 }
 void CSprite::PutSpriteFastClip(int sX, int sY, int srcX, int srcY, int srcW, int srcH, DWORD dwTime)
 {
@@ -527,10 +575,48 @@ void CSprite::PutSpriteFastNoColorKeyDst(LPDIRECTDRAWSURFACE7 lpDstS, int sX, in
 
 	m_rcBound.left = dX;
 	m_rcBound.top  = dY;
-	m_rcBound.right  = dX + szx;
+	m_rcBound.right = dX + szx;
 	m_rcBound.bottom = dY + szy;
 
-	lpDstS->BltFast( dX, dY, m_lpSurface, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT );
+	// === SFML INTERCEPT (Fase 8.D - Tiles) ===
+	if (g_pRenderBackend != nullptr && m_iSpriteIndex >= 0)
+	{
+		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex))
+		{
+			DDSURFACEDESC2 ddsd2;
+			ZeroMemory(&ddsd2, sizeof(ddsd2));
+			ddsd2.dwSize = sizeof(ddsd2);
+			if (m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK)
+			{
+				int w = m_wBitmapSizeX;
+				int h = m_wBitmapSizeY;
+				int pitch = (int)(ddsd2.lPitch / 2);
+				WORD* pPixs = (WORD*)ddsd2.lpSurface;
+				if (w > 0 && h > 0 && pPixs)
+				{
+					unsigned short* pBuf = new unsigned short[w * h];
+					for (int row = 0; row < h; row++)
+						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					// 0x10000 = "sin colorkey": todos los pixels del tile son opacos
+					// (DWORD > 0xFFFF evita conflicto con blanco=0xFFFF como colorkey valido)
+					g_pRenderBackend->LoadSpriteFromPixels16(
+						m_iSpriteIndex, pBuf, w, h, 0x10000);
+					delete[] pBuf;
+				}
+				m_lpSurface->Unlock(NULL);
+			}
+		}
+		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex))
+		{
+			g_pRenderBackend->DrawSprite(dX, dY, sx, sy, szx, szy, m_iSpriteIndex);
+			m_bOnCriticalSection = FALSE;
+			return;
+		}
+	}
+	// === FIN SFML INTERCEPT ===
+
+	lpDstS->BltFast(dX, dY, m_lpSurface, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
+
 
 	m_bOnCriticalSection = FALSE;
 }

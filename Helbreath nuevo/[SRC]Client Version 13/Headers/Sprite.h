@@ -112,6 +112,8 @@ public:
 	char	m_cAlphaDegree;
 	WORD	m_wBitmapSizeX, m_wBitmapSizeY;
 	WORD	m_wColorKey;
+	int		m_iSpriteIndex;   // Indice SFML (-1 = no gestionado por SFML)
+
 	char	m_cPakFileName[16];
 	stBrush* m_stBrush;
 	LPDIRECTDRAWSURFACE7 m_lpSurface;

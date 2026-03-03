@@ -74,10 +74,13 @@ public:
     bool LoadSpriteTexture(int iSpriteIndex,
                            const unsigned short* pPixels16,
                            int iWidth, int iHeight,
-                           unsigned short wColorKey = 0x0000);
+                           DWORD dwColorKey = 0x10000); // 0x10000 = sin colorkey
 
     // Verifica si un indice tiene textura cargada
-    bool IsTextureLoaded(int iSpriteIndex) const;
+    virtual bool IsTextureLoaded(int iSpriteIndex) override;
+    virtual bool LoadSpriteFromPixels16(int iSpriteIndex, const unsigned short* pPixels, int iW, int iH, DWORD dwColorKey) override;
+
+
 
     
 
@@ -96,7 +99,7 @@ private:
     // Convierte un pixel DDraw 16-bit a sf::Color RGBA
     // wColorKey: valor transparente real del sprite (de CSprite::m_wColorKey)
     // Usa m_DDraw.m_cPixelFormat para detectar RGB565/RGB555/BGR565
-    sf::Color ConvertPixel16ToRGBA(unsigned short pixel16, unsigned short wColorKey) const;
+    sf::Color ConvertPixel16ToRGBA(unsigned short pixel16, DWORD dwColorKey) const;
 
     // Blitea los pixels del RenderTexture al backbuffer DDraw
     // Se llama desde EndFrame()
