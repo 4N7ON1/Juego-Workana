@@ -680,9 +680,14 @@ static void Call_UpdateScreen_OnLoading()  { G_pGame->UpdateScreen_OnLoading(FAL
 
 // -----------------------------------------------------------------------------
 // EventLoop endurecido (versión ligera)
+// FPS cap: ~60 FPS para evitar que el servidor detecte speed-hack
+// (sin SFML el DDraw era el cuello de botella; con SFML el loop corre a 1600+ FPS)
 void EventLoop()
 {
 	MSG msg{};
+	DWORD dwLastFrameTime = timeGetTime();
+	const DWORD dwFrameInterval = 16; // ~60 FPS (16ms por frame)
+
 	while (true)
 	{
 		if (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
@@ -693,9 +698,18 @@ void EventLoop()
 		}
 		else if (G_pGame && G_pGame->m_bIsProgramActive)
 		{
-			if (!TryFrame(Call_UpdateScreen, "UpdateScreen"))
+			DWORD dwNow = timeGetTime();
+			if (dwNow - dwLastFrameTime >= dwFrameInterval)
 			{
-				// Frame saltado tras crash; nada más, sigue al próximo
+				dwLastFrameTime = dwNow;
+				if (!TryFrame(Call_UpdateScreen, "UpdateScreen"))
+				{
+					// Frame saltado tras crash; nada más, sigue al próximo
+				}
+			}
+			else
+			{
+				Sleep(1); // Ceder CPU mientras esperamos el siguiente frame
 			}
 		}
 		else if (G_pGame && G_pGame->m_cGameMode == DEF_GAMEMODE_ONLOADING)

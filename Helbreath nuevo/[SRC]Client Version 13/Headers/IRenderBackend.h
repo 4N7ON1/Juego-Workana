@@ -55,6 +55,11 @@ public:
     // usar SFML (en juego) o caer a DDraw BltFast (login/menus/seleccion)
     virtual bool IsFrameActive() const = 0;
 
+    // Fase 8.D fix: establece el offset de recorte para el blit SFML->DDraw.
+    // DrawBackground dibuja tiles con posiciones que incluyen sModX/sModY.
+    // El BltFast original recortaba desde (cropX,cropY) del PDBGS.
+    // Al saltar el BltFast, SFML necesita aplicar el mismo recorte.
+    virtual void SetViewCrop(int cropX, int cropY) = 0;
 
 };
 

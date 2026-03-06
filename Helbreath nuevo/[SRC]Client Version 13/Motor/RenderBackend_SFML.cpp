@@ -23,6 +23,8 @@ RenderBackend_SFML::RenderBackend_SFML(DXC_ddraw& ddraw)
     , m_iHeight(600)
     , m_bInitialized(false)
     , m_bFrameActive(false)
+    , m_iCropX(0)
+    , m_iCropY(0)
 {
 
 }
@@ -46,10 +48,14 @@ bool RenderBackend_SFML::Init(HWND hWnd, int iWidth, int iHeight, bool bFullscre
     m_iWidth  = iWidth;
     m_iHeight = iHeight;
 
-    // Canvas virtual SFML en la resolucion logica del juego
+    // Canvas virtual SFML: mas grande que la pantalla para acomodar tiles extra.
+    // El PDBGS original es (res_x+32, res_y+32). Agregamos 96 de margen
+    // para offsetX/offsetY del movimiento suave + sModX/sModY.
+    int canvasW = iWidth + 96;
+    int canvasH = iHeight + 96;
     m_pRenderTex = new sf::RenderTexture();
-    if (!m_pRenderTex->create(static_cast<unsigned int>(iWidth),
-                              static_cast<unsigned int>(iHeight)))
+    if (!m_pRenderTex->create(static_cast<unsigned int>(canvasW),
+                              static_cast<unsigned int>(canvasH)))
     {
         delete m_pRenderTex;
         m_pRenderTex = nullptr;
@@ -89,6 +95,8 @@ void RenderBackend_SFML::BeginFrame()
     m_pRenderTex->clear(sf::Color(0, 1, 0, 255)); // Centinela: imposible en RGB565
     // NO setActive(false): el contexto permanece activo hasta EndFrame()
     m_bFrameActive = true; // Habilita ruta SFML en PutSpriteFast/PutSpriteFastNoColorKeyDst
+    m_iCropX = 0; // Reset crop cada frame (DrawBackground lo setea antes de EndFrame)
+    m_iCropY = 0;
 }
 
 
@@ -266,6 +274,16 @@ sf::Color RenderBackend_SFML::ConvertPixel16ToRGBA(unsigned short pixel16,
 }
 
 // ============================================================
+// SetViewCrop: offset de recorte para replicar el BltFast del PDBGS
+// ============================================================
+
+void RenderBackend_SFML::SetViewCrop(int cropX, int cropY)
+{
+    m_iCropX = cropX;
+    m_iCropY = cropY;
+}
+
+// ============================================================
 // Blit del RenderTexture SFML al backbuffer DDraw
 // ============================================================
 
@@ -290,27 +308,35 @@ void RenderBackend_SFML::BlitRenderTextureToDDraw()
     unsigned short* pDst = reinterpret_cast<unsigned short*>(ddsd.lpSurface);
     int iPitch = ddsd.lPitch / 2; // pitch en shorts (16-bit por pixel)
 
-    int iW = min(m_iWidth,  static_cast<int>(img.getSize().x));
-    int iH = min(m_iHeight, static_cast<int>(img.getSize().y));
-    // Nota: EndFrame() ahora se llama ANTES de DrawDialogBoxs en Game.cpp.
-    // Por eso el canvas SFML solo contiene tiles + personajes (no HUD).
-    // La restriccion m_rcClipArea.bottom ya no es necesaria:
-    // el HUD se dibuja DESPUES de EndFrame via DDraw BltFast directo.
+    int imgW = static_cast<int>(img.getSize().x);
+    int imgH = static_cast<int>(img.getSize().y);
+
+    // Aplicar el crop: leer desde (m_iCropX, m_iCropY) del canvas SFML
+    // Esto replica el BltFast original que copiaba PDBGS desde (sModX+offsetX, sModY+offsetY)
+    // Limitar a la resolucion de pantalla (m_DDraw.res_x/y), no al canvas SFML (que es mas grande)
+    int screenW = m_DDraw.res_x;
+    int screenH = m_DDraw.res_y;
+    int iW = min(screenW, imgW - m_iCropX);
+    int iH = min(screenH, imgH - m_iCropY);
+    if (iW <= 0 || iH <= 0)
+    {
+        m_DDraw.m_lpBackB4->Unlock(nullptr);
+        return;
+    }
 
     for (int y = 0; y < iH; y++)
     {
         for (int x = 0; x < iW; x++)
         {
-            int srcIdx = (y * img.getSize().x + x) * 4;
+            // Leer desde (x + cropX, y + cropY) del canvas SFML
+            int srcIdx = ((y + m_iCropY) * imgW + (x + m_iCropX)) * 4;
 
-            sf::Uint8 a = pSrc[srcIdx + 3];  
             sf::Uint8 r = pSrc[srcIdx + 0];
             sf::Uint8 g = pSrc[srcIdx + 1];
             sf::Uint8 b = pSrc[srcIdx + 2];
 
-            // Solo sobreescribir si el pixel SFML no es negro/transparente
+            // Solo sobreescribir si el pixel SFML no es el centinela (0,1,0)
             if (!(r == 0 && g == 1 && b == 0))
-
             {
                 // Convertir RGBA32 -> RGB565 para DDraw
                 unsigned short pixel565 =
@@ -320,7 +346,6 @@ void RenderBackend_SFML::BlitRenderTextureToDDraw()
 
                 pDst[y * iPitch + x] = pixel565;
             }
-
         }
     }
 

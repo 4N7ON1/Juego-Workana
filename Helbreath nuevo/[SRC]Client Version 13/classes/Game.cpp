@@ -18603,6 +18603,8 @@ void CGame::DrawBackground(short sDivX, short sModX, short sDivY, short sModY)
 		SetRect(&rcRect, sModX + offsetX, sModY + offsetY, res_x + sModX + offsetX, res_y + sModY + offsetY);
 		if (!g_pRenderBackend)
 			m_DDraw.m_lpBackB4->BltFast(0, 0, m_DDraw.m_lpPDBGS, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
+		else
+			g_pRenderBackend->SetViewCrop(sModX + offsetX, sModY + offsetY);
 
 
 		if (m_bGrid)
@@ -18714,7 +18716,10 @@ void CGame::DrawBackground(short sDivX, short sModX, short sDivY, short sModY)
 
 		RECT rcRect;
 		SetRect(&rcRect, sModX, sModY, res_x + sModX, res_y + sModY);
-		m_DDraw.m_lpBackB4->BltFast(0, 0, m_DDraw.m_lpPDBGS, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
+		if (!g_pRenderBackend)
+			m_DDraw.m_lpBackB4->BltFast(0, 0, m_DDraw.m_lpPDBGS, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
+		else
+			g_pRenderBackend->SetViewCrop(sModX, sModY);
 
 		if (m_bGrid)
 		{

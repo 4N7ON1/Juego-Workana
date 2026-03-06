@@ -85,9 +85,10 @@ public:
     // Fuera del frame (login, menus, seleccion) caen a DDraw BltFast.
     virtual bool IsFrameActive() const override { return m_bFrameActive; }
 
+    // Fase 8.D fix: recorte del canvas SFML para compensar sModX/sModY
+    virtual void SetViewCrop(int cropX, int cropY) override;
 
 
-    
 
 private:
     DXC_ddraw&         m_DDraw;            // referencia al DDraw de CGame - NO es dueno
@@ -96,7 +97,9 @@ private:
     int                m_iHeight;
     bool               m_bInitialized;
     bool               m_bFrameActive;    // true entre BeginFrame() y EndFrame()
-    
+    int                m_iCropX;          // offset X del recorte (sModX+offsetX)
+    int                m_iCropY;          // offset Y del recorte (sModY+offsetY)
+
     // Mapa dinamico: indice real del sprite -> textura SFML
 // Sin limite fijo - soporta todos los sprites del juego
     std::unordered_map<int, sf::Texture> m_mapTextures;
