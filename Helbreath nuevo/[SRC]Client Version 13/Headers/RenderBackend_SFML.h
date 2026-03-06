@@ -87,6 +87,8 @@ public:
 
     // Fase 8.D fix: recorte del canvas SFML para compensar sModX/sModY
     virtual void SetViewCrop(int cropX, int cropY) override;
+    virtual int GetCropX() const override { return m_iCropX; }
+    virtual int GetCropY() const override { return m_iCropY; }
 
 
 

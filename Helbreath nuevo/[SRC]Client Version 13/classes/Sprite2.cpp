@@ -219,7 +219,11 @@ void CSprite::PutSpriteFast(int sX, int sY, int sFrame, DWORD dwTime)
 		}
 		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex))
 		{
-			g_pRenderBackend->DrawSprite(dX, dY, sx, sy, szx, szy, m_iSpriteIndex);
+			// Compensar el crop: sprites en coordenadas de pantalla necesitan
+			// el offset para sobrevivir el recorte en BlitRenderTextureToDDraw
+			int cropX = g_pRenderBackend->GetCropX();
+			int cropY = g_pRenderBackend->GetCropY();
+			g_pRenderBackend->DrawSprite(dX + cropX, dY + cropY, sx, sy, szx, szy, m_iSpriteIndex);
 			m_bOnCriticalSection = FALSE;
 			return;
 		}

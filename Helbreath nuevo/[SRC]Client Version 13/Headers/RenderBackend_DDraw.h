@@ -57,6 +57,8 @@ public:
     virtual bool LoadSpriteFromPixels16(int, const unsigned short*, int, int, DWORD) override { return false; }
     virtual bool IsFrameActive() const override { return false; }
     virtual void SetViewCrop(int, int) override {} // no-op en DDraw
+    virtual int GetCropX() const override { return 0; }
+    virtual int GetCropY() const override { return 0; }
 
     // Acceso al DDraw subyacente (necesario para Fase 7+)
     DXC_ddraw& GetDDraw() { return m_DDraw; }

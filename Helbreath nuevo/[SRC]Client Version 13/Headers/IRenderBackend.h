@@ -61,6 +61,15 @@ public:
     // Al saltar el BltFast, SFML necesita aplicar el mismo recorte.
     virtual void SetViewCrop(int cropX, int cropY) = 0;
 
+    // Obtener el crop actual. PutSpriteFast (personajes/objetos) usa esto
+    // para compensar el crop: dibuja en (dX+cropX, dY+cropY) en el canvas SFML,
+    // asi cuando BlitRenderTextureToDDraw recorta desde (cropX,cropY),
+    // los sprites terminan en la posicion correcta de pantalla.
+    // PutSpriteFastNoColorKeyDst (tiles) NO necesita esto porque sus posiciones
+    // ya incluyen sModX/sModY (coordenadas PDBGS, no de pantalla).
+    virtual int GetCropX() const = 0;
+    virtual int GetCropY() const = 0;
+
 };
 
 #endif // IRENDERBACKEND_H

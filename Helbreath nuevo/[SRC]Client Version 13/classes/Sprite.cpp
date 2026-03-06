@@ -229,7 +229,12 @@ void CSprite::PutSpriteFast(int sX, int sY, int sFrame, DWORD dwTime)
 		// Si ya esta cargado en SFML, dibujar en SFML y NO usar DDraw
 		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex))
 		{
-			g_pRenderBackend->DrawSprite(dX, dY, sx, sy, szx, szy, m_iSpriteIndex);
+			// PutSpriteFast dibuja personajes/objetos/arboles en coordenadas de PANTALLA.
+			// Pero BlitRenderTextureToDDraw aplica un crop de (cropX,cropY) para los tiles.
+			// Compensamos sumando el crop a la posicion, asi el crop no desplaza estos sprites.
+			int cropX = g_pRenderBackend->GetCropX();
+			int cropY = g_pRenderBackend->GetCropY();
+			g_pRenderBackend->DrawSprite(dX + cropX, dY + cropY, sx, sy, szx, szy, m_iSpriteIndex);
 			m_bOnCriticalSection = FALSE;
 			return;
 		}
