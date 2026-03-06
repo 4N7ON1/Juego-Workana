@@ -92,7 +92,7 @@ void RenderBackend_SFML::BeginFrame()
     // Eliminar el setActive(false) aqui previene 1000+ context-switches por frame
     // (500 tiles x 2) que corrompian el estado del RenderTexture.
     m_pRenderTex->setActive(true);
-    m_pRenderTex->clear(sf::Color(0, 1, 0, 255)); // Centinela: imposible en RGB565
+    m_pRenderTex->clear(sf::Color(0, 0, 0, 0)); // Fase 8.E: sentinel alpha=0 (mas rapido que RGB sentinel)
     // NO setActive(false): el contexto permanece activo hasta EndFrame()
     m_bFrameActive = true; // Habilita ruta SFML en PutSpriteFast/PutSpriteFastNoColorKeyDst
     m_iCropX = 0; // Reset crop cada frame (DrawBackground lo setea antes de EndFrame)
@@ -285,17 +285,18 @@ void RenderBackend_SFML::SetViewCrop(int cropX, int cropY)
 
 // ============================================================
 // Blit del RenderTexture SFML al backbuffer DDraw
+// Fase 8.E: Optimizado con uint32 reads, alpha sentinel, row pointers
 // ============================================================
 
 void RenderBackend_SFML::BlitRenderTextureToDDraw()
 {
-    // Obtener los pixels del canvas SFML como imagen RGBA en CPU
+    // GPU -> CPU readback (arquitectural, se elimina en Fase 8.G)
     sf::Image img = m_pRenderTex->getTexture().copyToImage();
 
     const sf::Uint8* pSrc = img.getPixelsPtr();
     if (!pSrc) return;
 
-    // Obtener acceso directo al backbuffer DDraw (Lock)
+    // Lock del backbuffer DDraw (una vez por frame)
     DDSURFACEDESC2 ddsd;
     ZeroMemory(&ddsd, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -307,44 +308,41 @@ void RenderBackend_SFML::BlitRenderTextureToDDraw()
 
     unsigned short* pDst = reinterpret_cast<unsigned short*>(ddsd.lpSurface);
     int iPitch = ddsd.lPitch / 2; // pitch en shorts (16-bit por pixel)
-
     int imgW = static_cast<int>(img.getSize().x);
-    int imgH = static_cast<int>(img.getSize().y);
 
-    // Aplicar el crop: leer desde (m_iCropX, m_iCropY) del canvas SFML
-    // Esto replica el BltFast original que copiaba PDBGS desde (sModX+offsetX, sModY+offsetY)
-    // Limitar a la resolucion de pantalla (m_DDraw.res_x/y), no al canvas SFML (que es mas grande)
-    int screenW = m_DDraw.res_x;
-    int screenH = m_DDraw.res_y;
-    int iW = min(screenW, imgW - m_iCropX);
-    int iH = min(screenH, imgH - m_iCropY);
+    // Dimensiones del blit: resolucion de pantalla, limitado al canvas
+    int iW = min(m_DDraw.res_x, imgW - m_iCropX);
+    int iH = min(m_DDraw.res_y, static_cast<int>(img.getSize().y) - m_iCropY);
     if (iW <= 0 || iH <= 0)
     {
         m_DDraw.m_lpBackB4->Unlock(nullptr);
         return;
     }
 
+    // Blit optimizado: uint32 reads + alpha sentinel + row pointers
+    // En x86 little-endian, SFML RGBA bytes [R,G,B,A] = uint32 A<<24|B<<16|G<<8|R
+    // Alpha es el byte alto (bits 24-31). Si alpha=0 -> no hay sprite -> saltar.
     for (int y = 0; y < iH; y++)
     {
+        // Pre-computar punteros de fila (elimina multiplicaciones del inner loop)
+        const uint32_t* pSrcRow = reinterpret_cast<const uint32_t*>(
+            pSrc + ((y + m_iCropY) * imgW + m_iCropX) * 4);
+        unsigned short* pDstRow = pDst + y * iPitch;
+
         for (int x = 0; x < iW; x++)
         {
-            // Leer desde (x + cropX, y + cropY) del canvas SFML
-            int srcIdx = ((y + m_iCropY) * imgW + (x + m_iCropX)) * 4;
+            uint32_t rgba = pSrcRow[x]; // 1 lectura de 4 bytes
 
-            sf::Uint8 r = pSrc[srcIdx + 0];
-            sf::Uint8 g = pSrc[srcIdx + 1];
-            sf::Uint8 b = pSrc[srcIdx + 2];
-
-            // Solo sobreescribir si el pixel SFML no es el centinela (0,1,0)
-            if (!(r == 0 && g == 1 && b == 0))
+            if (rgba & 0xFF000000) // alpha != 0 = sprite dibujado aqui
             {
-                // Convertir RGBA32 -> RGB565 para DDraw
-                unsigned short pixel565 =
-                    ((r >> 3) << 11) |
-                    ((g >> 2) << 5) |
-                    (b >> 3);
+                // Extraer R,G,B del uint32 (little-endian: R=byte0, G=byte1, B=byte2)
+                sf::Uint8 r = static_cast<sf::Uint8>(rgba & 0xFF);
+                sf::Uint8 g = static_cast<sf::Uint8>((rgba >> 8) & 0xFF);
+                sf::Uint8 b = static_cast<sf::Uint8>((rgba >> 16) & 0xFF);
 
-                pDst[y * iPitch + x] = pixel565;
+                // RGBA32 -> RGB565 para DDraw
+                pDstRow[x] = static_cast<unsigned short>(
+                    ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
             }
         }
     }
