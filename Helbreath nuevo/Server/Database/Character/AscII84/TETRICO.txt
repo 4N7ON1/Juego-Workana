@@ -1,13 +1,13 @@
 [FILE-DATE]
 
-file-saved-date: 2026 2 28 19 20
+file-saved-date: 2026 3 3 15 17
 
 [NAME-ACCOUNT]
 
 character-name     = TETRICO
 account-name       = tetrico
 Hour-Play = 0
-Min-Play = 27
+Min-Play = 38
 
 CheckProcess = OFF
 
@@ -23,8 +23,8 @@ character-guild-rank = -1
 [MAP-DATA]
 
 character-loc-map = elvine
-character-loc-x   = 157
-character-loc-y   = 66
+character-loc-x   = 194
+character-loc-y   = 197
 
 locked-map-name = NONE
 locked-map-time = 0
@@ -108,7 +108,7 @@ stated-reward-type     = 0
 [ACHIVEMENTS]
 
 Total-Mobs-Killed = 0
-Total-Death = 1
+Total-Death = 2
 Total-Client-Killed = 0
 Total-Quest-Completed = 0
 

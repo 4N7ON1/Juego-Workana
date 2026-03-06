@@ -80266,10 +80266,12 @@ void cCoreServer::SaveNpcKillData(int client)
 	if (pClient == NULL || !pClient->m_bIsInitComplete) return;
 
 	// Asegurar que el directorio existe
-	_mkdir("C:\\Users\\gonla\\OneDrive\\Desktop\\Helbreath nuevo\\Server\\Database\\MobData");
+	_mkdir(".\\Database\\MobData");
+
 
 	char szPath[256];
-	sprintf(szPath, "C:\\Users\\gonla\\OneDrive\\Desktop\\Helbreath nuevo\\Server\\Database\\MobData\\%s.txt", pClient->m_cCharName);
+	sprintf(szPath, ".\\Database\\MobData\\%s.txt", pClient->m_cCharName);
+
 
 	FILE * f = fopen(szPath, "w");
 	if (f)
@@ -80300,7 +80302,7 @@ void cCoreServer::LoadNpcKillData(int client)
 	pClient->m_mapNpcHuntLevel.clear();
 
 	char szPath[256];
-	sprintf(szPath, "C:\\Users\\gonla\\OneDrive\\Desktop\\Helbreath nuevo\\Server\\Database\\MobData\\%s.txt", pClient->m_cCharName);
+	sprintf(szPath, ".\\Database\\MobData\\%s.txt", pClient->m_cCharName);
 
 	FILE * f = fopen(szPath, "r");
 	if (f)

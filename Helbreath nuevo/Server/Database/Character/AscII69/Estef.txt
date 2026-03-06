@@ -1,6 +1,6 @@
 [FILE-DATE]
 
-file-saved-date: 2026 2 28 18 39
+file-saved-date: 2026 2 28 21 1
 
 [NAME-ACCOUNT]
 
@@ -24,7 +24,7 @@ character-guild-rank = -1
 
 character-loc-map = default
 character-loc-x   = 109
-character-loc-y   = 59
+character-loc-y   = 55
 
 locked-map-name = NONE
 locked-map-time = 0
@@ -134,7 +134,7 @@ character-IDnum3 = 1
 reserved-fightzone-id = 0 0 0
 character-reward-gold = 0
 character-downskillindex = -1
-ip-muerte = 
+ip-muerte = appr1
 
 
 appr1 = 1954
