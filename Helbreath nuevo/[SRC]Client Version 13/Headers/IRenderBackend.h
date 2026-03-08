@@ -102,6 +102,14 @@ public:
     // Fase 8.G: Medir ancho de texto en pixels (para centrado manual)
     virtual int MeasureTextWidth(const char* szText, int iFontId = HB_FONT_COMIC_SANS) = 0;
 
+    // Fase 8.H: Dibujo de sprites con color/alpha (efectos de transparencia, tintado)
+    // iR/iG/iB = 0-255 (multiplica color del sprite), iA = 0-255 (opacidad)
+    // Valores por defecto (255,255,255,255) = sprite sin modificar = DrawSprite normal
+    virtual void DrawSpriteColor(int iDstX, int iDstY,
+        int iSrcX, int iSrcY, int iSrcW, int iSrcH,
+        int iSpriteIndex,
+        int iR = 255, int iG = 255, int iB = 255, int iA = 255) = 0;
+
 };
 
 #endif // IRENDERBACKEND_H
