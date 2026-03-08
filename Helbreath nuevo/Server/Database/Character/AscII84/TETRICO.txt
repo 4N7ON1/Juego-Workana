@@ -1,13 +1,13 @@
 [FILE-DATE]
 
-file-saved-date: 2026 2 28 19 20
+file-saved-date: 2026 3 7 22 38
 
 [NAME-ACCOUNT]
 
 character-name     = TETRICO
 account-name       = tetrico
 Hour-Play = 0
-Min-Play = 27
+Min-Play = 30
 
 CheckProcess = OFF
 
@@ -23,7 +23,7 @@ character-guild-rank = -1
 [MAP-DATA]
 
 character-loc-map = elvine
-character-loc-x   = 157
+character-loc-x   = 150
 character-loc-y   = 66
 
 locked-map-name = NONE

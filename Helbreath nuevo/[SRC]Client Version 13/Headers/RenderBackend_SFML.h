@@ -26,7 +26,7 @@ class RenderBackend_SFML : public IRenderBackend
 public:
     // Recibe referencia a DXC_ddraw para poder blit a su backbuffer en EndFrame
     explicit RenderBackend_SFML(DXC_ddraw& ddraw);
-    virtual ~RenderBackend_SFML();
+    virtual ~RenderBackend_SFML() override;
 
     // --------------------------------------------------------
     // IRenderBackend interface
@@ -48,15 +48,23 @@ public:
         int iSrcW, int iSrcH,
         int iSpriteIndex) override;
 
-    // DrawTile / DrawText: stubs - implementacion en Fase 8
+    // DrawTile: stub - implementacion en Fase 8.G
     virtual void DrawTile(int iDstX, int iDstY,
         int iSrcX, int iSrcY,
         int iSrcW, int iSrcH,
         int iMapIndex) override;
 
+    // Fase 8.F: Texto SFML con fuentes del sistema
     virtual void DrawText(int iX, int iY,
         const char* szText,
-        unsigned long dwColor) override;
+        unsigned long dwColor,
+        int iFontId = HB_FONT_COMIC_SANS,
+        int iEffect = HB_TEXT_PLAIN) override;
+
+    virtual void DrawTextCentered(int iX1, int iX2, int iY,
+        const char* szText,
+        unsigned long dwColor,
+        int iFontId = HB_FONT_VERDANA) override;
 
     virtual void SetResolution(int iWidth, int iHeight) override;
     virtual int  GetWidth()  override;
@@ -103,9 +111,16 @@ private:
     int                m_iCropY;          // offset Y del recorte (sModY+offsetY)
 
     // Mapa dinamico: indice real del sprite -> textura SFML
-// Sin limite fijo - soporta todos los sprites del juego
+    // Sin limite fijo - soporta todos los sprites del juego
     std::unordered_map<int, sf::Texture> m_mapTextures;
 
+    // ---- Fase 8.F: Infraestructura de texto SFML ----
+    sf::Font m_fonts[HB_FONT_COUNT];      // 6 fuentes del sistema
+    bool     m_bFontsLoaded;              // true si al menos 1 fuente cargo
+
+    // Tamanios y estilos por fuente (indices HBFont)
+    static const unsigned int  s_fontSizes[HB_FONT_COUNT];
+    static const sf::Uint32    s_fontStyles[HB_FONT_COUNT];
 
     // Convierte un pixel DDraw 16-bit a sf::Color RGBA
     // wColorKey: valor transparente real del sprite (de CSprite::m_wColorKey)

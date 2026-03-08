@@ -83,9 +83,24 @@ void RenderBackend_DDraw::DrawTile(int iDstX, int iDstY,
 
 void RenderBackend_DDraw::DrawText(int iX, int iY,
     const char* szText,
-    unsigned long dwColor)
+    unsigned long dwColor,
+    int iFontId,
+    int iEffect)
 {
-    // FASE 7: migrar TextOut/DrawText aquí
+    // Fase 8.F stub: DDraw backend no implementa texto SFML
+    // El texto GDI sigue funcionando directamente via DXC_ddraw
+    (void)iX; (void)iY; (void)szText; (void)dwColor;
+    (void)iFontId; (void)iEffect;
+}
+
+void RenderBackend_DDraw::DrawTextCentered(int iX1, int iX2, int iY,
+    const char* szText,
+    unsigned long dwColor,
+    int iFontId)
+{
+    // Fase 8.F stub: DDraw backend no implementa texto SFML
+    (void)iX1; (void)iX2; (void)iY; (void)szText;
+    (void)dwColor; (void)iFontId;
 }
 
 // ------------------------------------------------------------

@@ -9,6 +9,27 @@
 
 #include <windows.h>
 
+// ============================================================
+// Enums de fuentes y efectos de texto (Fase 8.F)
+// Mapeo de las 6 fuentes GDI del juego a indices SFML
+// ============================================================
+
+enum HBFont {
+    HB_FONT_COMIC_SANS = 0, // m_hFontInUse  - Comic Sans MS, 16, Normal
+    HB_FONT_CAMBRIA,        // m_hFontInUse2 - Cambria, 16, Bold
+    HB_FONT_VERDANA,        // m_hFontInUse3 - Verdana, 13, Normal
+    HB_FONT_CALIBRI,        // m_hFontInUse4 - Calibri, 18, Bold
+    HB_FONT_TAHOMA,         // m_hFontInUse5 - Tahoma, 13, Normal
+    HB_FONT_TIMES,          // m_hFontHP     - Times New Roman, 13, Bold
+    HB_FONT_COUNT
+};
+
+enum HBTextEffect {
+    HB_TEXT_PLAIN    = 0,   // Sin efecto
+    HB_TEXT_SHADOW   = 1,   // Sombra derecha+abajo (1px)
+    HB_TEXT_OUTLINE4 = 2,   // Outline 4-direcciones
+};
+
 class IRenderBackend
 {
 public:
@@ -34,10 +55,18 @@ public:
         int iSrcW, int iSrcH,
         int iMapIndex) = 0;
 
-    // Texto
+    // Texto (Fase 8.F: expandido con fuente y efecto)
     virtual void DrawText(int iX, int iY,
         const char* szText,
-        unsigned long dwColor) = 0;
+        unsigned long dwColor,
+        int iFontId = HB_FONT_COMIC_SANS,
+        int iEffect = HB_TEXT_PLAIN) = 0;
+
+    // Texto centrado horizontalmente entre iX1 e iX2
+    virtual void DrawTextCentered(int iX1, int iX2, int iY,
+        const char* szText,
+        unsigned long dwColor,
+        int iFontId = HB_FONT_VERDANA) = 0;
 
     // Resoluci�n
     virtual void SetResolution(int iWidth, int iHeight) = 0;

@@ -47,7 +47,14 @@ public:
 
     virtual void DrawText(int iX, int iY,
         const char* szText,
-        unsigned long dwColor) override;
+        unsigned long dwColor,
+        int iFontId = HB_FONT_COMIC_SANS,
+        int iEffect = HB_TEXT_PLAIN) override;
+
+    virtual void DrawTextCentered(int iX1, int iX2, int iY,
+        const char* szText,
+        unsigned long dwColor,
+        int iFontId = HB_FONT_VERDANA) override;
 
     virtual void SetResolution(int iWidth, int iHeight) override;
     virtual int  GetWidth() override;

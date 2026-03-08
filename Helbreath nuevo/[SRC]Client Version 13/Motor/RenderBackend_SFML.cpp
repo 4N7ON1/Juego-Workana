@@ -13,6 +13,30 @@
 #include "RenderBackend_SFML.h"
 
 // ============================================================
+// Fase 8.F: Configuracion de fuentes (tamanios y estilos GDI)
+// ============================================================
+
+// Tamanios de fuente (mapeo de GDI CreateFont height)
+const unsigned int RenderBackend_SFML::s_fontSizes[HB_FONT_COUNT] = {
+    16, // HB_FONT_COMIC_SANS - Comic Sans MS
+    16, // HB_FONT_CAMBRIA    - Cambria
+    13, // HB_FONT_VERDANA    - Verdana
+    18, // HB_FONT_CALIBRI    - Calibri
+    13, // HB_FONT_TAHOMA     - Tahoma
+    13  // HB_FONT_TIMES      - Times New Roman
+};
+
+// Estilos de fuente (mapeo de GDI FW_NORMAL / FW_BOLD)
+const sf::Uint32 RenderBackend_SFML::s_fontStyles[HB_FONT_COUNT] = {
+    sf::Text::Regular,  // Comic Sans MS  - FW_NORMAL
+    sf::Text::Bold,     // Cambria         - FW_BOLD
+    sf::Text::Regular,  // Verdana         - FW_NORMAL
+    sf::Text::Bold,     // Calibri         - FW_BOLD
+    sf::Text::Regular,  // Tahoma          - FW_NORMAL
+    sf::Text::Bold      // Times New Roman - FW_BOLD
+};
+
+// ============================================================
 // Constructor / Destructor
 // ============================================================
 
@@ -25,8 +49,8 @@ RenderBackend_SFML::RenderBackend_SFML(DXC_ddraw& ddraw)
     , m_bFrameActive(false)
     , m_iCropX(0)
     , m_iCropY(0)
+    , m_bFontsLoaded(false)
 {
-
 }
 
 RenderBackend_SFML::~RenderBackend_SFML()
@@ -63,6 +87,26 @@ bool RenderBackend_SFML::Init(HWND hWnd, int iWidth, int iHeight, bool bFullscre
     }
 
     m_pRenderTex->setSmooth(false); // Sin interpolacion - pixelart fiel
+
+    // ---- Fase 8.F: Cargar fuentes del sistema ----
+    // Rutas de fuentes de Windows (C:\Windows\Fonts\)
+    static const char* s_fontPaths[HB_FONT_COUNT] = {
+        "C:\\Windows\\Fonts\\comic.ttf",      // Comic Sans MS
+        "C:\\Windows\\Fonts\\cambria.ttc",     // Cambria
+        "C:\\Windows\\Fonts\\verdana.ttf",     // Verdana
+        "C:\\Windows\\Fonts\\calibri.ttf",     // Calibri
+        "C:\\Windows\\Fonts\\tahoma.ttf",      // Tahoma
+        "C:\\Windows\\Fonts\\times.ttf"        // Times New Roman
+    };
+
+    m_bFontsLoaded = false;
+    for (int i = 0; i < HB_FONT_COUNT; i++)
+    {
+        if (m_fonts[i].loadFromFile(s_fontPaths[i]))
+        {
+            m_bFontsLoaded = true; // Al menos una fuente cargo
+        }
+    }
 
     m_bInitialized = true;
     return true;
@@ -139,7 +183,7 @@ void RenderBackend_SFML::DrawSprite(int iDstX, int iDstY,
 }
 
 // ============================================================
-// Stubs para Fase 8 (tiles y texto)
+// Stub para tiles (Fase 8.G)
 // ============================================================
 
 void RenderBackend_SFML::DrawTile(int iDstX, int iDstY,
@@ -147,19 +191,97 @@ void RenderBackend_SFML::DrawTile(int iDstX, int iDstY,
     int iSrcW, int iSrcH,
     int iMapIndex)
 {
-    // FASE 8: migrar DrawBackground aqui
+    // FASE 8.G: migrar DrawBackground aqui
     (void)iDstX; (void)iDstY;
     (void)iSrcX; (void)iSrcY;
     (void)iSrcW; (void)iSrcH;
     (void)iMapIndex;
 }
 
+// ============================================================
+// Fase 8.F: Texto SFML con fuentes del sistema
+// ============================================================
+
 void RenderBackend_SFML::DrawText(int iX, int iY,
     const char* szText,
-    unsigned long dwColor)
+    unsigned long dwColor,
+    int iFontId,
+    int iEffect)
 {
-    // FASE 8: migrar texto (reemplazar GDI GetDC) aqui
-    (void)iX; (void)iY; (void)szText; (void)dwColor;
+    if (!m_bInitialized || !m_bFontsLoaded) return;
+    if (!szText || !szText[0]) return;
+    if (iFontId < 0 || iFontId >= HB_FONT_COUNT) return;
+    if (!m_bFrameActive || !m_pRenderTex) return;
+
+    // Verificar que la fuente cargo (getInfo().family esta vacio si fallo)
+    if (m_fonts[iFontId].getInfo().family.empty()) return;
+
+    // Configuracion de la fuente
+    unsigned int charSize = s_fontSizes[iFontId];
+    sf::Uint32   style    = s_fontStyles[iFontId];
+
+    // Color SFML desde COLORREF (Windows BGR -> SFML RGB)
+    sf::Color color(GetRValue(dwColor), GetGValue(dwColor), GetBValue(dwColor));
+
+    sf::Text text;
+    text.setFont(m_fonts[iFontId]);
+    text.setString(szText);
+    text.setCharacterSize(charSize);
+    text.setStyle(style);
+    text.setFillColor(color);
+    text.setPosition(static_cast<float>(iX), static_cast<float>(iY));
+
+    // Efectos de texto
+    if (iEffect == HB_TEXT_SHADOW)
+    {
+        // Sombra: dibujar primero el texto negro desplazado 1px derecha+abajo
+        sf::Text shadow(text);
+        shadow.setFillColor(sf::Color::Black);
+        shadow.setPosition(static_cast<float>(iX + 1), static_cast<float>(iY + 1));
+        if (shadow.getOutlineThickness() != 0.f) shadow.setOutlineThickness(0.f);
+        m_pRenderTex->draw(shadow);
+    }
+    else if (iEffect == HB_TEXT_OUTLINE4)
+    {
+        // Outline via sf::Text::setOutlineThickness (mas eficiente que 4 draws)
+        text.setOutlineColor(sf::Color::Black);
+        text.setOutlineThickness(1.0f);
+    }
+
+    m_pRenderTex->draw(text);
+}
+
+void RenderBackend_SFML::DrawTextCentered(int iX1, int iX2, int iY,
+    const char* szText,
+    unsigned long dwColor,
+    int iFontId)
+{
+    if (!m_bInitialized || !m_bFontsLoaded) return;
+    if (!szText || !szText[0]) return;
+    if (iFontId < 0 || iFontId >= HB_FONT_COUNT) return;
+    if (!m_bFrameActive || !m_pRenderTex) return;
+    if (m_fonts[iFontId].getInfo().family.empty()) return;
+
+    // Crear texto temporal para medir su ancho
+    unsigned int charSize = s_fontSizes[iFontId];
+    sf::Uint32   style    = s_fontStyles[iFontId];
+
+    sf::Text text;
+    text.setFont(m_fonts[iFontId]);
+    text.setString(szText);
+    text.setCharacterSize(charSize);
+    text.setStyle(style);
+
+    // Calcular posicion centrada horizontalmente entre iX1 e iX2
+    float textWidth = text.getLocalBounds().width;
+    float regionWidth = static_cast<float>(iX2 - iX1);
+    float centeredX = static_cast<float>(iX1) + (regionWidth - textWidth) / 2.0f;
+
+    sf::Color color(GetRValue(dwColor), GetGValue(dwColor), GetBValue(dwColor));
+    text.setFillColor(color);
+    text.setPosition(centeredX, static_cast<float>(iY));
+
+    m_pRenderTex->draw(text);
 }
 
 // ============================================================
