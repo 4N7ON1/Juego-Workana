@@ -105,6 +105,14 @@ bool RenderBackend_SFML::Init(HWND hWnd, int iWidth, int iHeight, bool bFullscre
         if (m_fonts[i].loadFromFile(s_fontPaths[i]))
         {
             m_bFontsLoaded = true; // Al menos una fuente cargo
+
+            // Fase 8.G: Pre-cargar glifos ASCII (32-126) para evitar
+            // lag en el primer frame con texto. SFML construye el atlas
+            // de glifos on-demand, lo que puede causar un freeze de varios
+            // segundos la primera vez (el servidor kickea por timeout).
+            for (unsigned int ch = 32; ch < 127; ch++)
+                m_fonts[i].getGlyph(ch, s_fontSizes[i],
+                    (s_fontStyles[i] & sf::Text::Bold) != 0);
         }
     }
 
