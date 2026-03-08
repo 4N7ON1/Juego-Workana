@@ -7834,6 +7834,36 @@ void CGame::PutString(int iX, int iY, char * pString, COLORREF color, BOOL bHide
 	char * pTmp;
 	int i;
 	if (strlen(pString) == 0) return;
+
+	// Fase 8.G: ruta SFML cuando el frame esta activo
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive()) {
+		int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+		const char* pDraw = pString;
+		char* pHidden = nullptr;
+		if (bHide) {
+			pHidden = new char[strlen(pString) + 2];
+			ZeroMemory(pHidden, strlen(pString) + 2);
+			strcpy(pHidden, pString);
+			for (i = 0; i < (int)strlen(pString); i++)
+				if (pHidden[i] != NULL) pHidden[i] = '*';
+			pDraw = pHidden;
+		}
+		switch (cBGtype) {
+			case 0:
+				g_pRenderBackend->DrawText(iX + 1 + cx, iY + cy, pDraw, color, HB_FONT_COMIC_SANS, HB_TEXT_PLAIN);
+				break;
+			case 1:
+				g_pRenderBackend->DrawText(iX + cx, iY + 1 + cy, pDraw, RGB(5, 5, 5), HB_FONT_COMIC_SANS, HB_TEXT_PLAIN);
+				g_pRenderBackend->DrawText(iX + 1 + cx, iY + 1 + cy, pDraw, RGB(5, 5, 5), HB_FONT_COMIC_SANS, HB_TEXT_PLAIN);
+				g_pRenderBackend->DrawText(iX + 1 + cx, iY + cy, pDraw, RGB(5, 5, 5), HB_FONT_COMIC_SANS, HB_TEXT_PLAIN);
+				break;
+		}
+		g_pRenderBackend->DrawText(iX + cx, iY + cy, pDraw, color, HB_FONT_COMIC_SANS, HB_TEXT_PLAIN);
+		if (pHidden) delete[] pHidden;
+		return;
+	}
+
+	// GDI fallback (menus, login, post-EndFrame)
 	if (bIsPreDC == FALSE) m_DDraw._GetBackBufferDC();
 	if (bHide == FALSE) {
 		switch (cBGtype) {
@@ -7874,6 +7904,11 @@ void CGame::PutString(int iX, int iY, char * pString, COLORREF color, BOOL bHide
 
 void CGame::PutString(int iX, int iY, char * pString, COLORREF color)
 {
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive()) {
+		int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+		g_pRenderBackend->DrawText(iX + cx, iY + cy, pString, color, HB_FONT_COMIC_SANS, HB_TEXT_PLAIN);
+		return;
+	}
 	m_DDraw._GetBackBufferDC();
 	m_DDraw.TextOut(iX, iY, pString, color);
 	m_DDraw._ReleaseBackBufferDC();
@@ -7881,6 +7916,14 @@ void CGame::PutString(int iX, int iY, char * pString, COLORREF color)
 
 void CGame::PutString2(int iX, int iY, char * pString, short sR, short sG, short sB)
 {
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive()) {
+		int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+		g_pRenderBackend->DrawText(iX + 1 + cx, iY + cy, pString, RGB(0, 0, 0), HB_FONT_COMIC_SANS, HB_TEXT_PLAIN);
+		g_pRenderBackend->DrawText(iX + cx, iY + 1 + cy, pString, RGB(0, 0, 0), HB_FONT_COMIC_SANS, HB_TEXT_PLAIN);
+		g_pRenderBackend->DrawText(iX + 1 + cx, iY + 1 + cy, pString, RGB(0, 0, 0), HB_FONT_COMIC_SANS, HB_TEXT_PLAIN);
+		g_pRenderBackend->DrawText(iX + cx, iY + cy, pString, RGB(sR, sG, sB), HB_FONT_COMIC_SANS, HB_TEXT_PLAIN);
+		return;
+	}
 	m_DDraw._GetBackBufferDC();
 	m_DDraw.TextOut(iX + 1, iY, pString, RGB(0, 0, 0));
 	m_DDraw.TextOut(iX, iY + 1, pString, RGB(0, 0, 0));
@@ -7891,6 +7934,11 @@ void CGame::PutString2(int iX, int iY, char * pString, short sR, short sG, short
 
 void CGame::PutAlignedString(int iX1, int iX2, int iY, char * pString, short sR, short sG, short sB)
 {
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive()) {
+		int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+		g_pRenderBackend->DrawTextCentered(iX1 + cx, iX2 + cx, iY + cy, pString, RGB(sR, sG, sB), HB_FONT_COMIC_SANS);
+		return;
+	}
 	RECT rt;
 	m_DDraw._GetBackBufferDC();
 	SetRect(&rt, iX1, iY, iX2, iY + 15);
@@ -7902,6 +7950,11 @@ void CGame::PutAlignedString(int iX1, int iX2, int iY, char * pString, short sR,
 
 void CGame::PutAlignedCambriaString(int iX1, int iX2, int iY, char * pString, short sR, short sG, short sB)
 {
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive()) {
+		int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+		g_pRenderBackend->DrawTextCentered(iX1 + cx, iX2 + cx, iY + cy, pString, RGB(sR, sG, sB), HB_FONT_VERDANA);
+		return;
+	}
 	RECT rt;
 	m_DDraw._GetBackBufferDC3();
 	SetRect(&rt, iX1, iY, iX2, iY + 15);
@@ -7912,6 +7965,11 @@ void CGame::PutAlignedCambriaString(int iX1, int iX2, int iY, char * pString, sh
 
 void CGame::PutAlignedTahomaString(int iX1, int iX2, int iY, char * pString, short sR, short sG, short sB)
 {
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive()) {
+		int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+		g_pRenderBackend->DrawTextCentered(iX1 + cx, iX2 + cx, iY + cy, pString, RGB(sR, sG, sB), HB_FONT_TAHOMA);
+		return;
+	}
 	RECT rt;
 	m_DDraw._GetBackBufferDC6();
 	SetRect(&rt, iX1, iY, iX2, iY + 15);
@@ -7922,6 +7980,11 @@ void CGame::PutAlignedTahomaString(int iX1, int iX2, int iY, char * pString, sho
 
 void CGame::PutCenterStringTitle(int iX1, int iX2, int iY, char * pString, short sR, short sG, short sB)
 {
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive()) {
+		int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+		g_pRenderBackend->DrawTextCentered(iX1 + cx, iX2 + cx, iY + cy, pString, RGB(sR, sG, sB), HB_FONT_CAMBRIA);
+		return;
+	}
 	RECT rt;
 	m_DDraw._GetBackBufferDC2();
 	SetRect(&rt, iX1, iY, iX2, iY + 15);
@@ -7931,6 +7994,14 @@ void CGame::PutCenterStringTitle(int iX1, int iX2, int iY, char * pString, short
 
 void CGame::PutCambriaTabString(int iX, int iY, char * pString, short sR, short sG, short sB)
 {
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive()) {
+		int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+		g_pRenderBackend->DrawText(iX + 1 + cx, iY + cy, pString, RGB(0, 0, 0), HB_FONT_CALIBRI, HB_TEXT_PLAIN);
+		g_pRenderBackend->DrawText(iX + cx, iY + 1 + cy, pString, RGB(0, 0, 0), HB_FONT_CALIBRI, HB_TEXT_PLAIN);
+		g_pRenderBackend->DrawText(iX + 1 + cx, iY + 1 + cy, pString, RGB(0, 0, 0), HB_FONT_CALIBRI, HB_TEXT_PLAIN);
+		g_pRenderBackend->DrawText(iX + cx, iY + cy, pString, RGB(sR, sG, sB), HB_FONT_CALIBRI, HB_TEXT_PLAIN);
+		return;
+	}
 	m_DDraw._GetBackBufferDC5();
 	m_DDraw.TextOut(iX + 1, iY, pString, RGB(0, 0, 0));
 	m_DDraw.TextOut(iX, iY + 1, pString, RGB(0, 0, 0));
@@ -7941,6 +8012,14 @@ void CGame::PutCambriaTabString(int iX, int iY, char * pString, short sR, short 
 
 void CGame::PutCambriaString(int iX, int iY, char * pString, short sR, short sG, short sB)
 {
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive()) {
+		int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+		g_pRenderBackend->DrawText(iX + 1 + cx, iY + cy, pString, RGB(0, 0, 0), HB_FONT_VERDANA, HB_TEXT_PLAIN);
+		g_pRenderBackend->DrawText(iX + cx, iY + 1 + cy, pString, RGB(0, 0, 0), HB_FONT_VERDANA, HB_TEXT_PLAIN);
+		g_pRenderBackend->DrawText(iX + 1 + cx, iY + 1 + cy, pString, RGB(0, 0, 0), HB_FONT_VERDANA, HB_TEXT_PLAIN);
+		g_pRenderBackend->DrawText(iX + cx, iY + cy, pString, RGB(sR, sG, sB), HB_FONT_VERDANA, HB_TEXT_PLAIN);
+		return;
+	}
 	m_DDraw._GetBackBufferDC3();
 	m_DDraw.TextOut(iX + 1, iY, pString, RGB(0, 0, 0));
 	m_DDraw.TextOut(iX, iY + 1, pString, RGB(0, 0, 0));
@@ -7951,6 +8030,25 @@ void CGame::PutCambriaString(int iX, int iY, char * pString, short sR, short sG,
 
 void CGame::PutString_Outline(int iX, int iY, char * pString, short sR, short sG, short sB, BOOL bCenter)
 {
+	// Fase 8.G: ruta SFML
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive()) {
+		int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+		if (bCenter) {
+			int tw = g_pRenderBackend->MeasureTextWidth(pString, HB_FONT_TIMES);
+			iX -= (tw / 2);
+		}
+		iX -= 7;
+		// Outline negro 4 direcciones
+		g_pRenderBackend->DrawText(iX - 1 + cx, iY + cy, pString, RGB(0, 0, 0), HB_FONT_TIMES, HB_TEXT_PLAIN);
+		g_pRenderBackend->DrawText(iX + 1 + cx, iY + cy, pString, RGB(0, 0, 0), HB_FONT_TIMES, HB_TEXT_PLAIN);
+		g_pRenderBackend->DrawText(iX + cx, iY - 1 + cy, pString, RGB(0, 0, 0), HB_FONT_TIMES, HB_TEXT_PLAIN);
+		g_pRenderBackend->DrawText(iX + cx, iY + 1 + cy, pString, RGB(0, 0, 0), HB_FONT_TIMES, HB_TEXT_PLAIN);
+		// Texto principal blanco
+		g_pRenderBackend->DrawText(iX + cx, iY + cy, pString, RGB(255, 255, 255), HB_FONT_TIMES, HB_TEXT_PLAIN);
+		return;
+	}
+
+	// GDI fallback
 	m_DDraw._GetBackBufferDC_HP();
 	HDC hDC = m_DDraw.m_hDC; // Dedicated HP Font
 
@@ -7959,8 +8057,6 @@ void CGame::PutString_Outline(int iX, int iY, char * pString, short sR, short sG
 		GetTextExtentPoint32(hDC, pString, strlen(pString), &sz);
 		iX -= (sz.cx / 2);
 	}
-
-
 
 	iX -= 7;
 
@@ -7978,6 +8074,16 @@ void CGame::PutString_Outline(int iX, int iY, char * pString, short sR, short sG
 
 void CGame::PutAlignedString2(int iX1, int iX2, int iY, char * pString, short sR, short sG, short sB)
 {
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive()) {
+		int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+		// Sombra centrada (3 pasadas negras desplazadas)
+		g_pRenderBackend->DrawTextCentered(iX1 + 1 + cx, iX2 + 1 + cx, iY + cy, pString, RGB(0, 0, 0), HB_FONT_COMIC_SANS);
+		g_pRenderBackend->DrawTextCentered(iX1 + cx, iX2 + cx, iY + 1 + cy, pString, RGB(0, 0, 0), HB_FONT_COMIC_SANS);
+		g_pRenderBackend->DrawTextCentered(iX1 + 1 + cx, iX2 + 1 + cx, iY + 1 + cy, pString, RGB(0, 0, 0), HB_FONT_COMIC_SANS);
+		// Texto principal centrado
+		g_pRenderBackend->DrawTextCentered(iX1 + cx, iX2 + cx, iY + cy, pString, RGB(sR, sG, sB), HB_FONT_COMIC_SANS);
+		return;
+	}
 	RECT rt;
 	m_DDraw._GetBackBufferDC();
 	SetRect(&rt, iX1 + 1, iY, iX2 + 1, iY + 15);

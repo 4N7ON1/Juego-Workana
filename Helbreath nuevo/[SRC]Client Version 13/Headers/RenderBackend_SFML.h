@@ -98,7 +98,8 @@ public:
     virtual int GetCropX() const override { return m_iCropX; }
     virtual int GetCropY() const override { return m_iCropY; }
 
-
+    // Fase 8.G: medir ancho de texto
+    virtual int MeasureTextWidth(const char* szText, int iFontId = HB_FONT_COMIC_SANS) override;
 
 private:
     DXC_ddraw&         m_DDraw;            // referencia al DDraw de CGame - NO es dueno

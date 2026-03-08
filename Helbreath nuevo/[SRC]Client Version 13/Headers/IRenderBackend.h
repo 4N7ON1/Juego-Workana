@@ -99,6 +99,9 @@ public:
     virtual int GetCropX() const = 0;
     virtual int GetCropY() const = 0;
 
+    // Fase 8.G: Medir ancho de texto en pixels (para centrado manual)
+    virtual int MeasureTextWidth(const char* szText, int iFontId = HB_FONT_COMIC_SANS) = 0;
+
 };
 
 #endif // IRENDERBACKEND_H

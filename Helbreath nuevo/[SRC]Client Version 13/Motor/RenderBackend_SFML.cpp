@@ -285,6 +285,25 @@ void RenderBackend_SFML::DrawTextCentered(int iX1, int iX2, int iY,
 }
 
 // ============================================================
+// Fase 8.G: Medir ancho de texto en pixels
+// ============================================================
+
+int RenderBackend_SFML::MeasureTextWidth(const char* szText, int iFontId)
+{
+    if (!m_bFontsLoaded || !szText || !szText[0]) return 0;
+    if (iFontId < 0 || iFontId >= HB_FONT_COUNT) return 0;
+    if (m_fonts[iFontId].getInfo().family.empty()) return 0;
+
+    sf::Text text;
+    text.setFont(m_fonts[iFontId]);
+    text.setString(szText);
+    text.setCharacterSize(s_fontSizes[iFontId]);
+    text.setStyle(s_fontStyles[iFontId]);
+
+    return static_cast<int>(text.getLocalBounds().width + 0.5f);
+}
+
+// ============================================================
 // Resolucion
 // ============================================================
 
