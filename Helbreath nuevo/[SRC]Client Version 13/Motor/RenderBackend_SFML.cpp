@@ -218,6 +218,35 @@ void RenderBackend_SFML::DrawSpriteColor(int iDstX, int iDstY,
 }
 
 // ============================================================
+// Fase 8.I: Sombra proyectada con sf::Transform
+// ============================================================
+
+void RenderBackend_SFML::DrawSpriteShadow(int iSrcX, int iSrcY, int iSrcW, int iSrcH,
+    int iSpriteIndex,
+    float fDstX, float fDstY,
+    float fShearX, float fScaleY)
+{
+    if (!m_bInitialized || !m_bFrameActive || !m_pRenderTex) return;
+    if (m_mapTextures.find(iSpriteIndex) == m_mapTextures.end()) return;
+
+    sf::Sprite spr(m_mapTextures.at(iSpriteIndex));
+    spr.setTextureRect(sf::IntRect(iSrcX, iSrcY, iSrcW, iSrcH));
+    // Negro con 75% opacidad = oscurece destino a ~25% (equivale a >>2 del DDraw)
+    spr.setColor(sf::Color(0, 0, 0, 192));
+
+    // Matriz de transformacion para paralelogramo:
+    // x' = 1*x + fShearX*y + fDstX
+    // y' = 0*x + fScaleY*y + fDstY
+    sf::Transform shadowTransform(
+        1.0f,     fShearX,  fDstX,
+        0.0f,     fScaleY,  fDstY,
+        0.0f,     0.0f,     1.0f
+    );
+
+    m_pRenderTex->draw(spr, sf::RenderStates(shadowTransform));
+}
+
+// ============================================================
 // Stub para tiles (Fase 8.G)
 // ============================================================
 

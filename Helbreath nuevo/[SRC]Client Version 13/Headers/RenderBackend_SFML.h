@@ -107,6 +107,12 @@ public:
         int iSpriteIndex,
         int iR = 255, int iG = 255, int iB = 255, int iA = 255) override;
 
+    // Fase 8.I: sombra proyectada con transformacion geometrica
+    virtual void DrawSpriteShadow(int iSrcX, int iSrcY, int iSrcW, int iSrcH,
+        int iSpriteIndex,
+        float fDstX, float fDstY,
+        float fShearX, float fScaleY) override;
+
 private:
     DXC_ddraw&         m_DDraw;            // referencia al DDraw de CGame - NO es dueno
     sf::RenderTexture* m_pRenderTex;       // canvas virtual (resolucion del juego)

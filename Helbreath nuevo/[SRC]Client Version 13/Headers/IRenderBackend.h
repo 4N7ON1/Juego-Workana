@@ -110,6 +110,16 @@ public:
         int iSpriteIndex,
         int iR = 255, int iG = 255, int iB = 255, int iA = 255) = 0;
 
+    // Fase 8.I: Sombra proyectada con transformacion geometrica (paralelogramo)
+    // Usa la silueta del sprite (alpha del colorkey) como mascara.
+    // Dibuja en negro semitransparente con shear horizontal + compresion vertical.
+    // fShearX: factor de cizallamiento horizontal (1/3 = sombra a la derecha)
+    // fScaleY: factor de compresion vertical (1/3 = altura comprimida)
+    virtual void DrawSpriteShadow(int iSrcX, int iSrcY, int iSrcW, int iSrcH,
+        int iSpriteIndex,
+        float fDstX, float fDstY,
+        float fShearX, float fScaleY) = 0;
+
 };
 
 #endif // IRENDERBACKEND_H

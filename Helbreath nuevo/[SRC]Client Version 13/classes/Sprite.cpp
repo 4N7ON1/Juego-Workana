@@ -887,6 +887,40 @@ void CSprite::PutShadowSprite(int sX, int sY, int sFrame, DWORD dwTime)
 		if( _iOpenSprite() == FALSE ) return;
 	}
 
+	// === SFML INTERCEPT (Fase 8.I - PutShadowSprite - sombra proyectada) ===
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive() && m_iSpriteIndex >= 0)
+	{
+		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			DDSURFACEDESC2 ddsd2; ZeroMemory(&ddsd2, sizeof(ddsd2)); ddsd2.dwSize = sizeof(ddsd2);
+			if (m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK) {
+				int w = m_wBitmapSizeX, h = m_wBitmapSizeY;
+				int pitch = (int)(ddsd2.lPitch / 2);
+				WORD* pPixs = (WORD*)ddsd2.lpSurface;
+				if (w > 0 && h > 0 && pPixs) {
+					unsigned short* pBuf = new unsigned short[w * h];
+					for (int row = 0; row < h; row++)
+						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, m_wColorKey);
+					delete[] pBuf;
+				}
+				m_lpSurface->Unlock(NULL);
+			}
+		}
+		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+			// Matematica del paralelogramo DDraw:
+			// destX = sX+pvx+ix+(iy-szy)/3  -> shear=1/3, offsetX = sX+pvx-szy/3
+			// destY = sY+pvy+(iy+2*szy)/3   -> scale=1/3, offsetY = sY+pvy+2*szy/3
+			float fDstX = (float)(sX + pvx) - (float)szy / 3.0f + (float)cx;
+			float fDstY = (float)(sY + pvy) + 2.0f * (float)szy / 3.0f + (float)cy;
+			g_pRenderBackend->DrawSpriteShadow(sx, sy, szx, szy, m_iSpriteIndex,
+				fDstX, fDstY, 1.0f / 3.0f, 1.0f / 3.0f);
+			m_bOnCriticalSection = FALSE;
+			return;
+		}
+	}
+	// === FIN SFML INTERCEPT (PutShadowSprite) ===
+
 	int iSangX, iSangY;
 	pSrc = (WORD *)m_pSurfaceAddr + sx + sy*m_sPitch;
 	pDst = (WORD *)m_pDDraw->m_pBackB4Addr;// + dX + ((dY+szy-1)*m_pDDraw->m_sBackB4Pitch);
@@ -941,9 +975,9 @@ void CSprite::PutShadowSpriteClip(int sX, int sY, int sFrame, DWORD dwTime)
 	if( this == NULL ) return;
 	if( m_stBrush == NULL ) return;
 	m_rcBound.top = -1; // Fix by Snoopy.... (Reco at mine)
-	if ((m_iTotalFrame-1 < sFrame) || (sFrame < 0)) return;	
+	if ((m_iTotalFrame-1 < sFrame) || (sFrame < 0)) return;
 	m_bOnCriticalSection = TRUE;
-	
+
 	sx  = m_stBrush[sFrame].sx;
 	sy  = m_stBrush[sFrame].sy;
 	szx = m_stBrush[sFrame].szx;
@@ -953,7 +987,44 @@ void CSprite::PutShadowSpriteClip(int sX, int sY, int sFrame, DWORD dwTime)
 
   	dX = sX + pvx;
 	dY = sY + pvy;
-	
+
+	// === SFML INTERCEPT (Fase 8.I - PutShadowSpriteClip - sombra proyectada con clip) ===
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive() && m_iSpriteIndex >= 0)
+	{
+		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			m_dwRefTime = dwTime;
+			if (m_bIsSurfaceEmpty == TRUE) {
+				if (_iOpenSprite() == FALSE) return;
+			}
+			DDSURFACEDESC2 ddsd2; ZeroMemory(&ddsd2, sizeof(ddsd2)); ddsd2.dwSize = sizeof(ddsd2);
+			if (m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK) {
+				int w = m_wBitmapSizeX, h = m_wBitmapSizeY;
+				int pitch = (int)(ddsd2.lPitch / 2);
+				WORD* pPixs = (WORD*)ddsd2.lpSurface;
+				if (w > 0 && h > 0 && pPixs) {
+					unsigned short* pBuf = new unsigned short[w * h];
+					for (int row = 0; row < h; row++)
+						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, m_wColorKey);
+					delete[] pBuf;
+				}
+				m_lpSurface->Unlock(NULL);
+			}
+		}
+		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+			// Misma transformacion geometrica que PutShadowSprite (shear=1/3, scale=1/3)
+			// pero usando dX/dY (posicion con pivot) como base
+			float fDstX = (float)dX - (float)szy / 3.0f + (float)cx;
+			float fDstY = (float)dY + 2.0f * (float)szy / 3.0f + (float)cy;
+			g_pRenderBackend->DrawSpriteShadow(sx, sy, szx, szy, m_iSpriteIndex,
+				fDstX, fDstY, 1.0f / 3.0f, 1.0f / 3.0f);
+			m_bOnCriticalSection = FALSE;
+			return;
+		}
+	}
+	// === FIN SFML INTERCEPT (PutShadowSpriteClip) ===
+
 	if (dX < m_pDDraw->m_rcClipArea.left)
 	{
 		//Reparando warning LaloRamos anulado v11 - Agregado (unsigned short)
@@ -2834,6 +2905,35 @@ void CSprite::PutTransSprite2(int sX, int sY, int sFrame, DWORD dwTime)
 	m_rcBound.top  = dY;
 	m_rcBound.right  = dX + szx;
 	m_rcBound.bottom = dY + szy;
+
+	// === SFML INTERCEPT (Fase 8.I - PutTransSprite2 - 50% alpha) ===
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive() && m_iSpriteIndex >= 0)
+	{
+		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			DDSURFACEDESC2 ddsd2; ZeroMemory(&ddsd2, sizeof(ddsd2)); ddsd2.dwSize = sizeof(ddsd2);
+			if (m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK) {
+				int w = m_wBitmapSizeX, h = m_wBitmapSizeY;
+				int pitch = (int)(ddsd2.lPitch / 2);
+				WORD* pPixs = (WORD*)ddsd2.lpSurface;
+				if (w > 0 && h > 0 && pPixs) {
+					unsigned short* pBuf = new unsigned short[w * h];
+					for (int row = 0; row < h; row++)
+						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, m_wColorKey);
+					delete[] pBuf;
+				}
+				m_lpSurface->Unlock(NULL);
+			}
+		}
+		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+			g_pRenderBackend->DrawSpriteColor(dX + cx, dY + cy, sx, sy, szx, szy,
+				m_iSpriteIndex, 255, 255, 255, 128);
+			m_bOnCriticalSection = FALSE;
+			return;
+		}
+	}
+	// === FIN SFML INTERCEPT (PutTransSprite2) ===
 
 	pSrc = (WORD *)m_pSurfaceAddr + sx + ((sy)*m_sPitch);
 	pDst = (WORD *)m_pDDraw->m_pBackB4Addr + dX + ((dY)*m_pDDraw->m_sBackB4Pitch);
