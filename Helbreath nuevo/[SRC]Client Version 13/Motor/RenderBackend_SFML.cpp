@@ -247,6 +247,37 @@ void RenderBackend_SFML::DrawSpriteShadow(int iSrcX, int iSrcY, int iSrcW, int i
 }
 
 // ============================================================
+// Fase 8.K: Sprite escalado con color/alpha
+// ============================================================
+
+void RenderBackend_SFML::DrawSpriteScaled(int iDstX, int iDstY,
+    int iSrcX, int iSrcY, int iSrcW, int iSrcH,
+    int iSpriteIndex,
+    float fScaleX, float fScaleY,
+    int iR, int iG, int iB, int iA)
+{
+    if (!m_bInitialized) return;
+    if (!m_bFrameActive) return;
+    if (m_mapTextures.find(iSpriteIndex) == m_mapTextures.end()) return;
+
+    sf::Sprite spr(m_mapTextures.at(iSpriteIndex));
+    spr.setTextureRect(sf::IntRect(iSrcX, iSrcY, iSrcW, iSrcH));
+    spr.setPosition(static_cast<float>(iDstX), static_cast<float>(iDstY));
+    spr.setScale(fScaleX, fScaleY);
+
+    // Clamp RGBA 0-255
+    sf::Uint8 r = static_cast<sf::Uint8>((iR < 0) ? 0 : ((iR > 255) ? 255 : iR));
+    sf::Uint8 g = static_cast<sf::Uint8>((iG < 0) ? 0 : ((iG > 255) ? 255 : iG));
+    sf::Uint8 b = static_cast<sf::Uint8>((iB < 0) ? 0 : ((iB > 255) ? 255 : iB));
+    sf::Uint8 a = static_cast<sf::Uint8>((iA < 0) ? 0 : ((iA > 255) ? 255 : iA));
+    spr.setColor(sf::Color(r, g, b, a));
+
+    m_pRenderTex->draw(spr);
+}
+
+
+
+// ============================================================
 // Stub para tiles (Fase 8.G)
 // ============================================================
 

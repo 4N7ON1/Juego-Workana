@@ -113,6 +113,14 @@ public:
         float fDstX, float fDstY,
         float fShearX, float fScaleY) override;
 
+    // Fase 8.K: dibujo de sprites con escala
+    virtual void DrawSpriteScaled(int iDstX, int iDstY,
+        int iSrcX, int iSrcY, int iSrcW, int iSrcH,
+        int iSpriteIndex,
+        float fScaleX, float fScaleY,
+        int iR = 255, int iG = 255, int iB = 255, int iA = 255) override;
+
+
 private:
     DXC_ddraw&         m_DDraw;            // referencia al DDraw de CGame - NO es dueno
     sf::RenderTexture* m_pRenderTex;       // canvas virtual (resolucion del juego)

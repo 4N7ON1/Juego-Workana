@@ -120,6 +120,15 @@ public:
         float fDstX, float fDstY,
         float fShearX, float fScaleY) = 0;
 
+    // Fase 8.K: Dibujo de sprites con escala + color/alpha
+    // Igual que DrawSpriteColor pero aplica escala al sprite.
+    // fScaleX/fScaleY: factores de escala (0.7 = 70%, 0.25 = 25%)
+    virtual void DrawSpriteScaled(int iDstX, int iDstY,
+        int iSrcX, int iSrcY, int iSrcW, int iSrcH,
+        int iSpriteIndex,
+        float fScaleX, float fScaleY,
+        int iR = 255, int iG = 255, int iB = 255, int iA = 255) = 0;
+
 };
 
 #endif // IRENDERBACKEND_H

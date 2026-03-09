@@ -1550,11 +1550,12 @@ void CSprite::PutTransSpriteScaled(int sX, int sY, int sFrame, DWORD dwTime, int
 		}
 		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
 			int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
-			g_pRenderBackend->DrawSpriteColor(dX + cx, dY + cy, sx, sy, szx, szy,
-				m_iSpriteIndex, 255, 255, 255, 128);
+			g_pRenderBackend->DrawSpriteScaled(dX + cx, dY + cy, sx, sy, szx, szy,
+				m_iSpriteIndex, 0.7f, 0.7f, 255, 255, 255, 128);
 			m_bOnCriticalSection = FALSE;
 			return;
 		}
+
 	}
 	// === FIN SFML INTERCEPT ===
 
@@ -1701,11 +1702,12 @@ void CSprite::PutTransSpriteMiniScaled(int sX, int sY, int sFrame, DWORD dwTime,
 		}
 		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
 			int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
-			g_pRenderBackend->DrawSpriteColor(dX + cx, dY + cy, sx, sy, szx, szy,
-				m_iSpriteIndex, 255, 255, 255, 128);
+			g_pRenderBackend->DrawSpriteScaled(dX + cx, dY + cy, sx, sy, szx, szy,
+				m_iSpriteIndex, 0.25f, 0.25f, 255, 255, 255, 128);
 			m_bOnCriticalSection = FALSE;
 			return;
 		}
+
 	}
 	// === FIN SFML INTERCEPT ===
 
