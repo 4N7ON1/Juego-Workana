@@ -1529,6 +1529,35 @@ void CSprite::PutTransSpriteScaled(int sX, int sY, int sFrame, DWORD dwTime, int
 	m_rcBound.top = dY;
 	m_rcBound.right = dX + szx;
 	m_rcBound.bottom = dY + szy;
+	// === SFML INTERCEPT (Fase 8.J - PutTransSpriteScaled - 70% escala + alpha) ===
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive() && m_iSpriteIndex >= 0)
+	{
+		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			DDSURFACEDESC2 ddsd2; ZeroMemory(&ddsd2, sizeof(ddsd2)); ddsd2.dwSize = sizeof(ddsd2);
+			if (m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK) {
+				int w = m_wBitmapSizeX, h = m_wBitmapSizeY;
+				int pitch = (int)(ddsd2.lPitch / 2);
+				WORD* pPixs = (WORD*)ddsd2.lpSurface;
+				if (w > 0 && h > 0 && pPixs) {
+					unsigned short* pBuf = new unsigned short[w * h];
+					for (int row = 0; row < h; row++)
+						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, m_wColorKey);
+					delete[] pBuf;
+				}
+				m_lpSurface->Unlock(NULL);
+			}
+		}
+		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+			g_pRenderBackend->DrawSpriteColor(dX + cx, dY + cy, sx, sy, szx, szy,
+				m_iSpriteIndex, 255, 255, 255, 128);
+			m_bOnCriticalSection = FALSE;
+			return;
+		}
+	}
+	// === FIN SFML INTERCEPT ===
+
 
 	// Dimensiones escaladas
 	int scaledWidth = static_cast<int>(szx * 0.7f);
@@ -1651,6 +1680,35 @@ void CSprite::PutTransSpriteMiniScaled(int sX, int sY, int sFrame, DWORD dwTime,
 	m_rcBound.top = dY;
 	m_rcBound.right = dX + szx;
 	m_rcBound.bottom = dY + szy;
+	// === SFML INTERCEPT (Fase 8.J - PutTransSpriteMiniScaled - 25% escala + alpha) ===
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive() && m_iSpriteIndex >= 0)
+	{
+		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			DDSURFACEDESC2 ddsd2; ZeroMemory(&ddsd2, sizeof(ddsd2)); ddsd2.dwSize = sizeof(ddsd2);
+			if (m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK) {
+				int w = m_wBitmapSizeX, h = m_wBitmapSizeY;
+				int pitch = (int)(ddsd2.lPitch / 2);
+				WORD* pPixs = (WORD*)ddsd2.lpSurface;
+				if (w > 0 && h > 0 && pPixs) {
+					unsigned short* pBuf = new unsigned short[w * h];
+					for (int row = 0; row < h; row++)
+						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, m_wColorKey);
+					delete[] pBuf;
+				}
+				m_lpSurface->Unlock(NULL);
+			}
+		}
+		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+			g_pRenderBackend->DrawSpriteColor(dX + cx, dY + cy, sx, sy, szx, szy,
+				m_iSpriteIndex, 255, 255, 255, 128);
+			m_bOnCriticalSection = FALSE;
+			return;
+		}
+	}
+	// === FIN SFML INTERCEPT ===
+
 
 	// Dimensiones escaladas
 	int scaledWidth = static_cast<int>(szx * 0.25f);
@@ -3055,6 +3113,36 @@ void CSprite::PutShiftTransSprite2(int sX, int sY, int shX, int shY, int sFrame,
 	m_rcBound.top  = dY;
 	m_rcBound.right  = dX + szx;
 	m_rcBound.bottom = dY + szy;
+	
+	// === SFML INTERCEPT (Fase 8.J - PutShiftTransSprite2 - 128x128 shifted 50% alpha) ===
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive() && m_iSpriteIndex >= 0)
+	{
+		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			DDSURFACEDESC2 ddsd2; ZeroMemory(&ddsd2, sizeof(ddsd2)); ddsd2.dwSize = sizeof(ddsd2);
+			if (m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK) {
+				int w = m_wBitmapSizeX, h = m_wBitmapSizeY;
+				int pitch = (int)(ddsd2.lPitch / 2);
+				WORD* pPixs = (WORD*)ddsd2.lpSurface;
+				if (w > 0 && h > 0 && pPixs) {
+					unsigned short* pBuf = new unsigned short[w * h];
+					for (int row = 0; row < h; row++)
+						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, m_wColorKey);
+					delete[] pBuf;
+				}
+				m_lpSurface->Unlock(NULL);
+			}
+		}
+		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+			g_pRenderBackend->DrawSpriteColor(dX + cx, dY + cy, sx, sy, szx, szy,
+				m_iSpriteIndex, 255, 255, 255, 128);
+			m_bOnCriticalSection = FALSE;
+			return;
+		}
+	}
+	// === FIN SFML INTERCEPT ===
+
 
 	pSrc = (WORD *)m_pSurfaceAddr + sx + ((sy)*m_sPitch);
 	pDst = (WORD *)m_pDDraw->m_pBackB4Addr + dX + ((dY)*m_pDDraw->m_sBackB4Pitch);
@@ -4183,6 +4271,42 @@ void CSprite::PutTintedSpriteRGB(int sX, int sY, int sFrame, int sRed, int sGree
 	m_rcBound.top = dY;
 	m_rcBound.right = dX + szx;
 	m_rcBound.bottom = dY + szy;
+	// === SFML INTERCEPT (Fase 8.J - PutTintedSpriteRGB - tintado oscilante) ===
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive() && m_iSpriteIndex >= 0)
+	{
+		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			DDSURFACEDESC2 ddsd2; ZeroMemory(&ddsd2, sizeof(ddsd2)); ddsd2.dwSize = sizeof(ddsd2);
+			if (m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK) {
+				int w = m_wBitmapSizeX, h = m_wBitmapSizeY;
+				int pitch = (int)(ddsd2.lPitch / 2);
+				WORD* pPixs = (WORD*)ddsd2.lpSurface;
+				if (w > 0 && h > 0 && pPixs) {
+					unsigned short* pBuf = new unsigned short[w * h];
+					for (int row = 0; row < h; row++)
+						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, m_wColorKey);
+					delete[] pBuf;
+				}
+				m_lpSurface->Unlock(NULL);
+			}
+		}
+		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+			float t = (sinf(dwTime * 0.002f) + 1.0f) * 0.25f;
+			int sfR = (int)(255.0f * (1.0f - t) + (float)sRed * t);
+			int sfG = (int)(255.0f * (1.0f - t) + (float)sGreen * t);
+			int sfB = (int)(255.0f * (1.0f - t) + (float)sBlue * t);
+			if (sfR > 255) sfR = 255; if (sfR < 0) sfR = 0;
+			if (sfG > 255) sfG = 255; if (sfG < 0) sfG = 0;
+			if (sfB > 255) sfB = 255; if (sfB < 0) sfB = 0;
+			g_pRenderBackend->DrawSpriteColor(dX + cx, dY + cy, sx, sy, szx, szy,
+				m_iSpriteIndex, sfR, sfG, sfB, 255);
+			m_bOnCriticalSection = FALSE;
+			return;
+		}
+	}
+	// === FIN SFML INTERCEPT ===
+
 
 	pSrc = (WORD*)m_pSurfaceAddr + sx + (sy * m_sPitch);
 	pDst = (WORD*)m_pDDraw->m_pBackB4Addr + dX + (dY * m_pDDraw->m_sBackB4Pitch);
@@ -4869,6 +4993,7 @@ void CSprite::PutShiftSpriteFast(int sX, int sY, int shX, int shY, int sFrame, D
 		}
 	}
 	
+
 	m_dwRefTime = dwTime;
 
 	if (m_bIsSurfaceEmpty == TRUE) {
@@ -4897,6 +5022,34 @@ void CSprite::PutShiftSpriteFast(int sX, int sY, int shX, int shY, int sFrame, D
 	m_rcBound.top  = dY;
 	m_rcBound.right  = dX + szx;
 	m_rcBound.bottom = dY + szy;
+	// === SFML INTERCEPT (Fase 8.J - PutShiftSpriteFast - 128x128 shifted opaco) ===
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive() && m_iSpriteIndex >= 0)
+	{
+		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			DDSURFACEDESC2 ddsd2; ZeroMemory(&ddsd2, sizeof(ddsd2)); ddsd2.dwSize = sizeof(ddsd2);
+			if (m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK) {
+				int w = m_wBitmapSizeX, h = m_wBitmapSizeY;
+				int pitch = (int)(ddsd2.lPitch / 2);
+				WORD* pPixs = (WORD*)ddsd2.lpSurface;
+				if (w > 0 && h > 0 && pPixs) {
+					unsigned short* pBuf = new unsigned short[w * h];
+					for (int row = 0; row < h; row++)
+						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, m_wColorKey);
+					delete[] pBuf;
+				}
+				m_lpSurface->Unlock(NULL);
+			}
+		}
+		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+			g_pRenderBackend->DrawSpriteColor(dX + cx, dY + cy, sx, sy, szx, szy,
+				m_iSpriteIndex, 255, 255, 255, 255);
+			m_bOnCriticalSection = FALSE;
+			return;
+		}
+	}
+	// === FIN SFML INTERCEPT ===
 
 	m_pDDraw->m_lpBackB4->BltFast( dX, dY, m_lpSurface, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT );
 
@@ -5151,6 +5304,34 @@ void CSprite::PutShadowSpriteEight(int sX, int sY, int sFrame, int sEight, DWORD
 	{
 		if (_iOpenSprite() == FALSE) return;
 	}
+	// === SFML INTERCEPT (Fase 8.J - PutShadowSpriteEight - 50% alpha con limite altura) ===
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive() && m_iSpriteIndex >= 0)
+	{
+		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			DDSURFACEDESC2 ddsd2; ZeroMemory(&ddsd2, sizeof(ddsd2)); ddsd2.dwSize = sizeof(ddsd2);
+			if (m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK) {
+				int w = m_wBitmapSizeX, h = m_wBitmapSizeY;
+				int pitch = (int)(ddsd2.lPitch / 2);
+				WORD* pPixs = (WORD*)ddsd2.lpSurface;
+				if (w > 0 && h > 0 && pPixs) {
+					unsigned short* pBuf = new unsigned short[w * h];
+					for (int row = 0; row < h; row++)
+						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, m_wColorKey);
+					delete[] pBuf;
+				}
+				m_lpSurface->Unlock(NULL);
+			}
+		}
+		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+			g_pRenderBackend->DrawSpriteColor(dX + cx, dY + cy, sx, sy, szx, szy,
+				m_iSpriteIndex, 255, 255, 255, 128);
+			m_bOnCriticalSection = FALSE;
+			return;
+		}
+	}
+	// === FIN SFML INTERCEPT ===
 
 	pSrc = (WORD *)m_pSurfaceAddr + sx + sy * m_sPitch;
 	pDst = (WORD *)m_pDDraw->m_pBackB4Addr;
@@ -5300,6 +5481,36 @@ void CSprite::PutSpriteFastEight(int sX, int sY, int sFrame, int sEight, DWORD d
 	m_rcBound.top  = dY;
 	m_rcBound.right  = dX + szx;
 	m_rcBound.bottom = dY + szy;
+
+	// === SFML INTERCEPT (Fase 8.J - PutSpriteFastEight - opaco con limite altura) ===
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive() && m_iSpriteIndex >= 0)
+	{
+		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			DDSURFACEDESC2 ddsd2; ZeroMemory(&ddsd2, sizeof(ddsd2)); ddsd2.dwSize = sizeof(ddsd2);
+			if (m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK) {
+				int w = m_wBitmapSizeX, h = m_wBitmapSizeY;
+				int pitch = (int)(ddsd2.lPitch / 2);
+				WORD* pPixs = (WORD*)ddsd2.lpSurface;
+				if (w > 0 && h > 0 && pPixs) {
+					unsigned short* pBuf = new unsigned short[w * h];
+					for (int row = 0; row < h; row++)
+						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, m_wColorKey);
+					delete[] pBuf;
+				}
+				m_lpSurface->Unlock(NULL);
+			}
+		}
+		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+			int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
+			g_pRenderBackend->DrawSpriteColor(dX + cx, dY + cy, sx, sy, szx, szy,
+				m_iSpriteIndex, 255, 255, 255, 255);
+			m_bOnCriticalSection = FALSE;
+			return;
+		}
+	}
+	// === FIN SFML INTERCEPT ===
+
 
 	m_pDDraw->m_lpBackB4->BltFast( dX, dY, m_lpSurface, &rcRect, DDBLTFAST_SRCCOLORKEY | DDBLTFAST_WAIT );
 
