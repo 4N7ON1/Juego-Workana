@@ -328,6 +328,27 @@ void RenderBackend_SFML::DrawSpriteGrayscale(int iDstX, int iDstY,
     }
 }
 
+// ============================================================
+// Fase 9.A: Rectangulo relleno con color RGBA
+// ============================================================
+
+void RenderBackend_SFML::DrawFilledRect(int iX, int iY, int iW, int iH,
+    int iR, int iG, int iB, int iA)
+{
+    if (!m_bInitialized || !m_bFrameActive || !m_pRenderTex) return;
+
+    sf::RectangleShape rect(sf::Vector2f(static_cast<float>(iW), static_cast<float>(iH)));
+    rect.setPosition(static_cast<float>(iX), static_cast<float>(iY));
+
+    sf::Uint8 r = static_cast<sf::Uint8>((iR < 0) ? 0 : ((iR > 255) ? 255 : iR));
+    sf::Uint8 g = static_cast<sf::Uint8>((iG < 0) ? 0 : ((iG > 255) ? 255 : iG));
+    sf::Uint8 b = static_cast<sf::Uint8>((iB < 0) ? 0 : ((iB > 255) ? 255 : iB));
+    sf::Uint8 a = static_cast<sf::Uint8>((iA < 0) ? 0 : ((iA > 255) ? 255 : iA));
+    rect.setFillColor(sf::Color(r, g, b, a));
+
+    m_pRenderTex->draw(rect);
+}
+
 
 
 // ============================================================

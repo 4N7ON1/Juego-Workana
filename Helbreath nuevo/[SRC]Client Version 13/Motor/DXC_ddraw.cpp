@@ -8,6 +8,8 @@
 //added resolution
 #include "..\Headers\Game.h"
 #include "..\Resolution\Resolution.h"
+#include "IRenderBackend.h"
+extern IRenderBackend* g_pRenderBackend;
 class cResolution * c_reso;
 extern CGame * G_pGame;
 
@@ -729,6 +731,31 @@ void DXC_ddraw::ClearBackB4()
 
 void DXC_ddraw::DrawShadowBox(short sX, short sY, short dX, short dY, int iType)
 {
+	// === SFML INTERCEPT (Fase 9.A - DrawShadowBox a SFML) ===
+	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive())
+	{
+		int cx = g_pRenderBackend->GetCropX();
+		int cy = g_pRenderBackend->GetCropY();
+		int w = dX - sX + 1;
+		int h = dY - sY + 1;
+		if (w <= 0 || h <= 0) return;
+
+		if (iType == 0) {
+			// Tipo 0: oscurecer 50% = rectangulo negro semitransparente
+			g_pRenderBackend->DrawFilledRect(sX + cx, sY + cy, w, h, 0, 0, 0, 128);
+		}
+		else if (iType == 1) {
+			// Tipo 1: relleno gris oscuro solido
+			g_pRenderBackend->DrawFilledRect(sX + cx, sY + cy, w, h, 57, 28, 57, 255);
+		}
+		else if (iType == 2) {
+			// Tipo 2: relleno gris mas oscuro solido
+			g_pRenderBackend->DrawFilledRect(sX + cx, sY + cy, w, h, 24, 12, 24, 255);
+		}
+		return;
+	}
+	// === FIN SFML INTERCEPT ===
+
 	WORD * pDst, wValue;
 	int ix, iy;
 

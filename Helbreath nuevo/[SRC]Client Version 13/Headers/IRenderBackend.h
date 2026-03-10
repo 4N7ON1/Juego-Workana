@@ -136,6 +136,12 @@ public:
         int iSrcX, int iSrcY, int iSrcW, int iSrcH,
         int iSpriteIndex) = 0;
 
+    // Fase 9.A: Rectangulo relleno con color RGBA
+    // Usado para shadow boxes, fondos de HUD, etc.
+    // Coordenadas en espacio canvas (el caller aplica crop si es necesario)
+    virtual void DrawFilledRect(int iX, int iY, int iW, int iH,
+        int iR, int iG, int iB, int iA = 255) = 0;
+
 };
 
 #endif // IRENDERBACKEND_H

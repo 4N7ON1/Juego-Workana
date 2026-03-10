@@ -125,6 +125,10 @@ public:
         int iSrcX, int iSrcY, int iSrcW, int iSrcH,
         int iSpriteIndex) override;
 
+    // Fase 9.A: rectangulo relleno
+    virtual void DrawFilledRect(int iX, int iY, int iW, int iH,
+        int iR, int iG, int iB, int iA = 255) override;
+
 
 private:
     DXC_ddraw&         m_DDraw;            // referencia al DDraw de CGame - NO es dueno

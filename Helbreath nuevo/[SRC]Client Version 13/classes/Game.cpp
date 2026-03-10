@@ -48268,12 +48268,7 @@ void CGame::UpdateScreen_OnGame()
 	m_sViewPointX = sVPXsave;
 	m_sViewPointY = sVPYsave;
 
-	// Fase 8.D HUD fix: blit SFML (tiles + personajes) a DDraw ANTES del HUD.
-	// EndFrame aqui -> IsFrameActive=false para todo lo que sigue:
-	//   PutSpriteFast del HUD, cursor, iconos -> DDraw BltFast directo (encima de tiles)
-	//   DrawShadowBox, strings -> DDraw directo
-	// Resultado: HUD correcto sin necesitar restriccion de clip area.
-	if (m_pRenderBackend) m_pRenderBackend->EndFrame();
+
 
 	if (iUpdateRet != 0)
 		DrawDialogBoxs(msX, msY, msZ, cLB);
@@ -49871,6 +49866,8 @@ void CGame::UpdateScreen_OnGame()
 		}
 
 
+		// Fase 9.A: EndFrame despues del HUD - todo pasa por SFML
+		if (m_pRenderBackend) m_pRenderBackend->EndFrame();
 
 		if (m_DDraw.iFlip() == DDERR_SURFACELOST) RestoreSprites();
 	}
