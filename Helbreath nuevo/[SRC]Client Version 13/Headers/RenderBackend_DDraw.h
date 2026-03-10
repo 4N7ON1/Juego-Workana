@@ -70,6 +70,7 @@ public:
     virtual void DrawSpriteColor(int, int, int, int, int, int, int, int=255, int=255, int=255, int=255) override {} // no-op
     virtual void DrawSpriteShadow(int, int, int, int, int, float, float, float, float) override {} // no-op
     virtual void DrawSpriteScaled(int, int, int, int, int, int, int, float, float, int = 255, int = 255, int = 255, int = 255) override {} // no-op
+    virtual void DrawSpriteGrayscale(int, int, int, int, int, int, int) override {} // no-op
 
     // Acceso al DDraw subyacente (necesario para Fase 7+)
     DXC_ddraw& GetDDraw() { return m_DDraw; }

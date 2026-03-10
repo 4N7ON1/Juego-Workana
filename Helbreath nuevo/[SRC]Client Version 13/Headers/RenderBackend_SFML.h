@@ -120,6 +120,11 @@ public:
         float fScaleX, float fScaleY,
         int iR = 255, int iG = 255, int iB = 255, int iA = 255) override;
 
+    // Fase 8.L: dibujo de sprites en escala de grises (shader)
+    virtual void DrawSpriteGrayscale(int iDstX, int iDstY,
+        int iSrcX, int iSrcY, int iSrcW, int iSrcH,
+        int iSpriteIndex) override;
+
 
 private:
     DXC_ddraw&         m_DDraw;            // referencia al DDraw de CGame - NO es dueno
@@ -138,6 +143,10 @@ private:
     // ---- Fase 8.F: Infraestructura de texto SFML ----
     sf::Font m_fonts[HB_FONT_COUNT];      // 6 fuentes del sistema
     bool     m_bFontsLoaded;              // true si al menos 1 fuente cargo
+
+    // ---- Fase 8.L: Shader de escala de grises ----
+    sf::Shader* m_pGrayscaleShader;
+    bool        m_bGrayscaleShaderLoaded;
 
     // Tamanios y estilos por fuente (indices HBFont)
     static const unsigned int  s_fontSizes[HB_FONT_COUNT];

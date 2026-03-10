@@ -50,12 +50,16 @@ RenderBackend_SFML::RenderBackend_SFML(DXC_ddraw& ddraw)
     , m_iCropX(0)
     , m_iCropY(0)
     , m_bFontsLoaded(false)
+    , m_pGrayscaleShader  (nullptr)
+    , m_bGrayscaleShaderLoaded  (false)
+
 {
 }
 
 RenderBackend_SFML::~RenderBackend_SFML()
 {
     Shutdown();
+
 }
 
 // ============================================================
@@ -117,6 +121,27 @@ bool RenderBackend_SFML::Init(HWND hWnd, int iWidth, int iHeight, bool bFullscre
     }
 
     m_bInitialized = true;
+
+    // ---- Fase 8.L: Cargar shader de escala de grises ----
+    static const char* s_grayscaleFragSrc =
+        "uniform sampler2D texture;\n"
+        "void main() {\n"
+        "    vec4 pixel = texture2D(texture, gl_TexCoord[0].xy);\n"
+        "    float gray = dot(pixel.rgb, vec3(0.299, 0.587, 0.114));\n"
+        "    gl_FragColor = vec4(gray, gray, gray, pixel.a) * gl_Color;\n"
+        "}\n";
+
+    if (sf::Shader::isAvailable()) {
+        m_pGrayscaleShader = new sf::Shader();
+        if (m_pGrayscaleShader->loadFromMemory(s_grayscaleFragSrc, sf::Shader::Fragment)) {
+            m_bGrayscaleShaderLoaded = true;
+        }
+        else {
+            delete m_pGrayscaleShader;
+            m_pGrayscaleShader = nullptr;
+        }
+    }
+
     return true;
 }
 
@@ -128,6 +153,9 @@ void RenderBackend_SFML::Shutdown()
         m_pRenderTex = nullptr;
     }
     m_bInitialized = false;
+    if (m_pGrayscaleShader) { delete m_pGrayscaleShader; m_pGrayscaleShader = nullptr; }
+    m_bGrayscaleShaderLoaded = false;
+
 }
 
 // ============================================================
@@ -273,6 +301,31 @@ void RenderBackend_SFML::DrawSpriteScaled(int iDstX, int iDstY,
     spr.setColor(sf::Color(r, g, b, a));
 
     m_pRenderTex->draw(spr);
+}
+
+// ============================================================
+// Fase 8.L: Sprite en escala de grises (shader GLSL)
+// ============================================================
+
+void RenderBackend_SFML::DrawSpriteGrayscale(int iDstX, int iDstY,
+    int iSrcX, int iSrcY, int iSrcW, int iSrcH,
+    int iSpriteIndex)
+{
+    if (!m_bInitialized || !m_bFrameActive || !m_pRenderTex) return;
+    if (m_mapTextures.find(iSpriteIndex) == m_mapTextures.end()) return;
+
+    sf::Sprite spr(m_mapTextures.at(iSpriteIndex));
+    spr.setTextureRect(sf::IntRect(iSrcX, iSrcY, iSrcW, iSrcH));
+    spr.setPosition(static_cast<float>(iDstX), static_cast<float>(iDstY));
+
+    if (m_bGrayscaleShaderLoaded && m_pGrayscaleShader) {
+        m_pGrayscaleShader->setUniform("texture", sf::Shader::CurrentTexture);
+        m_pRenderTex->draw(spr, sf::RenderStates(m_pGrayscaleShader));
+    }
+    else {
+        // Fallback sin shader: dibujar normal (mejor que nada)
+        m_pRenderTex->draw(spr);
+    }
 }
 
 

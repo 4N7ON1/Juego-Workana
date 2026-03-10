@@ -129,6 +129,13 @@ public:
         float fScaleX, float fScaleY,
         int iR = 255, int iG = 255, int iB = 255, int iA = 255) = 0;
 
+    // Fase 8.L: Dibujo de sprites en escala de grises (shader GLSL)
+    // Convierte el sprite a grayscale usando la formula de luminancia:
+    // gray = 0.299*R + 0.587*G + 0.114*B
+    virtual void DrawSpriteGrayscale(int iDstX, int iDstY,
+        int iSrcX, int iSrcY, int iSrcW, int iSrcH,
+        int iSpriteIndex) = 0;
+
 };
 
 #endif // IRENDERBACKEND_H
