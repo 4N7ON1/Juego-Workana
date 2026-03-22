@@ -2,6 +2,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+// Fix crash-0x50: macro para NULL check seguro en funciones miembro de CSprite.
+// El check "if (this == NULL)" puede ser eliminado por el compilador en Release
+// porque es UB. Usando volatile se fuerza la comparacion real.
+#define SPRITE_NULL_CHECK() { volatile const CSprite* _safeThis = this; if (_safeThis == nullptr) return; }
+#define SPRITE_NULL_CHECK_BOOL() { volatile const CSprite* _safeThis = this; if (_safeThis == nullptr) return FALSE; }
+
 #include "../Headers/Sprite.h"
 //added resolution
 #include "..\Headers\Game.h"
@@ -104,7 +110,7 @@ void CSprite::PutSpriteFast(int sX, int sY, int sFrame, DWORD dwTime)
 	short dX, dY, sx, sy, szx, szy, pvx, pvy;
 	RECT rcRect;
 
-	if (this == NULL) return; // Comprobación del puntero this
+	SPRITE_NULL_CHECK(); // Fix crash-0x50: volatile NULL check
 	if (m_stBrush == NULL) return; // Comprobación del puntero m_stBrush
 	if (m_pDDraw == NULL) return; // Comprobación del puntero m_pDDraw
 	if (m_pDDraw->m_lpBackB4 == NULL) return; // Comprobación del puntero m_lpBackB4
@@ -254,7 +260,7 @@ void CSprite::PutSpriteFast(int sX, int sY, int sFrame, DWORD dwTime)
 }
 void CSprite::PutSpriteFastClip(int sX, int sY, int srcX, int srcY, int srcW, int srcH, DWORD dwTime)
 {
-	if (this == NULL) return;
+	SPRITE_NULL_CHECK(); // Fix crash-0x50: volatile NULL check
 	if (m_pDDraw == NULL) return;
 	if (m_pDDraw->m_lpBackB4 == NULL) return;
 
@@ -1167,7 +1173,7 @@ void CSprite::PutAlphaSprite(int sX, int sY, int sFrame, DWORD dwTime, int alpha
 	int ix, iy;
 	WORD *pSrc, *pDst;
 
-	if (this == NULL) return;
+	SPRITE_NULL_CHECK(); // Fix crash-0x50: volatile NULL check
 	if (m_stBrush == NULL) return;
 	m_rcBound.top = -1;
 	if ((m_iTotalFrame - 1 < sFrame) || (sFrame < 0)) return;
@@ -4070,7 +4076,7 @@ void CSprite::PutSolidColorTransSprite(int sX, int sY, int sFrame, const ColorRG
 	short ix, iy;
 	WORD* pSrc, * pDst;
 
-	if (this == NULL) return;
+	SPRITE_NULL_CHECK(); // Fix crash-0x50: volatile NULL check
 	if (m_stBrush == NULL) return;
 	if ((m_iTotalFrame - 1 < sFrame) || (sFrame < 0)) return;
 
@@ -4174,7 +4180,7 @@ void CSprite::PutFuegoScrollEffect(int sX, int sY, int sFrame, const ColorRGB& c
 	short ix, iy;
 	WORD* pSrc, * pDst;
 
-	if (this == NULL) return;
+	SPRITE_NULL_CHECK(); // Fix crash-0x50: volatile NULL check
 	if (m_stBrush == NULL) return;
 	if ((m_iTotalFrame - 1 < sFrame) || (sFrame < 0)) return;
 
@@ -4279,7 +4285,7 @@ void CSprite::PutTintedSpriteRGB(int sX, int sY, int sFrame, int sRed, int sGree
 	short ix, iy;
 	WORD  * pSrc, *pDst;
 
-	if (this == NULL) return;
+	SPRITE_NULL_CHECK(); // Fix crash-0x50: volatile NULL check
 	if (m_stBrush == NULL) return;
 	m_rcBound.top = -1;
 	if ((m_iTotalFrame - 1 < sFrame) || (sFrame < 0)) return;
@@ -4418,7 +4424,7 @@ void CSprite::PutTintedSpriteRGB(int sX, int sY, int sFrame, int sRed, int sGree
 	short ix, iy;
 	WORD  * pSrc, *pDst;
 
-	if (this == NULL) return;
+	SPRITE_NULL_CHECK(); // Fix crash-0x50: volatile NULL check
 	if (m_stBrush == NULL) return;
 	m_rcBound.top = -1;
 	if ((m_iTotalFrame - 1 < sFrame) || (sFrame < 0)) return;
@@ -5449,7 +5455,7 @@ void CSprite::PutShadowSpriteEight(int sX, int sY, int sFrame, int sEight, DWORD
 		res_y = 427; // Adjusted for shadow drawing
 	}
 
-	if (this == NULL) return;
+	SPRITE_NULL_CHECK(); // Fix crash-0x50: volatile NULL check
 	if (m_stBrush == NULL) return;
 	m_rcBound.top = -1;
 	if ((m_iTotalFrame - 1 < sFrame) || (sFrame < 0)) return;

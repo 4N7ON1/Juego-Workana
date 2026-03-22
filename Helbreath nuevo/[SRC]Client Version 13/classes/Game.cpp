@@ -1,4 +1,6 @@
 #pragma warning(disable : 4996)
+// Fix: jpeg.lib compilado con MSVC antiguo, necesita simbolos CRT legacy
+#pragma comment(lib, "legacy_stdio_definitions.lib")
 
 #include "../Headers/Game.h"
 #include "../Language/lan_eng.h"
@@ -9,7 +11,9 @@
 #include <thread>
 #include <chrono>
 #include <thread>
-#include <iomanip>  
+#include <iomanip>
+#include <unordered_map>
+#include <cmath>
 #include <windows.h>
 #include <gdiplus.h>
 #include <direct.h>
@@ -19,11 +23,26 @@
 
 using namespace Gdiplus;
 
-float m_fRenderOffsetX = 0;  
+float m_fRenderOffsetX = 0;
 float m_fRenderOffsetY = 0;
-float m_fTargetOffsetX = 0;   
+float m_fTargetOffsetX = 0;
 float m_fTargetOffsetY = 0;
-bool  m_bIsInterpolating = false; 
+bool  m_bIsInterpolating = false;
+
+// ============================================================
+// Sistema de Movimiento Suave por Personaje (Smooth Movement)
+// Trackea posicion de TILE (mundo), no de pantalla.
+// Cuando un personaje cambia de tile, aplica un offset visual
+// que decae suavemente a 0. Objetos estaticos (arboles, etc.)
+// nunca cambian de tile -> offset siempre 0 -> sin movimiento.
+// ============================================================
+struct SmoothPosEntry {
+    int   lastTileX, lastTileY; // Ultimo tile conocido (coordenadas mundo)
+    float offsetX,   offsetY;  // Offset visual actual (decae a 0 suavemente)
+    DWORD lastSeen;             // Para limpieza periodica
+};
+static std::unordered_map<int, SmoothPosEntry> s_smoothPosCache;
+static DWORD s_lastSmoothCleanup = 0;
 
 const float m_fSmoothness = 0.88f; 
 const float m_fMovementIntensity = 1.1f; 
@@ -1053,6 +1072,7 @@ void CGame::DrawObjects(short sPivotX, short sPivotY, short sDivX, short sDivY, 
 				}
 
 				if ((bRet == TRUE) && (sItemSprite != 0)) {
+					if (m_pSprite[ItemGround + sItemSprite] != NULL) { // Fix: NULL guard crash-0x50
 					if (cItemColor == 0)
 						m_pSprite[ItemGround + sItemSprite]->PutSpriteFast(ix, iy, sItemSpriteFrame, dwTime);
 					else {
@@ -1070,6 +1090,7 @@ void CGame::DrawObjects(short sPivotX, short sPivotY, short sDivX, short sDivY, 
 							break;
 						}
 					}
+					} // end NULL guard
 
 					if ((ix - 13 < msX) && (ix + 13 > msX) && (iy - 13 < msY) && (iy + 13 > msY)) {
 						if ((dwTime - dwMCAnimTime) > 200) {
@@ -1421,10 +1442,12 @@ void CGame::DrawObjects(short sPivotX, short sPivotY, short sDivX, short sDivY, 
 					char cTmpDOdir, cTmpDOframe;
 					cTmpDOdir = m_Misc.cCalcDirection(cDynamicObjectData1, cDynamicObjectData2, cDynamicObjectData1 + cDynamicObjectData3, cDynamicObjectData2 + cDynamicObjectData4);
 					cTmpDOframe = ((cTmpDOdir - 1) * 4) + (rand() % 4);
+					if (m_pSprite[DEF_SPRID_ITEMDYNAMIC_PIVOTPOINT + 0] != NULL) // Fix crash-0x50
 					m_pSprite[DEF_SPRID_ITEMDYNAMIC_PIVOTPOINT + 0]->PutTransSprite2(ix + cDynamicObjectData1, iy + cDynamicObjectData2, cTmpDOframe, dwTime);
 					break;
 
 				case DEF_DYNAMICOBJECT_MINERAL1:		// 4
+					if (m_pSprite[DEF_SPRID_ITEMDYNAMIC_PIVOTPOINT + 1] == NULL) break; // Fix crash-0x50
 					if ((m_cDetailLevel == 0) || (m_cDetailLevel == 3 && Shadows)) m_pSprite[DEF_SPRID_ITEMDYNAMIC_PIVOTPOINT + 1]->PutShadowSprite(ix, iy, 0, dwTime);
 					m_pSprite[DEF_SPRID_ITEMDYNAMIC_PIVOTPOINT + 1]->PutSpriteFast(ix, iy, 0, dwTime);
 					if ((m_pSprite[DEF_SPRID_ITEMDYNAMIC_PIVOTPOINT + 1]->m_rcBound.top != -1)
@@ -1441,6 +1464,7 @@ void CGame::DrawObjects(short sPivotX, short sPivotY, short sDivX, short sDivY, 
 					break;
 
 				case DEF_DYNAMICOBJECT_MINERAL2:		// 5
+				if (m_pSprite[DEF_SPRID_ITEMDYNAMIC_PIVOTPOINT + 1] == NULL) break; // Fix crash-0x50
 					if ((m_cDetailLevel == 0) || (m_cDetailLevel == 3 && Shadows)) m_pSprite[DEF_SPRID_ITEMDYNAMIC_PIVOTPOINT + 1]->PutShadowSprite(ix, iy, 1, dwTime);
 					m_pSprite[DEF_SPRID_ITEMDYNAMIC_PIVOTPOINT + 1]->PutSpriteFast(ix, iy, 1, dwTime);
 					if ((m_pSprite[DEF_SPRID_ITEMDYNAMIC_PIVOTPOINT + 1]->m_rcBound.top != -1)
@@ -1457,14 +1481,17 @@ void CGame::DrawObjects(short sPivotX, short sPivotY, short sDivX, short sDivY, 
 					break;
 
 				case DEF_DYNAMICOBJECT_SPIKE:			// 9
+				if (m_pEffectSpr[17] == NULL) break; // Fix crash-0x50
 					m_pEffectSpr[17]->PutTransSprite70_NoColorKey(ix, iy, sDynamicObjectFrame, dwTime);
 					break;
 
 				case DEF_DYNAMICOBJECT_ARESDENFLAG1:  // 6
+				if (m_pSprite[DEF_SPRID_ITEMDYNAMIC_PIVOTPOINT + 2] == NULL) break; // Fix crash-0x50
 					m_pSprite[DEF_SPRID_ITEMDYNAMIC_PIVOTPOINT + 2]->PutSpriteFast(ix, iy, sDynamicObjectFrame, dwTime);
 					break;
 
 				case DEF_DYNAMICOBJECT_ELVINEFLAG1: // 7
+				if (m_pSprite[DEF_SPRID_ITEMDYNAMIC_PIVOTPOINT + 2] == NULL) break; // Fix crash-0x50
 					m_pSprite[DEF_SPRID_ITEMDYNAMIC_PIVOTPOINT + 2]->PutSpriteFast(ix, iy, sDynamicObjectFrame, dwTime);
 					break;
 				}
@@ -17960,7 +17987,7 @@ void CGame::LogResponseHandler(char * pData)
 			//proxy system
 			m_pGSock = new class XSocket(m_hWnd, DEF_SOCKETBLOCKLIMIT);
 
-			m_pGSock->bConnect(m_cGameServerAddr, iGameServerPort, WM_USER_GAMESOCKETEVENT);
+			m_pGSock->bConnect(cGameServerAddr, iGameServerPort, WM_USER_GAMESOCKETEVENT);
 
 			m_pGSock->bInitBufferSize(30000);
 			
@@ -18158,8 +18185,11 @@ DEFAULT_IP:;
 void CGame::GetIPByDNS()
 {
 #ifndef DEF_SELECTSERVER
-	strcpy(m_cLogServerAddrBuffer, DEF_SERVER_IP);
-	m_iLogServerPort = EncriptInt(DEF_SERVER_PORT);
+	// Solo usar IP hardcodeada si no se leyo un ClientIP.cfg (ConfigIP==-1 si se leyo archivo)
+	if (ConfigIP == 0) {
+		strcpy(m_cLogServerAddrBuffer, DEF_SERVER_IP);
+		m_iLogServerPort = EncriptInt(DEF_SERVER_PORT);
+	}
 #endif
 	ZeroMemory(m_cLogServerAddr, sizeof(m_cLogServerAddr));
 	if ((m_cLogServerAddrBuffer[0] >= 65 && m_cLogServerAddrBuffer[0] <= 122) && (ConfigIP == 0)) {
@@ -23506,18 +23536,18 @@ void CGame::EnableDialogBox(int iBoxID, int cType, int sV1, int sV2, char * pStr
 		{
 			if (c_reso->IsResolution() == C800x600)
 			{
-				if (m_stDialogBoxInfo[iBoxID].sY > 520) m_stDialogBoxInfo[iBoxID].sY = 547; // 410
-				if (m_stDialogBoxInfo[iBoxID].sX > 780) m_stDialogBoxInfo[iBoxID].sX = 770; // 610
+				m_stDialogBoxInfo[iBoxID].sY = 547;
+				m_stDialogBoxInfo[iBoxID].sX = 0;
 			}
 			else if (c_reso->IsResolution() == C1024x768)
 			{
-				if (m_stDialogBoxInfo[iBoxID].sY > 688) m_stDialogBoxInfo[iBoxID].sY = 715; // 410
-				if (m_stDialogBoxInfo[iBoxID].sX > 1004) m_stDialogBoxInfo[iBoxID].sX = 994; // 610
+				m_stDialogBoxInfo[iBoxID].sY = 715;
+				m_stDialogBoxInfo[iBoxID].sX = 0;
 			}
 			else if (c_reso->IsResolution() == C640x480)
 			{
-				if (m_stDialogBoxInfo[iBoxID].sY > 400) m_stDialogBoxInfo[iBoxID].sY = 427; // 410
-				if (m_stDialogBoxInfo[iBoxID].sX > 620) m_stDialogBoxInfo[iBoxID].sX = 610; // 610
+				m_stDialogBoxInfo[iBoxID].sY = 427;
+				m_stDialogBoxInfo[iBoxID].sX = 0;
 			}
 			if ((m_stDialogBoxInfo[iBoxID].sX + m_stDialogBoxInfo[iBoxID].sSizeX) < 10) m_stDialogBoxInfo[iBoxID].sX += 20;
 			if ((m_stDialogBoxInfo[iBoxID].sY + m_stDialogBoxInfo[iBoxID].sSizeY) < 10) m_stDialogBoxInfo[iBoxID].sY += 20;
@@ -23598,10 +23628,10 @@ void CGame::InitDataResponseHandler(char * pData)
 	//DisableDialogBox(54); // hora : elegir City
 	if (BigBar != 2)
 	{
-		if (BigBar > 0)
-			EnableDialogBox(30, NULL, NULL, NULL);//Barra Chica 44 Barra Grande 30
+		if (BigBar == 0)
+			EnableDialogBox(30, NULL, NULL, NULL);//Barra Grande 30 (BigBar=0)
 		else
-			EnableDialogBox(44, NULL, NULL, NULL);
+			EnableDialogBox(44, NULL, NULL, NULL);//Barra Chica 44 (BigBar=1)
 	}
 
 	AllVsAll = FALSE;
@@ -48268,7 +48298,10 @@ void CGame::UpdateScreen_OnGame()
 	m_sViewPointX = sVPXsave;
 	m_sViewPointY = sVPYsave;
 
-
+	// Fase 11: EndFrame movido DESPUES de todo el rendering (incluido HUD).
+	// Todas las funciones de dibujo (DrawShadowBox, PutSpriteFast, PutPixel, etc.)
+	// ahora tienen SFML intercepts (Fase 10), asi que todo pasa por SFML.
+	// EndFrame esta justo antes de iFlip, al final de UpdateScreen_OnGame.
 
 	if (iUpdateRet != 0)
 		DrawDialogBoxs(msX, msY, msZ, cLB);
@@ -49599,16 +49632,7 @@ void CGame::UpdateScreen_OnGame()
 		if (m_cGameModeCount < 2) m_DDraw.DrawShadowBox(0, 0, 639, 479);
 	}
 	
-	//Original
-	if (DecriptBool(m_bIsObserverMode) == TRUE)
-	{
-		m_DDraw.PutPixel(msX, msY, 255, 255, 255);
-		m_DDraw.PutPixel(msX + 1, msY, 255, 255, 255);
-		m_DDraw.PutPixel(msX - 1, msY, 255, 255, 255);
-		m_DDraw.PutPixel(msX, msY + 1, 255, 255, 255);
-		m_DDraw.PutPixel(msX, msY - 1, 255, 255, 255);
-	}
-	else m_pSprite[DEF_SPRID_MOUSECURSOR]->PutSpriteFast(msX, msY, m_stMCursor.sCursorFrame, dwTime);
+	// Cursor movido despues de EndFrame (ver abajo)
 
 	/*if (m_stMCursor.sCursorFrame == 4 || m_stMCursor.sCursorFrame == 5 || m_stMCursor.sCursorFrame == 8)
 	{
@@ -49652,15 +49676,13 @@ void CGame::UpdateScreen_OnGame()
 	cTeststr.append(to_string(m_stMCursor.sCursorFrame).c_str());
 	AddEventList((char*)cTeststr.c_str());*/
 
-	if (iUpdateRet == 0) m_iFrameCount++;
-	else m_iFrameCount += 256;//lalo desbug fps (256 / 512)
+	m_iFrameCount++; // Contamos cada frame real
 
-	if (dwTime - m_dwFPStime > 500) //lalo 500 o 1000
+	if (dwTime - m_dwFPStime > 1000) // Actualizar FPS cada 1 segundo
 	{
-		m_dwFPStime = dwTime;
-		m_sFPS = m_iFrameCount >> 7;
-		if (m_sFPS < 10) m_sFPS += 6;
+		m_sFPS = m_iFrameCount; // FPS real = frames en el ultimo segundo
 		m_iFrameCount = 0;
+		m_dwFPStime = dwTime;
 	}
 
 	//time ChangeCity
@@ -49775,7 +49797,7 @@ void CGame::UpdateScreen_OnGame()
 			
 			SYSTEMTIME SysTime;
 			GetLocalTime(&SysTime);
-			wsprintf(G_cTxt, "Helbreath Cursed - Fps: %d - Ping: %s - Time: %d", m_sFPS + 1624, pingValue, SysTime.wSecond);
+			wsprintf(G_cTxt, "Helbreath Cursed - Fps: %d - Ping: %s - Time: %d", m_sFPS, pingValue, SysTime.wSecond);
 			if (c_reso->IsResolution() == C800x600)
 			{
 				PutAlignedString2(0, 800, 5, G_cTxt, 250, 250, 250);
@@ -49865,11 +49887,31 @@ void CGame::UpdateScreen_OnGame()
 			}
 		}
 
-
-		// Fase 9.A: EndFrame despues del HUD - todo pasa por SFML
+		// Fase 11: EndFrame aqui - TODO el rendering (mundo + HUD + cursor + texto)
+		// ya paso por SFML. Ahora bliteamos el resultado final a DDraw para iFlip.
 		if (m_pRenderBackend) m_pRenderBackend->EndFrame();
 
+		// Cursor se dibuja DESPUES de EndFrame para que quede encima del blit SFML
+		if (DecriptBool(m_bIsObserverMode) == TRUE)
+		{
+			m_DDraw.PutPixel(msX, msY, 255, 255, 255);
+			m_DDraw.PutPixel(msX + 1, msY, 255, 255, 255);
+			m_DDraw.PutPixel(msX - 1, msY, 255, 255, 255);
+			m_DDraw.PutPixel(msX, msY + 1, 255, 255, 255);
+			m_DDraw.PutPixel(msX, msY - 1, 255, 255, 255);
+		}
+		else if (m_pSprite[DEF_SPRID_MOUSECURSOR] != NULL)
+			m_pSprite[DEF_SPRID_MOUSECURSOR]->PutSpriteFast(msX, msY, m_stMCursor.sCursorFrame, dwTime);
+
+		// Fase 12: Cuando SFML presenta directamente (ventana hijo 32-bit),
+		// NO hacemos iFlip de DDraw. Si ambos presentan al mismo tiempo,
+		// la pantalla parpadea entre el frame SFML (bueno) y el backbuffer
+		// DDraw (vacio/negro). El crash anterior era por orden de contextos
+		// OpenGL (ya arreglado), NO por saltar iFlip.
+				// iFlip presenta el backbuffer DDraw (con contenido SFML ya bliteado)
 		if (m_DDraw.iFlip() == DDERR_SURFACELOST) RestoreSprites();
+
+
 	}
 
 	iUpdateRet = m_pMapData->iObjectFrameCounter(m_cPlayerName, m_sViewPointX, m_sViewPointY);
@@ -60586,6 +60628,7 @@ void CGame::UpdateScreen_OnLoading(bool bActive)
 				m_hPakFile = CreateFile("sprites\\Barra800.apk", GENERIC_READ, NULL, NULL, OPEN_EXISTING, NULL, NULL);
 				if (m_hPakFile != INVALID_HANDLE_VALUE) {
 					m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL] = new class CSprite(m_hPakFile, &m_DDraw, "Barra800", 0, FALSE);
+					m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->m_iSpriteIndex = DEF_SPRID_INTERFACE_ND_ICONPANNEL;
 					CloseHandle(m_hPakFile);
 				}
 			}
@@ -60595,6 +60638,7 @@ void CGame::UpdateScreen_OnLoading(bool bActive)
 				m_hPakFile = CreateFile("sprites\\Barra.apk", GENERIC_READ, NULL, NULL, OPEN_EXISTING, NULL, NULL);
 				if (m_hPakFile != INVALID_HANDLE_VALUE) {
 					m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL] = new class CSprite(m_hPakFile, &m_DDraw, "Barra", 0, FALSE, FALSE);
+					m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->m_iSpriteIndex = DEF_SPRID_INTERFACE_ND_ICONPANNEL;
 					CloseHandle(m_hPakFile);
 				}
 			}
@@ -60603,6 +60647,7 @@ void CGame::UpdateScreen_OnLoading(bool bActive)
 				m_hPakFile = CreateFile("sprites\\Barra1024.apk", GENERIC_READ, NULL, NULL, OPEN_EXISTING, NULL, NULL);
 				if (m_hPakFile != INVALID_HANDLE_VALUE) {
 					m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL] = new class CSprite(m_hPakFile, &m_DDraw, "Barra1024", 0, FALSE);
+					m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->m_iSpriteIndex = DEF_SPRID_INTERFACE_ND_ICONPANNEL;
 					CloseHandle(m_hPakFile);
 				}
 			}
@@ -78809,7 +78854,8 @@ void CGame::UpdateScreen_OnSelectCharacter(short sX, short sY, short msX, short 
 			{
 				if (m_Misc.bCheckValidString(m_pCharList[i]->m_cName) == TRUE)
 				{
-					m_pEffectSpr[0]->PutTransSprite(sX + add_x + 157 + i * 109, sY + add_y + 138, 1, dwTime);
+					if (m_pEffectSpr[0] != NULL)
+						m_pEffectSpr[0]->PutTransSprite(sX + add_x + 157 + i * 109, sY + add_y + 138, 1, dwTime);
 					DrawObject_OnMove_ForMenu(0, 0, sX + add_x + 157 + i * 109, sY + add_y + 138, FALSE, dwTime, 0, 0);
 					PutString(sX + add_x + 112 + i * 109, sY + 179 - 9 + add_y, m_pCharList[i]->m_cName, RGB(51, 0, 51));//25,35,25);
 					int	_sLevel = m_pCharList[i]->m_sLevel;
@@ -81283,6 +81329,92 @@ bool CGame::isInMarketMap(char* mapname)
 
 BOOL   CGame::DrawObject(int indexX, int indexY, int sX, int sY, BOOL bTrans, DWORD dwTime, int msX, int msY, int ObjectID, char _tmp_cAction, const bool frame_omision)
 {
+	// ----------------------------------------------------------------
+	// Smooth Movement: offset visual basado en cambio de TILE
+	// Los objetos estaticos (arboles, rocas) nunca cambian de tile
+	// -> su offset es siempre 0 -> no se mueven visualmente.
+	// Solo los personajes que realmente se mueven tienen offset != 0.
+	// ----------------------------------------------------------------
+	if (ObjectID > 0)
+	{
+		auto it = s_smoothPosCache.find(ObjectID);
+		if (it == s_smoothPosCache.end())
+		{
+			// Primera vez: inicializar con tile actual, offset 0
+			SmoothPosEntry entry;
+			entry.lastTileX = indexX;
+			entry.lastTileY = indexY;
+			entry.offsetX   = 0.0f;
+			entry.offsetY   = 0.0f;
+			entry.lastSeen  = dwTime;
+			s_smoothPosCache[ObjectID] = entry;
+		}
+		else
+		{
+			SmoothPosEntry& entry = it->second;
+
+			float dt = (float)(dwTime - entry.lastSeen) / 1000.0f;
+			if (dt > 0.1f) dt = 0.1f;
+			entry.lastSeen = dwTime;
+
+			int dTileX = indexX - entry.lastTileX;
+			int dTileY = indexY - entry.lastTileY;
+
+			if (dTileX != 0 || dTileY != 0)
+			{
+				int absDX = dTileX < 0 ? -dTileX : dTileX;
+				int absDY = dTileY < 0 ? -dTileY : dTileY;
+
+				if (absDX <= 2 && absDY <= 2)
+				{
+					// Movimiento normal (1-2 tiles): arrancar offset negativo
+					// que decae a 0 = el personaje "viaja" desde la pos anterior
+					entry.offsetX -= (float)(dTileX * 32);
+					entry.offsetY -= (float)(dTileY * 32);
+				}
+				else
+				{
+					// Teleport: sin suavizado
+					entry.offsetX = 0.0f;
+					entry.offsetY = 0.0f;
+				}
+				entry.lastTileX = indexX;
+				entry.lastTileY = indexY;
+			}
+
+			// Decaer el offset hacia 0 (suavizado exponencial)
+			// fFactor * dt debe ser < 1.0 para evitar oscilacion.
+			// Con dt clamp=0.1 y fFactor=8: 8*0.1=0.8 < 1.0, siempre seguro.
+			const float fFactor = 8.0f;
+			float decay = fFactor * dt;
+			if (decay > 0.95f) decay = 0.95f; // Clamp extra de seguridad
+			entry.offsetX *= (1.0f - decay);
+			entry.offsetY *= (1.0f - decay);
+
+			// Snap cuando el offset es insignificante
+			if (fabsf(entry.offsetX) < 0.5f) entry.offsetX = 0.0f;
+			if (fabsf(entry.offsetY) < 0.5f) entry.offsetY = 0.0f;
+
+			// Aplicar offset a la posicion de pantalla
+			sX += (int)entry.offsetX;
+			sY += (int)entry.offsetY;
+		}
+
+		// Limpieza periodica
+		if (dwTime - s_lastSmoothCleanup > 5000)
+		{
+			s_lastSmoothCleanup = dwTime;
+			for (auto cleanIt = s_smoothPosCache.begin(); cleanIt != s_smoothPosCache.end(); )
+			{
+				if (dwTime - cleanIt->second.lastSeen > 5000)
+					cleanIt = s_smoothPosCache.erase(cleanIt);
+				else
+					++cleanIt;
+			}
+		}
+	}
+	// ----------------------------------------------------------------
+
 	int cFrame, cDir, iFrame;
 	int dx, dy, cFrameMoveDots, dsx, dsy, iDrawMode;
 	int iBodyIndex, iHairIndex, iUndiesIndex, iArmArmorIndex, iBodyArmorIndex, iPantsIndex, iBootsIndex, iHelmIndex, iR, iG, iB;
