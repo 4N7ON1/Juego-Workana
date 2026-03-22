@@ -37,6 +37,15 @@ const sf::Uint32 RenderBackend_SFML::s_fontStyles[HB_FONT_COUNT] = {
 };
 
 // ============================================================
+// HD SCALING: Factor de supersampling SFML (2x SSAA)
+// SFML dibuja TODO al doble de resolucion y BlitRenderTextureToDDraw
+// hace un box-filter 2:1 → sprites con anti-aliasing sin cambiar
+// su tamano aparente en pantalla. Cambiar a 1 para desactivar.
+// ============================================================
+static const int   SFML_S  = 1;       // 1=sin SSAA (rapido), 2=SSAA 2x (calidad, mas lento)
+static const float SFML_SF = 1.0f;    // Factor float
+
+// ============================================================
 // Constructor / Destructor
 // ============================================================
 
@@ -52,7 +61,9 @@ RenderBackend_SFML::RenderBackend_SFML(DXC_ddraw& ddraw)
     , m_bFontsLoaded(false)
     , m_pGrayscaleShader  (nullptr)
     , m_bGrayscaleShaderLoaded  (false)
-
+    , m_hSFMLChild(NULL)
+    , m_pRenderWin(nullptr)
+    , m_bDirectPresent(false)
 {
 }
 
@@ -77,10 +88,10 @@ bool RenderBackend_SFML::Init(HWND hWnd, int iWidth, int iHeight, bool bFullscre
     m_iHeight = iHeight;
 
     // Canvas virtual SFML: mas grande que la pantalla para acomodar tiles extra.
-    // El PDBGS original es (res_x+32, res_y+32). Agregamos 96 de margen
-    // para offsetX/offsetY del movimiento suave + sModX/sModY.
-    int canvasW = iWidth + 96;
-    int canvasH = iHeight + 96;
+    // Con SSAA 2x: el canvas es el doble de grande en cada dimension.
+    // El margen de 96px se escala tambien por SFML_S para mantener el espacio extra.
+    int canvasW = (iWidth  + 96) * SFML_S;
+    int canvasH = (iHeight + 96) * SFML_S;
     m_pRenderTex = new sf::RenderTexture();
     if (!m_pRenderTex->create(static_cast<unsigned int>(canvasW),
                               static_cast<unsigned int>(canvasH)))
@@ -122,6 +133,12 @@ bool RenderBackend_SFML::Init(HWND hWnd, int iWidth, int iHeight, bool bFullscre
 
     m_bInitialized = true;
 
+    // Fase 12 REVERTIDA: El enfoque de ventana hijo STATIC es incompatible
+    // con cnc-ddraw porque Windows borra la ventana STATIC automaticamente
+    // (WM_ERASEBKGND) causando parpadeo, y el OpenGL del padre pinta encima.
+    // Se usa BlitRenderTextureToDDraw con mejora de color incorporada
+
+
     // ---- Fase 8.L: Cargar shader de escala de grises ----
     static const char* s_grayscaleFragSrc =
         "uniform sampler2D texture;\n"
@@ -147,6 +164,8 @@ bool RenderBackend_SFML::Init(HWND hWnd, int iWidth, int iHeight, bool bFullscre
 
 void RenderBackend_SFML::Shutdown()
 {
+    // ---- Fase 12: Limpiar ventana de presentacion SFML ----
+
     if (m_pRenderTex)
     {
         delete m_pRenderTex;
@@ -155,46 +174,48 @@ void RenderBackend_SFML::Shutdown()
     m_bInitialized = false;
     if (m_pGrayscaleShader) { delete m_pGrayscaleShader; m_pGrayscaleShader = nullptr; }
     m_bGrayscaleShaderLoaded = false;
-
 }
-
-// ============================================================
-// Control de frame
-// ============================================================
 
 void RenderBackend_SFML::BeginFrame()
 {
     if (!m_bInitialized) return;
 
-    // Activar contexto SFML y MANTENERLO activo durante todo el frame.
-    // cnc-ddraw usa shadow buffers CPU para BltFast (no usa OpenGL entre frames),
+    // Activar contexto SFML y mantenerlo activo durante todo el frame.
+    // cnc-ddraw usa shadow buffers CPU para BltFast (no usa OpenGL entre frames).
     // OpenGL de cnc-ddraw solo se necesita en iFlip() que ocurre DESPUES de EndFrame().
-    // Eliminar el setActive(false) aqui previene 1000+ context-switches por frame
-    // (500 tiles x 2) que corrompian el estado del RenderTexture.
     m_pRenderTex->setActive(true);
-    m_pRenderTex->clear(sf::Color(0, 0, 0, 0)); // Fase 8.E: sentinel alpha=0 (mas rapido que RGB sentinel)
-    // NO setActive(false): el contexto permanece activo hasta EndFrame()
-    m_bFrameActive = true; // Habilita ruta SFML en PutSpriteFast/PutSpriteFastNoColorKeyDst
-    m_iCropX = 0; // Reset crop cada frame (DrawBackground lo setea antes de EndFrame)
+    m_pRenderTex->clear(sf::Color(0, 0, 0, 0)); // alpha=0 = transparente (centinela)
+    m_bFrameActive = true;
+    m_iCropX = 0; // Reset crop cada frame
     m_iCropY = 0;
 }
-
 
 void RenderBackend_SFML::EndFrame()
 {
     if (!m_bInitialized) return;
 
-    // Contexto SFML ya activo desde BeginFrame() - no necesitamos setActive(true) aqui.
-    // Finalizar el frame: display() sella el RenderTexture para poder leerlo.
+    // Guardia: si BeginFrame() no fue llamado primero, salir sin hacer nada.
+    // Esto evita crasheos si EndFrame llega en un estado inesperado.
+    if (!m_bFrameActive) return;
+
+    // Asegurar que el contexto esta activo antes de display()
+    m_pRenderTex->setActive(true);
+
+    // Sellar el RenderTexture para que su textura sea legible
     m_pRenderTex->display();
 
-    // Blit del canvas SFML al backbuffer DDraw (copyToImage necesita contexto activo)
+    // Blit al backbuffer DDraw con mejora de color incorporada
     BlitRenderTextureToDDraw();
 
-    // Liberar contexto OpenGL AHORA para que cnc-ddraw pueda usarlo en iFlip()
-    m_bFrameActive = false; // Deshabilita ruta SFML: sprites post-EndFrame van a DDraw
+    // Liberar contexto OpenGL para que cnc-ddraw pueda usarlo en iFlip()
+    m_bFrameActive = false;
     m_pRenderTex->setActive(false);
 }
+
+
+
+
+
 
 
 // ============================================================
@@ -214,7 +235,8 @@ void RenderBackend_SFML::DrawSprite(int iDstX, int iDstY,
     // Eliminar estos context-switches fue la solucion al black screen con 500+ tiles.
     sf::Sprite spr(m_mapTextures.at(iSpriteIndex));
     spr.setTextureRect(sf::IntRect(iSrcX, iSrcY, iSrcW, iSrcH));
-    spr.setPosition(static_cast<float>(iDstX), static_cast<float>(iDstY));
+    spr.setPosition(static_cast<float>(iDstX * SFML_S), static_cast<float>(iDstY * SFML_S));
+    spr.setScale(SFML_SF, SFML_SF);
     m_pRenderTex->draw(spr);
 }
 
@@ -233,7 +255,8 @@ void RenderBackend_SFML::DrawSpriteColor(int iDstX, int iDstY,
 
     sf::Sprite spr(m_mapTextures.at(iSpriteIndex));
     spr.setTextureRect(sf::IntRect(iSrcX, iSrcY, iSrcW, iSrcH));
-    spr.setPosition(static_cast<float>(iDstX), static_cast<float>(iDstY));
+    spr.setPosition(static_cast<float>(iDstX * SFML_S), static_cast<float>(iDstY * SFML_S));
+    spr.setScale(SFML_SF, SFML_SF);
 
     // Clamp RGBA 0-255 y aplicar color/alpha al sprite
     sf::Uint8 r = static_cast<sf::Uint8>((iR < 0) ? 0 : ((iR > 255) ? 255 : iR));
@@ -262,13 +285,13 @@ void RenderBackend_SFML::DrawSpriteShadow(int iSrcX, int iSrcY, int iSrcW, int i
     // Negro con 75% opacidad = oscurece destino a ~25% (equivale a >>2 del DDraw)
     spr.setColor(sf::Color(0, 0, 0, 192));
 
-    // Matriz de transformacion para paralelogramo:
-    // x' = 1*x + fShearX*y + fDstX
-    // y' = 0*x + fScaleY*y + fDstY
+    // Matriz de transformacion para paralelogramo (escalada x SFML_S para 2x SSAA):
+    // En espacio 2x: x' = 2*u + 2*fShearX*v + 2*fDstX
+    //                y' = 2*fScaleY*v + 2*fDstY
     sf::Transform shadowTransform(
-        1.0f,     fShearX,  fDstX,
-        0.0f,     fScaleY,  fDstY,
-        0.0f,     0.0f,     1.0f
+        SFML_SF,  SFML_SF * fShearX,  SFML_SF * fDstX,
+        0.0f,     SFML_SF * fScaleY,  SFML_SF * fDstY,
+        0.0f,     0.0f,               1.0f
     );
 
     m_pRenderTex->draw(spr, sf::RenderStates(shadowTransform));
@@ -290,8 +313,8 @@ void RenderBackend_SFML::DrawSpriteScaled(int iDstX, int iDstY,
 
     sf::Sprite spr(m_mapTextures.at(iSpriteIndex));
     spr.setTextureRect(sf::IntRect(iSrcX, iSrcY, iSrcW, iSrcH));
-    spr.setPosition(static_cast<float>(iDstX), static_cast<float>(iDstY));
-    spr.setScale(fScaleX, fScaleY);
+    spr.setPosition(static_cast<float>(iDstX * SFML_S), static_cast<float>(iDstY * SFML_S));
+    spr.setScale(fScaleX * SFML_SF, fScaleY * SFML_SF); // escala pedida + factor SSAA
 
     // Clamp RGBA 0-255
     sf::Uint8 r = static_cast<sf::Uint8>((iR < 0) ? 0 : ((iR > 255) ? 255 : iR));
@@ -316,7 +339,8 @@ void RenderBackend_SFML::DrawSpriteGrayscale(int iDstX, int iDstY,
 
     sf::Sprite spr(m_mapTextures.at(iSpriteIndex));
     spr.setTextureRect(sf::IntRect(iSrcX, iSrcY, iSrcW, iSrcH));
-    spr.setPosition(static_cast<float>(iDstX), static_cast<float>(iDstY));
+    spr.setPosition(static_cast<float>(iDstX * SFML_S), static_cast<float>(iDstY * SFML_S));
+    spr.setScale(SFML_SF, SFML_SF);
 
     if (m_bGrayscaleShaderLoaded && m_pGrayscaleShader) {
         m_pGrayscaleShader->setUniform("texture", sf::Shader::CurrentTexture);
@@ -337,8 +361,8 @@ void RenderBackend_SFML::DrawFilledRect(int iX, int iY, int iW, int iH,
 {
     if (!m_bInitialized || !m_bFrameActive || !m_pRenderTex) return;
 
-    sf::RectangleShape rect(sf::Vector2f(static_cast<float>(iW), static_cast<float>(iH)));
-    rect.setPosition(static_cast<float>(iX), static_cast<float>(iY));
+    sf::RectangleShape rect(sf::Vector2f(static_cast<float>(iW * SFML_S), static_cast<float>(iH * SFML_S)));
+    rect.setPosition(static_cast<float>(iX * SFML_S), static_cast<float>(iY * SFML_S));
 
     sf::Uint8 r = static_cast<sf::Uint8>((iR < 0) ? 0 : ((iR > 255) ? 255 : iR));
     sf::Uint8 g = static_cast<sf::Uint8>((iG < 0) ? 0 : ((iG > 255) ? 255 : iG));
@@ -349,7 +373,73 @@ void RenderBackend_SFML::DrawFilledRect(int iX, int iY, int iW, int iH,
     m_pRenderTex->draw(rect);
 }
 
+// ============================================================
+// Fase 10: Rectangulo con borde (outline) sin relleno
+// ============================================================
+void RenderBackend_SFML::DrawOutlineRect(int iX, int iY, int iW, int iH,
+    int iThickness, int iR, int iG, int iB, int iA)
+{
+    if (!m_bInitialized || !m_bFrameActive || !m_pRenderTex) return;
 
+    sf::RectangleShape rect(sf::Vector2f(static_cast<float>(iW * SFML_S), static_cast<float>(iH * SFML_S)));
+    rect.setPosition(static_cast<float>(iX * SFML_S), static_cast<float>(iY * SFML_S));
+    rect.setFillColor(sf::Color::Transparent);
+
+    sf::Uint8 r = static_cast<sf::Uint8>((iR < 0) ? 0 : ((iR > 255) ? 255 : iR));
+    sf::Uint8 g = static_cast<sf::Uint8>((iG < 0) ? 0 : ((iG > 255) ? 255 : iG));
+    sf::Uint8 b = static_cast<sf::Uint8>((iB < 0) ? 0 : ((iB > 255) ? 255 : iB));
+    sf::Uint8 a = static_cast<sf::Uint8>((iA < 0) ? 0 : ((iA > 255) ? 255 : iA));
+    rect.setOutlineColor(sf::Color(r, g, b, a));
+    rect.setOutlineThickness(static_cast<float>(iThickness * SFML_S));
+
+    m_pRenderTex->draw(rect);
+}
+
+// ============================================================
+// Fase 10: Circulo relleno con color RGBA
+// ============================================================
+void RenderBackend_SFML::DrawFilledCircle(int iCenterX, int iCenterY, int iRadius,
+    int iR, int iG, int iB, int iA)
+{
+    if (!m_bInitialized || !m_bFrameActive || !m_pRenderTex) return;
+    if (iRadius <= 0) return;
+
+    sf::CircleShape circle(static_cast<float>(iRadius * SFML_S));
+    circle.setPosition(static_cast<float>((iCenterX - iRadius) * SFML_S),
+                       static_cast<float>((iCenterY - iRadius) * SFML_S));
+
+    sf::Uint8 r = static_cast<sf::Uint8>((iR < 0) ? 0 : ((iR > 255) ? 255 : iR));
+    sf::Uint8 g = static_cast<sf::Uint8>((iG < 0) ? 0 : ((iG > 255) ? 255 : iG));
+    sf::Uint8 b = static_cast<sf::Uint8>((iB < 0) ? 0 : ((iB > 255) ? 255 : iB));
+    sf::Uint8 a = static_cast<sf::Uint8>((iA < 0) ? 0 : ((iA > 255) ? 255 : iA));
+    circle.setFillColor(sf::Color(r, g, b, a));
+
+    m_pRenderTex->draw(circle);
+}
+
+// ============================================================
+// Fase 10: Circulo con borde (outline)
+// ============================================================
+void RenderBackend_SFML::DrawOutlineCircle(int iCenterX, int iCenterY, int iRadius,
+    int iThickness, int iR, int iG, int iB, int iA)
+{
+    if (!m_bInitialized || !m_bFrameActive || !m_pRenderTex) return;
+    if (iRadius <= 0) return;
+
+    sf::CircleShape circle(static_cast<float>(iRadius * SFML_S));
+    circle.setPosition(static_cast<float>((iCenterX - iRadius) * SFML_S),
+                       static_cast<float>((iCenterY - iRadius) * SFML_S));
+    circle.setFillColor(sf::Color::Transparent);
+
+    sf::Uint8 r = static_cast<sf::Uint8>((iR < 0) ? 0 : ((iR > 255) ? 255 : iR));
+    sf::Uint8 g = static_cast<sf::Uint8>((iG < 0) ? 0 : ((iG > 255) ? 255 : iG));
+    sf::Uint8 b = static_cast<sf::Uint8>((iB < 0) ? 0 : ((iB > 255) ? 255 : iB));
+    sf::Uint8 a = static_cast<sf::Uint8>((iA < 0) ? 0 : ((iA > 255) ? 255 : iA));
+    circle.setOutlineColor(sf::Color(r, g, b, a));
+    circle.setOutlineThickness(static_cast<float>(iThickness * SFML_S));
+
+    m_pRenderTex->draw(circle);
+}
 
 // ============================================================
 // Stub para tiles (Fase 8.G)
@@ -385,8 +475,8 @@ void RenderBackend_SFML::DrawText(int iX, int iY,
     // Verificar que la fuente cargo (getInfo().family esta vacio si fallo)
     if (m_fonts[iFontId].getInfo().family.empty()) return;
 
-    // Configuracion de la fuente
-    unsigned int charSize = s_fontSizes[iFontId];
+    // Configuracion de la fuente (charSize * SFML_S para canvas 2x)
+    unsigned int charSize = s_fontSizes[iFontId] * static_cast<unsigned int>(SFML_S);
     sf::Uint32   style    = s_fontStyles[iFontId];
 
     // Color SFML desde COLORREF (Windows BGR -> SFML RGB)
@@ -398,23 +488,23 @@ void RenderBackend_SFML::DrawText(int iX, int iY,
     text.setCharacterSize(charSize);
     text.setStyle(style);
     text.setFillColor(color);
-    text.setPosition(static_cast<float>(iX), static_cast<float>(iY));
+    text.setPosition(static_cast<float>(iX * SFML_S), static_cast<float>(iY * SFML_S));
 
     // Efectos de texto
     if (iEffect == HB_TEXT_SHADOW)
     {
-        // Sombra: dibujar primero el texto negro desplazado 1px derecha+abajo
+        // Sombra: desplazada SFML_S px (equivalente a 1px en espacio de pantalla)
         sf::Text shadow(text);
         shadow.setFillColor(sf::Color::Black);
-        shadow.setPosition(static_cast<float>(iX + 1), static_cast<float>(iY + 1));
+        shadow.setPosition(static_cast<float>(iX * SFML_S + SFML_S), static_cast<float>(iY * SFML_S + SFML_S));
         if (shadow.getOutlineThickness() != 0.f) shadow.setOutlineThickness(0.f);
         m_pRenderTex->draw(shadow);
     }
     else if (iEffect == HB_TEXT_OUTLINE4)
     {
-        // Outline via sf::Text::setOutlineThickness (mas eficiente que 4 draws)
+        // Outline via sf::Text::setOutlineThickness (escalado a SSAA 2x)
         text.setOutlineColor(sf::Color::Black);
-        text.setOutlineThickness(1.0f);
+        text.setOutlineThickness(static_cast<float>(SFML_S));
     }
 
     m_pRenderTex->draw(text);
@@ -431,8 +521,8 @@ void RenderBackend_SFML::DrawTextCentered(int iX1, int iX2, int iY,
     if (!m_bFrameActive || !m_pRenderTex) return;
     if (m_fonts[iFontId].getInfo().family.empty()) return;
 
-    // Crear texto temporal para medir su ancho
-    unsigned int charSize = s_fontSizes[iFontId];
+    // Crear texto temporal para medir su ancho (en espacio 2x canvas)
+    unsigned int charSize = s_fontSizes[iFontId] * static_cast<unsigned int>(SFML_S);
     sf::Uint32   style    = s_fontStyles[iFontId];
 
     sf::Text text;
@@ -441,14 +531,14 @@ void RenderBackend_SFML::DrawTextCentered(int iX1, int iX2, int iY,
     text.setCharacterSize(charSize);
     text.setStyle(style);
 
-    // Calcular posicion centrada horizontalmente entre iX1 e iX2
-    float textWidth = text.getLocalBounds().width;
-    float regionWidth = static_cast<float>(iX2 - iX1);
-    float centeredX = static_cast<float>(iX1) + (regionWidth - textWidth) / 2.0f;
+    // Calcular posicion centrada en espacio 2x: iX1, iX2 escalados por SFML_S
+    float textWidth   = text.getLocalBounds().width;
+    float regionWidth = static_cast<float>((iX2 - iX1) * SFML_S);
+    float centeredX   = static_cast<float>(iX1 * SFML_S) + (regionWidth - textWidth) / 2.0f;
 
     sf::Color color(GetRValue(dwColor), GetGValue(dwColor), GetBValue(dwColor));
     text.setFillColor(color);
-    text.setPosition(centeredX, static_cast<float>(iY));
+    text.setPosition(centeredX, static_cast<float>(iY * SFML_S));
 
     m_pRenderTex->draw(text);
 }
@@ -519,7 +609,7 @@ bool RenderBackend_SFML::LoadSpriteTexture(int iSpriteIndex,
         return false;
 
     tex.update(pixels32.data());
-    tex.setSmooth(false);
+    tex.setSmooth(true); // Bilinear para suavizar bordes al escalar 2x
 
     m_mapTextures[iSpriteIndex] = std::move(tex);
     return true;
@@ -589,8 +679,12 @@ sf::Color RenderBackend_SFML::ConvertPixel16ToRGBA(unsigned short pixel16,
 
 void RenderBackend_SFML::SetViewCrop(int cropX, int cropY)
 {
-    m_iCropX = cropX;
-    m_iCropY = cropY;
+    // Clamp a 0 para evitar lecturas fuera del buffer SFML (offsetX puede ser negativo)
+    if (cropX < 0) cropX = 0;
+    if (cropY < 0) cropY = 0;
+    // Con canvas SFML_S x, el crop tambien debe estar en espacio SFML_S x
+    m_iCropX = cropX * SFML_S;
+    m_iCropY = cropY * SFML_S;
 }
 
 // ============================================================
@@ -600,7 +694,12 @@ void RenderBackend_SFML::SetViewCrop(int cropX, int cropY)
 
 void RenderBackend_SFML::BlitRenderTextureToDDraw()
 {
-    // GPU -> CPU readback (arquitectural, se elimina en Fase 8.G)
+    // Garantizar que el contexto OpenGL esta activo ANTES de copyToImage().
+    // display() puede desactivar el contexto internamente en SFML 2.6,
+    // y copyToImage() necesita el contexto activo para leer la GPU.
+    if (m_pRenderTex) m_pRenderTex->setActive(true);
+
+    // GPU -> CPU readback
     sf::Image img = m_pRenderTex->getTexture().copyToImage();
 
     const sf::Uint8* pSrc = img.getPixelsPtr();
@@ -620,40 +719,71 @@ void RenderBackend_SFML::BlitRenderTextureToDDraw()
     int iPitch = ddsd.lPitch / 2; // pitch en shorts (16-bit por pixel)
     int imgW = static_cast<int>(img.getSize().x);
 
-    // Dimensiones del blit: resolucion de pantalla, limitado al canvas
-    int iW = min(m_DDraw.res_x, imgW - m_iCropX);
-    int iH = min(m_DDraw.res_y, static_cast<int>(img.getSize().y) - m_iCropY);
+    // ---- HD Scaling: blit con box-filter 2x SSAA ----
+    // El canvas SFML es 2x en cada dimension. Para cada pixel destino (x,y)
+    // leemos los 4 pixeles fuente correspondientes (2x+cx, 2y+cy) a (2x+1+cx, 2y+1+cy)
+    // y los promediamos -> anti-aliasing 2x en sprites SFML.
+    int imgH = static_cast<int>(img.getSize().y);
+    int iW = min(m_DDraw.res_x, (imgW  - m_iCropX) / SFML_S);
+    int iH = min(m_DDraw.res_y, (imgH  - m_iCropY) / SFML_S);
     if (iW <= 0 || iH <= 0)
     {
         m_DDraw.m_lpBackB4->Unlock(nullptr);
         return;
     }
 
-    // Blit optimizado: uint32 reads + alpha sentinel + row pointers
-    // En x86 little-endian, SFML RGBA bytes [R,G,B,A] = uint32 A<<24|B<<16|G<<8|R
-    // Alpha es el byte alto (bits 24-31). Si alpha=0 -> no hay sprite -> saltar.
     for (int y = 0; y < iH; y++)
     {
-        // Pre-computar punteros de fila (elimina multiplicaciones del inner loop)
-        const uint32_t* pSrcRow = reinterpret_cast<const uint32_t*>(
-            pSrc + ((y + m_iCropY) * imgW + m_iCropX) * 4);
+        // Filas fuente: cada fila destino cubre SFML_S filas en el canvas 2x
+        int srcY0 = SFML_S * y + m_iCropY;
+        int srcY1 = srcY0 + 1;
+        if (srcY1 >= imgH) srcY1 = imgH - 1; // Safety: nunca leer fuera del buffer
+
+        const uint32_t* pSrcRow0 = reinterpret_cast<const uint32_t*>(
+            pSrc + (srcY0 * imgW + m_iCropX) * 4);
+        const uint32_t* pSrcRow1 = reinterpret_cast<const uint32_t*>(
+            pSrc + (srcY1 * imgW + m_iCropX) * 4);
         unsigned short* pDstRow = pDst + y * iPitch;
 
         for (int x = 0; x < iW; x++)
         {
-            uint32_t rgba = pSrcRow[x]; // 1 lectura de 4 bytes
+            int sx = SFML_S * x;
+            uint32_t p00 = pSrcRow0[sx];
 
-            if (rgba & 0xFF000000) // alpha != 0 = sprite dibujado aqui
+            int ri, gi, bi;
+            if (SFML_S >= 2)
             {
-                // Extraer R,G,B del uint32 (little-endian: R=byte0, G=byte1, B=byte2)
-                sf::Uint8 r = static_cast<sf::Uint8>(rgba & 0xFF);
-                sf::Uint8 g = static_cast<sf::Uint8>((rgba >> 8) & 0xFF);
-                sf::Uint8 b = static_cast<sf::Uint8>((rgba >> 16) & 0xFF);
-
-                // RGBA32 -> RGB565 para DDraw
-                pDstRow[x] = static_cast<unsigned short>(
-                    ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
+                // Box filter 2x2: promediar los 4 pixeles fuente para anti-aliasing
+                uint32_t p10 = pSrcRow0[sx + 1];
+                uint32_t p01 = pSrcRow1[sx];
+                uint32_t p11 = pSrcRow1[sx + 1];
+                if (!((p00 | p10 | p01 | p11) & 0xFF000000)) continue;
+                ri = static_cast<int>( (p00        & 0xFF) + (p10        & 0xFF)
+                                     + (p01        & 0xFF) + (p11        & 0xFF)) >> 2;
+                gi = static_cast<int>(((p00 >>  8) & 0xFF) + ((p10 >>  8) & 0xFF)
+                                     +((p01 >>  8) & 0xFF) + ((p11 >>  8) & 0xFF)) >> 2;
+                bi = static_cast<int>(((p00 >> 16) & 0xFF) + ((p10 >> 16) & 0xFF)
+                                     +((p01 >> 16) & 0xFF) + ((p11 >> 16) & 0xFF)) >> 2;
             }
+            else
+            {
+                // SFML_S=1: pixel unico, sin promediar (1:1 mapping)
+                if (!(p00 & 0xFF000000)) continue;
+                ri = static_cast<int>(p00        & 0xFF);
+                gi = static_cast<int>((p00 >>  8) & 0xFF);
+                bi = static_cast<int>((p00 >> 16) & 0xFF);
+            }
+
+            // Sin modificacion de color: respetar colores originales DDraw
+            float r = ri / 255.0f;
+            float g = gi / 255.0f;
+            float b = bi / 255.0f;
+
+            sf::Uint8 R = static_cast<sf::Uint8>(r * 255.0f);
+            sf::Uint8 G = static_cast<sf::Uint8>(g * 255.0f);
+            sf::Uint8 B = static_cast<sf::Uint8>(b * 255.0f);
+            pDstRow[x] = static_cast<unsigned short>(
+                ((R >> 3) << 11) | ((G >> 2) << 5) | (B >> 3));
         }
     }
 
