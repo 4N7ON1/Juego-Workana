@@ -18737,9 +18737,9 @@ void CGame::DrawBackground(short sDivX, short sModX, short sDivY, short sModY)
 
 		RECT rcRect;
 		SetRect(&rcRect, sModX + offsetX, sModY + offsetY, res_x + sModX + offsetX, res_y + sModY + offsetY);
-		if (!g_pRenderBackend)
-			m_DDraw.m_lpBackB4->BltFast(0, 0, m_DDraw.m_lpPDBGS, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
-		else
+		// Tiles siempre via DDraw BltFast (diseño híbrido: DDraw=tiles, SFML=sprites)
+		m_DDraw.m_lpBackB4->BltFast(0, 0, m_DDraw.m_lpPDBGS, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
+		if (g_pRenderBackend)
 			g_pRenderBackend->SetViewCrop(sModX + offsetX, sModY + offsetY);
 
 
@@ -18852,9 +18852,9 @@ void CGame::DrawBackground(short sDivX, short sModX, short sDivY, short sModY)
 
 		RECT rcRect;
 		SetRect(&rcRect, sModX, sModY, res_x + sModX, res_y + sModY);
-		if (!g_pRenderBackend)
-			m_DDraw.m_lpBackB4->BltFast(0, 0, m_DDraw.m_lpPDBGS, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
-		else
+		// Tiles siempre via DDraw BltFast (diseño híbrido: DDraw=tiles, SFML=sprites)
+		m_DDraw.m_lpBackB4->BltFast(0, 0, m_DDraw.m_lpPDBGS, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
+		if (g_pRenderBackend)
 			g_pRenderBackend->SetViewCrop(sModX, sModY);
 
 		if (m_bGrid)
