@@ -129,6 +129,13 @@ public:
     virtual void DrawFilledRect(int iX, int iY, int iW, int iH,
         int iR, int iG, int iB, int iA = 255) override;
 
+    // Fase 10: rectangulo con borde, circulo relleno, circulo con borde
+    void DrawOutlineRect(int iX, int iY, int iW, int iH,
+        int iThickness, int iR, int iG, int iB, int iA = 255);
+    void DrawFilledCircle(int iCenterX, int iCenterY, int iRadius,
+        int iR, int iG, int iB, int iA = 255);
+    void DrawOutlineCircle(int iCenterX, int iCenterY, int iRadius,
+        int iThickness, int iR, int iG, int iB, int iA = 255);
 
 private:
     DXC_ddraw&         m_DDraw;            // referencia al DDraw de CGame - NO es dueno

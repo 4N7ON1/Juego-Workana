@@ -86,14 +86,23 @@ int XSocket::iOnSocketEvent(WPARAM wParam, LPARAM lParam)
 	if ((SOCKET)wParam != m_Sock) return DEF_XSOCKEVENT_SOCKETMISMATCH;
 	WSAEvent = WSAGETSELECTEVENT(lParam);
 
+	{
+		extern void DbgLog(const char* msg);
+		char _sb[256];
+		sprintf(_sb, "[DBG-SOCK] iOnSocketEvent: event=%d error=%d sock=%d\n", WSAEvent, WSAGETSELECTERROR(lParam), (int)m_Sock);
+		DbgLog(_sb);
+	}
+
 	switch (WSAEvent) {
 	case FD_CONNECT:
 		if (WSAGETSELECTERROR(lParam) != 0) {
+			{ extern void DbgLog(const char* msg); char _sb[128]; sprintf(_sb, "[DBG-SOCK] FD_CONNECT ERROR=%d, retrying\n", WSAGETSELECTERROR(lParam)); DbgLog(_sb); }
 			if (bConnect(m_pAddr, m_iPortNum, m_uiMsg) == FALSE) return DEF_XSOCKEVENT_SOCKETERROR;
 
 			return DEF_XSOCKEVENT_RETRYINGCONNECTION;
 		}
 		else {
+			{ extern void DbgLog(const char* msg); DbgLog("[DBG-SOCK] FD_CONNECT SUCCESS -> CONNECTIONESTABLISH\n"); }
 			m_bIsAvailable = TRUE;
 			return DEF_XSOCKEVENT_CONNECTIONESTABLISH;
 		}
@@ -319,12 +328,13 @@ BOOL XSocket::bConnect(char* pAddr, int iPort, unsigned int uiMsg)
 	m_bIsWriteEnabled = FALSE;
 	m_bIsAvailable = TRUE;
 
-	// Log opcional
-#ifdef _DEBUG
-	char tmp[128];
-	sprintf(tmp, "[XSocket] Conectando a %s:%d (modo asíncrono, KeepAlive ON)", pAddr, iPort);
-	OutputDebugStringA(tmp);
-#endif
+	// Log diagnóstico de conexión
+	{
+		extern void DbgLog(const char* msg);
+		char tmp[256];
+		sprintf(tmp, "[DBG-SOCK] bConnect: addr='%s' port=%d sock=%d iRet=%d err=%d\n", pAddr, iPort, (int)m_Sock, iRet, (iRet == SOCKET_ERROR) ? WSAGetLastError() : 0);
+		DbgLog(tmp);
+	}
 
 	return TRUE;
 }

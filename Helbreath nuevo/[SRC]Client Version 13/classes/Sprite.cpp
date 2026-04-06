@@ -14,10 +14,21 @@
 #include "..\Resolution\Resolution.h"
 extern class cResolution * c_reso;
 #include "../Headers/IRenderBackend.h"
+#include <unordered_set>
 extern IRenderBackend* g_pRenderBackend;
+extern void DbgLog(const char* msg); // v14: debug sprite-load tracing
+
+// [DIAG-C] First-draw tracker: logs the FIRST time each (slot, method) is drawn via SFML.
+// Slot = positive idx (Fast), negative idx (NoColorKey).
+// Avoids per-frame spam; reveals dual-loading and wrong-method draws.
+static std::unordered_set<int> s_drawnSlots;
 
 
 extern char G_cSpriteAlphaDegree;
+
+// === DEBUG HIPOTESIS A: contadores de intercept tiles ===
+int g_dbgTileToSFML = 0;   // tiles que fueron a SFML en este frame
+int g_dbgTileToDDraw = 0;  // tiles que cayeron a DDraw en este frame
 
 extern int G_iAddTable31[64][510], G_iAddTable63[64][510];
 extern int G_iAddTransTable31[510][64], G_iAddTransTable63[510][64]; 
@@ -224,9 +235,12 @@ void CSprite::PutSpriteFast(int sX, int sY, int sFrame, DWORD dwTime)
 					unsigned short* pBuf = new unsigned short[w * h];
 					for (int row = 0; row < h; row++)
 						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					// Sprites del mundo: usar colorkey real. ConvertPixel16ToRGBA (dwColorKey>=1)
+					// maneja el caso UI (colorkey=0 → todos opacos).
 					g_pRenderBackend->LoadSpriteFromPixels16(
 						m_iSpriteIndex, pBuf, w, h, m_wColorKey);
 					delete[] pBuf;
+					// [DIAG-A] Full load detail logged inside LoadSpriteTexture (RenderBackend_SFML.cpp)
 				}
 				m_lpSurface->Unlock(NULL);
 			}
@@ -235,6 +249,14 @@ void CSprite::PutSpriteFast(int sX, int sY, int sFrame, DWORD dwTime)
 		// Si ya esta cargado en SFML, dibujar en SFML y NO usar DDraw
 		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex))
 		{
+			// [DIAG-C] First-draw via PutSpriteFast (colorkey path, positive slot)
+			if (s_drawnSlots.find(m_iSpriteIndex) == s_drawnSlots.end()) {
+				s_drawnSlots.insert(m_iSpriteIndex);
+				char _ud[96];
+				sprintf(_ud, "[UI-DRAW] idx=%d slot=%d method=Fast ck=0x%04X\n",
+					m_iSpriteIndex, m_iSpriteIndex, (unsigned)m_wColorKey);
+				DbgLog(_ud);
+			}
 			// PutSpriteFast dibuja personajes/objetos/arboles en coordenadas de PANTALLA.
 			// Pero BlitRenderTextureToDDraw aplica un crop de (cropX,cropY) para los tiles.
 			// Compensamos sumando el crop a la posicion, asi el crop no desplaza estos sprites.
@@ -425,6 +447,40 @@ void CSprite::PutSpriteFastDst(LPDIRECTDRAWSURFACE7 lpDstS, int sX, int sY, int 
 	m_rcBound.top  = dY;
 	m_rcBound.right  = dX + szx;
 	m_rcBound.bottom = dY + szy;
+
+	// SFML intercept: usa m_wColorKey (ConvertPixel16ToRGBA maneja colorkey=0 como opaco)
+	if (g_pRenderBackend != nullptr && m_iSpriteIndex >= 0 && g_pRenderBackend->IsFrameActive())
+	{
+		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex))
+		{
+			DDSURFACEDESC2 ddsd2;
+			ZeroMemory(&ddsd2, sizeof(ddsd2));
+			ddsd2.dwSize = sizeof(ddsd2);
+			if (m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK)
+			{
+				int w = m_wBitmapSizeX;
+				int h = m_wBitmapSizeY;
+				int pitch = (int)(ddsd2.lPitch / 2);
+				WORD* pPixs = (WORD*)ddsd2.lpSurface;
+				if (w > 0 && h > 0 && pPixs)
+				{
+					unsigned short* pBuf = new unsigned short[w * h];
+					for (int row = 0; row < h; row++)
+						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
+					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, m_wColorKey);
+					delete[] pBuf;
+				}
+				m_lpSurface->Unlock(NULL);
+			}
+		}
+		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex))
+		{
+			g_pRenderBackend->DrawSprite(dX, dY, sx, sy, szx, szy, m_iSpriteIndex);
+			m_bOnCriticalSection = FALSE;
+			return;
+		}
+	}
+
 	lpDstS->BltFast( dX, dY, m_lpSurface, &rcRect, DDBLTFAST_SRCCOLORKEY | DDBLTFAST_WAIT );
 	m_bOnCriticalSection = FALSE;
 }
@@ -503,9 +559,13 @@ void CSprite::PutSpriteFastNoColorKey(int sX, int sY, int sFrame, DWORD dwTime)
 	m_rcBound.bottom = dY + szy;
 
 	// === SFML INTERCEPT (Fase 9.A - PutSpriteFastNoColorKey) ===
+	// v13 FIX: use negative key -(m_iSpriteIndex+1) for the no-colorkey cache entry.
+	// This keeps UI opaque textures in a SEPARATE slot from the colorkey textures loaded
+	// by PutSpriteFast, eliminating cache conflicts that caused transparent UI panels.
 	if (g_pRenderBackend && g_pRenderBackend->IsFrameActive() && m_iSpriteIndex >= 0)
 	{
-		if (!g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+		int ncKey = -(m_iSpriteIndex + 1); // negative = no-colorkey namespace
+		if (!g_pRenderBackend->IsTextureLoaded(ncKey)) {
 			DDSURFACEDESC2 ddsd2; ZeroMemory(&ddsd2, sizeof(ddsd2)); ddsd2.dwSize = sizeof(ddsd2);
 			if (m_lpSurface && m_lpSurface->Lock(NULL, &ddsd2, DDLOCK_WAIT, NULL) == DD_OK) {
 				int w = m_wBitmapSizeX, h = m_wBitmapSizeY;
@@ -515,16 +575,26 @@ void CSprite::PutSpriteFastNoColorKey(int sX, int sY, int sFrame, DWORD dwTime)
 					unsigned short* pBuf = new unsigned short[w * h];
 					for (int row = 0; row < h; row++)
 						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
-					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, m_wColorKey);
+					// Load into negative-key slot with 0x10000 (fully opaque — no colorkey)
+					g_pRenderBackend->LoadSpriteFromPixels16(ncKey, pBuf, w, h, 0x10000);
 					delete[] pBuf;
+					// [DIAG-A] Full load detail logged inside LoadSpriteTexture (RenderBackend_SFML.cpp)
 				}
 				m_lpSurface->Unlock(NULL);
 			}
 		}
-		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex)) {
+		if (g_pRenderBackend->IsTextureLoaded(ncKey)) {
+			// [DIAG-C] First-draw via PutSpriteFastNoColorKey (opaque path, negative slot)
+			if (s_drawnSlots.find(ncKey) == s_drawnSlots.end()) {
+				s_drawnSlots.insert(ncKey);
+				char _ud[96];
+				sprintf(_ud, "[UI-DRAW] idx=%d slot=%d method=NoColorKey ck=0x10000\n",
+					m_iSpriteIndex, ncKey);
+				DbgLog(_ud);
+			}
 			int cx = g_pRenderBackend->GetCropX(), cy = g_pRenderBackend->GetCropY();
 			g_pRenderBackend->DrawSpriteColor(dX + cx, dY + cy, sx, sy, szx, szy,
-				m_iSpriteIndex, 255, 255, 255, 255);
+				ncKey, 255, 255, 255, 255);
 			m_bOnCriticalSection = FALSE;
 			return;
 		}
@@ -653,12 +723,14 @@ void CSprite::PutSpriteFastNoColorKeyDst(LPDIRECTDRAWSURFACE7 lpDstS, int sX, in
 		if (g_pRenderBackend->IsTextureLoaded(m_iSpriteIndex))
 		{
 			g_pRenderBackend->DrawSprite(dX, dY, sx, sy, szx, szy, m_iSpriteIndex);
+			extern int g_dbgTileToSFML; g_dbgTileToSFML++; // DBG-A
 			m_bOnCriticalSection = FALSE;
 			return;
 		}
 	}
 	// === FIN SFML INTERCEPT ===
 
+	extern int g_dbgTileToDDraw; g_dbgTileToDDraw++; // DBG-A: tile cayo a DDraw
 	lpDstS->BltFast(dX, dY, m_lpSurface, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
 
 
@@ -2680,7 +2752,7 @@ void CSprite::PutTransSprite50_NoColorKey(int sX, int sY, int sFrame, DWORD dwTi
 					unsigned short* pBuf = new unsigned short[w * h];
 					for (int row = 0; row < h; row++)
 						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
-					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, 0x10000);
+					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, m_wColorKey);
 					delete[] pBuf;
 				}
 				m_lpSurface->Unlock(NULL);
@@ -2990,7 +3062,7 @@ void CSprite::PutTransSprite25_NoColorKey(int sX, int sY, int sFrame, DWORD dwTi
 					unsigned short* pBuf = new unsigned short[w * h];
 					for (int row = 0; row < h; row++)
 						memcpy(&pBuf[row * w], pPixs + row * pitch, w * 2);
-					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, 0x10000);
+					g_pRenderBackend->LoadSpriteFromPixels16(m_iSpriteIndex, pBuf, w, h, m_wColorKey);
 					delete[] pBuf;
 				}
 				m_lpSurface->Unlock(NULL);

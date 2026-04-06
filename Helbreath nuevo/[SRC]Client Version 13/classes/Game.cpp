@@ -23,11 +23,13 @@
 
 using namespace Gdiplus;
 
-float m_fRenderOffsetX = 0;
-float m_fRenderOffsetY = 0;
-float m_fTargetOffsetX = 0;
-float m_fTargetOffsetY = 0;
-bool  m_bIsInterpolating = false;
+// v14 FINAL: render offset system removed (v13). Declarations kept as stubs for binary compat.
+// These variables are no longer read or written by any active code path.
+static float m_fRenderOffsetX = 0;   // OBSOLETO - mantener para evitar errores de enlace
+static float m_fRenderOffsetY = 0;   // OBSOLETO
+static float m_fTargetOffsetX = 0;   // OBSOLETO
+static float m_fTargetOffsetY = 0;   // OBSOLETO
+static bool  m_bIsInterpolating = false; // OBSOLETO
 
 // ============================================================
 // Sistema de Movimiento Suave por Personaje (Smooth Movement)
@@ -82,6 +84,7 @@ int dr = -5, dg = 0, db = 5;
 bool useYellow = true;
 int frameCounter = 0; 
 extern void SetKeyboardHook(bool enable);
+extern void DbgLog(const char* msg); // DBG: log a archivo
 IRenderBackend* g_pRenderBackend = nullptr;
 
 
@@ -764,103 +767,46 @@ void CGame::CalcViewPoint()
 	float fDeltaTime = (dwNow - s_dwLastCalcTime) / 1000.0f;
 	if (fDeltaTime > 0.1f) fDeltaTime = 0.1f; // máximo 100ms por frame
 	s_dwLastCalcTime = dwNow;
-	if (m_bModernMovement)
+	// Float lerp camera: sub-pixel interpolation for smooth movement.
+	// Snap when residual < 0.1 to eliminate end-of-move micro-jitter (v14).
 	{
+		float dx = (float)m_sViewDstX - m_fSmoothViewPointX;
+		if (fabs(dx) < 0.1f)
+			m_fSmoothViewPointX = (float)m_sViewDstX;
+		else
+			m_fSmoothViewPointX += dx * 0.25f;
+	}
+	{
+		float dy = (float)m_sViewDstY - m_fSmoothViewPointY;
+		if (fabs(dy) < 0.1f)
+			m_fSmoothViewPointY = (float)m_sViewDstY;
+		else
+			m_fSmoothViewPointY += dy * 0.25f;
+	}
 
-		// 1. Lógica original de movimiento (tiles)
-		short dX = m_sViewPointX - m_sViewDstX;
-		short dY = m_sViewPointY - m_sViewDstY;
+	m_sViewPointX = (short)(int)m_fSmoothViewPointX;
+	m_sViewPointY = (short)(int)m_fSmoothViewPointY;
 
-		// X Axis
-		if (abs(dX) < abs(m_sViewDX)) {
-			m_sViewPointX = m_sViewDstX;
-			m_sViewDX = 0;
-		}
-		else {
-			if (dX > 0) m_sViewDX--;
-			else if (dX < 0) m_sViewDX++;
-			else m_sViewDX = 0;
-
-			if ((unsigned)abs(dX) < 40) {
-				if (m_sViewDX > 2) m_sViewDX = 2;
-				else if (m_sViewDX < -2) m_sViewDX = -2;
-			}
-			m_sViewPointX += m_sViewDX;
-		}
-
-		// Y Axis
-		if (abs(dY) < abs(m_sViewDY)) {
-			m_sViewPointY = m_sViewDstY;
-			m_sViewDY = 0;
-		}
-		else {
-			if (dY > 0) m_sViewDY--;
-			else if (dY < 0) m_sViewDY++;
-			else m_sViewDY = 0;
-
-			if ((unsigned)abs(dY) < 40) {
-				if (m_sViewDY > 2) m_sViewDY = 2;
-				else if (m_sViewDY < -2) m_sViewDY = -2;
-			}
-			m_sViewPointY += m_sViewDY;
-		}
-
-		// 2. Suavizado en píxeles (solo si hay movimiento activo)
-		if (m_bIsInterpolating) {
-			const float decayFactor = powf(0.9f, fDeltaTime * 60.0f); // Ajusta este valor para mayor/menor suavidad
-
-			// Interpolación no lineal (decaimiento exponencial)
-			m_fRenderOffsetX *= decayFactor;
-			m_fRenderOffsetY *= decayFactor;
-
-			// Reset cuando sea insignificante
-			if (fabs(m_fRenderOffsetX) < 0.1f && fabs(m_fRenderOffsetY) < 0.1f) {
-				m_fRenderOffsetX = m_fRenderOffsetY = 0.0f;
-				m_bIsInterpolating = false;
-			}
+	// [DIAG-D] Camera trace: log whenever movement delta is active OR every 300 frames.
+	// Shows: smoothX=float, targetX=int, deltaX=float, resultX=int (cast artifact)
+	{
+		static int s_camDiagN = 0;
+		float dxLog = (float)m_sViewDstX - m_fSmoothViewPointX;
+		float dyLog = (float)m_sViewDstY - m_fSmoothViewPointY;
+		bool moving = (fabsf(dxLog) > 0.01f || fabsf(dyLog) > 0.01f);
+		if (moving || (++s_camDiagN % 300 == 0)) {
+			char _cb[160];
+			sprintf(_cb,
+				"[CAM] sX=%.4f tX=%d dX=%.4f rX=%d | sY=%.4f tY=%d dY=%.4f rY=%d%s\n",
+				m_fSmoothViewPointX, (int)m_sViewDstX, dxLog, (int)m_sViewPointX,
+				m_fSmoothViewPointY, (int)m_sViewDstY, dyLog, (int)m_sViewPointY,
+				moving ? " MOVING" : " idle");
+			DbgLog(_cb);
 		}
 	}
-	else
-	{
-		short dX = m_sViewPointX - m_sViewDstX;
-		short dY = m_sViewPointY - m_sViewDstY;
 
-		// Optimización en X
-		if (abs(dX) < abs(m_sViewDX)) { // abs utilizado para asegurar correcto comportamiento
-			m_sViewPointX = m_sViewDstX;
-			m_sViewDX = 0;
-		}
-		else {
-			if (dX > 0) m_sViewDX--;
-			else if (dX < 0) m_sViewDX++;
-			else m_sViewDX = 0;
-
-			if ((unsigned)abs(dX) < 40) { // Absuelto con unsigned para optimización
-				if (m_sViewDX > 2) m_sViewDX = 2;
-				else if (m_sViewDX < -2) m_sViewDX = -2;
-			}
-
-			m_sViewPointX += m_sViewDX;
-		}
-
-		// Optimización en Y
-		if (abs(dY) < abs(m_sViewDY)) { // abs utilizado para asegurar correcto comportamiento
-			m_sViewPointY = m_sViewDstY;
-			m_sViewDY = 0;
-		}
-		else {
-			if (dY > 0) m_sViewDY--;
-			else if (dY < 0) m_sViewDY++;
-			else m_sViewDY = 0;
-
-			if ((unsigned)abs(dY) < 40) { // Absuelto con unsigned para optimización
-				if (m_sViewDY > 2) m_sViewDY = 2;
-				else if (m_sViewDY < -2) m_sViewDY = -2;
-			}
-
-			m_sViewPointY += m_sViewDY;
-		}
-	}	
+	// v13: render offset system removed. Float lerp camera is the sole smoothing mechanism.
+	(void)fDeltaTime; // suppress unused warning
 }
 
 void CGame::OnGameSocketEvent(WPARAM wParam, LPARAM lParam)
@@ -2495,7 +2441,12 @@ void CGame::MakeEffectSpr(char* FileName, short sStart, short sCount, bool bAlph
 	ReadFile(m_hPakFile, (char *)&iTotalimage, 4, &nCount, NULL);
 	if (!Pak) iTotalimage = ((((iTotalimage - 51) / 3) - 17) / 44);
 	for (short i = 0; i < sCount; i++) {
-		if (i < iTotalimage) m_pEffectSpr[i + sStart] = new class CSprite(m_hPakFile, &m_DDraw, FileName, i, bAlphaEffect, Pak);
+		if (i < iTotalimage) {
+			m_pEffectSpr[i + sStart] = new class CSprite(m_hPakFile, &m_DDraw, FileName, i, bAlphaEffect, Pak);
+			// Asignar índice SFML consistente con MakeTileSpr (100000+) y MakeSprite.
+			// Rango 200000+ reservado para efectos, evita colisión con sprites (0-27499) y tiles (100000-100999).
+			m_pEffectSpr[i + sStart]->m_iSpriteIndex = 200000 + (i + sStart);
+		}
 	}
 	CloseHandle(m_hPakFile);
 }
@@ -2523,7 +2474,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 			sY = m_stDialogBoxInfo[26].sY;
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX, sY, 1, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX, sY, 1, dwTime);
 
 		if (m_stDialogBoxInfo[26].sV1 != -1) {
 			m_pSprite[DEF_SPRID_ITEMPACK_PIVOTPOINT +
@@ -2576,7 +2527,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 			sX = m_stDialogBoxInfo[26].sX;
 			sY = m_stDialogBoxInfo[26].sY;
 		}
-		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX, sY, 1, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX, sY, 1, dwTime);
 
 		if (m_stDialogBoxInfo[26].sV1 != -1) {
 			m_pSprite[DEF_SPRID_ITEMPACK_PIVOTPOINT +
@@ -2672,11 +2623,11 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		}
 
 		if ((m_stDialogBoxInfo[26].sView >= 1) && (m_pDispBuildItemList[m_stDialogBoxInfo[26].sView - 1] != NULL))
-			m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutSpriteFast(sX + iAdjX + 225, sY + iAdjY + 210, 23, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutSpriteFastNoColorKey(sX + iAdjX + 225, sY + iAdjY + 210, 23, dwTime);
 		else m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutTransSpriteRGB(sX + iAdjX + 225, sY + iAdjY + 210, 23, 5, 5, 5, dwTime);
 
 		if (m_pDispBuildItemList[m_stDialogBoxInfo[26].sView + 13] != NULL)
-			m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutSpriteFast(sX + iAdjX + 225, sY + iAdjY + 230, 24, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutSpriteFastNoColorKey(sX + iAdjX + 225, sY + iAdjY + 230, 24, dwTime);
 		else m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutTransSpriteRGB(sX + iAdjX + 225, sY + iAdjY + 230, 24, 5, 5, 5, dwTime);
 
 		if ((cLB != 0) && (iGetTopDialogBoxIndex() == 26)) {
@@ -2841,12 +2792,12 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		PutString(sX + iAdjX + 44 + 20 + 60, sY + 190, cTemp, RGB(255, 255, 255));*/
 
 		if (m_pDispBuildItemList[m_stDialogBoxInfo[26].cStr[0]]->m_bBuildEnabled == TRUE) {
-			m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX + iAdjX + 55 + 30 + 13, sY + iAdjY + 55 + 180, 2, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX + iAdjX + 55 + 30 + 45 * 1 + 13, sY + iAdjY + 55 + 180, 2, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX + iAdjX + 55 + 30 + 45 * 2 + 13, sY + iAdjY + 55 + 180, 2, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX + iAdjX + 55 + 30 + 13, sY + iAdjY + 100 + 180, 2, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX + iAdjX + 55 + 30 + 45 * 1 + 13, sY + iAdjY + 100 + 180, 2, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX + iAdjX + 55 + 30 + 45 * 2 + 13, sY + iAdjY + 100 + 180, 2, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX + iAdjX + 55 + 30 + 13, sY + iAdjY + 55 + 180, 2, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX + iAdjX + 55 + 30 + 45 * 1 + 13, sY + iAdjY + 55 + 180, 2, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX + iAdjX + 55 + 30 + 45 * 2 + 13, sY + iAdjY + 55 + 180, 2, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX + iAdjX + 55 + 30 + 13, sY + iAdjY + 100 + 180, 2, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX + iAdjX + 55 + 30 + 45 * 1 + 13, sY + iAdjY + 100 + 180, 2, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX + iAdjX + 55 + 30 + 45 * 2 + 13, sY + iAdjY + 100 + 180, 2, dwTime);
 
 			if (m_stDialogBoxInfo[26].sV1 != -1) {
 				m_pSprite[DEF_SPRID_ITEMPACK_PIVOTPOINT +
@@ -3043,12 +2994,12 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 		PutString(sX + iAdjX + 44 + 20 + 60 - 1, sY + 190 - 1, cTemp, RGB(0, 0, 0));
 		PutString(sX + iAdjX + 44 + 20 + 60, sY + 190, cTemp, RGB(255, 255, 255));*/
 
-		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX + iAdjX + 55 + 30 + 13, sY + iAdjY + 55 + 180, 2, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX + iAdjX + 55 + 30 + 45 * 1 + 13, sY + iAdjY + 55 + 180, 2, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX + iAdjX + 55 + 30 + 45 * 2 + 13, sY + iAdjY + 55 + 180, 2, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX + iAdjX + 55 + 30 + 13, sY + iAdjY + 100 + 180, 2, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX + iAdjX + 55 + 30 + 45 * 1 + 13, sY + iAdjY + 100 + 180, 2, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX + iAdjX + 55 + 30 + 45 * 2 + 13, sY + iAdjY + 100 + 180, 2, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX + iAdjX + 55 + 30 + 13, sY + iAdjY + 55 + 180, 2, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX + iAdjX + 55 + 30 + 45 * 1 + 13, sY + iAdjY + 55 + 180, 2, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX + iAdjX + 55 + 30 + 45 * 2 + 13, sY + iAdjY + 55 + 180, 2, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX + iAdjX + 55 + 30 + 13, sY + iAdjY + 100 + 180, 2, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX + iAdjX + 55 + 30 + 45 * 1 + 13, sY + iAdjY + 100 + 180, 2, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX + iAdjX + 55 + 30 + 45 * 2 + 13, sY + iAdjY + 100 + 180, 2, dwTime);
 
 		if (m_stDialogBoxInfo[26].sV1 != -1) {
 			m_pSprite[DEF_SPRID_ITEMPACK_PIVOTPOINT + m_pItemList[m_stDialogBoxInfo[26].sV1]->m_sSprite]->PutSpriteRGB(sX + iAdjX + 55 + 30 + 13,
@@ -3151,7 +3102,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 			sX = m_stDialogBoxInfo[26].sX;
 			sY = m_stDialogBoxInfo[26].sY;
 		}
-		m_pSprite[DEF_SPRID_INTERFACE_CRAFTING]->PutSpriteFast(sX, sY, 0, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_CRAFTING]->PutSpriteFastNoColorKey(sX, sY, 0, dwTime);
 
 		if (m_stDialogBoxInfo[26].sV1 != -1) {
 			m_pSprite[DEF_SPRID_ITEMPACK_PIVOTPOINT +
@@ -3203,7 +3154,7 @@ void CGame::DrawDialogBox_SkillDlg(short msX, short msY, short msZ, char cLB)
 			sX = m_stDialogBoxInfo[26].sX;
 			sY = m_stDialogBoxInfo[26].sY;
 		}
-		m_pSprite[DEF_SPRID_INTERFACE_CRAFTING]->PutSpriteFast(sX, sY, 0, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_CRAFTING]->PutSpriteFastNoColorKey(sX, sY, 0, dwTime);
 
 		if (m_stDialogBoxInfo[26].sV1 != -1) {
 			m_pSprite[DEF_SPRID_ITEMPACK_PIVOTPOINT +
@@ -9334,16 +9285,19 @@ void CGame::ConnectionEstablishHandler(char cWhere)
 
 void CGame::ConnectionEstablishHandler(char cWhere)
 {
+	{ char _b[128]; sprintf(_b, "[DBG-LOGIN] ConnectionEstablishHandler: cWhere=%d connectMode=0x%X\n", (int)cWhere, (unsigned int)m_dwConnectMode); DbgLog(_b); }
 	ChangeGameMode(DEF_GAMEMODE_ONWAITINGRESPONSE);
 
 	switch (cWhere) {
 	case DEF_SERVERTYPE_GAME:
+		DbgLog("[DBG-LOGIN] -> Sending CLIENT_REQUEST_INITPLAYER\n");
 		bSendCommand(CLIENT_REQUEST_INITPLAYER, NULL, NULL, NULL, NULL, NULL, NULL);
 		break;
 
 	case DEF_SERVERTYPE_LOG:
 		switch (m_dwConnectMode) {
 		case NUCLEO_REQUEST_LOGIN:
+			DbgLog("[DBG-LOGIN] -> Sending NUCLEO_REQUEST_LOGIN\n");
 			bSendCommand(NUCLEO_REQUEST_LOGIN, NULL, NULL, NULL, NULL, NULL, NULL);
 			break;
 		case NUCLEO_REQUEST_CREATEACC:
@@ -17610,35 +17564,46 @@ void CGame::OnLogSocketEvent(WPARAM wParam, LPARAM lParam)
 	int iRet;
 	char * pData;
 	DWORD  dwMsgSize;
-	if (m_pLSock == NULL) return;
+	if (m_pLSock == NULL) { DbgLog("[DBG-LOGIN] OnLogSocketEvent: m_pLSock==NULL, ignoring\n"); return; }
 
 	iRet = m_pLSock->iOnSocketEvent(wParam, lParam);
+	{ char _b[128]; sprintf(_b, "[DBG-LOGIN] OnLogSocketEvent: iRet=%d\n", iRet); DbgLog(_b); }
 	switch (iRet) {
 		case DEF_XSOCKEVENT_CONNECTIONESTABLISH:
+			DbgLog("[DBG-LOGIN] -> CONNECTIONESTABLISH, calling ConnectionEstablishHandler\n");
 			ConnectionEstablishHandler(DEF_SERVERTYPE_LOG);
 			break;
 
 		case DEF_XSOCKEVENT_READCOMPLETE:
+			DbgLog("[DBG-LOGIN] -> READCOMPLETE, processing server response\n");
 			pData = m_pLSock->pGetRcvDataPointer(&dwMsgSize);
+			{ char _b[128]; sprintf(_b, "[DBG-LOGIN] -> received %lu bytes\n", dwMsgSize); DbgLog(_b); }
 			LogRecvMsgHandler(pData);
 			m_dwTime = G_dwGlobalTime;
 			break;
 
 		case DEF_XSOCKEVENT_SOCKETCLOSED:
+			DbgLog("[DBG-LOGIN] -> SOCKETCLOSED\n");
 			ChangeGameMode(DEF_GAMEMODE_ONCONNECTIONLOST);
 			delete m_pLSock;
 			m_pLSock = NULL;
 			break;
 
 		case DEF_XSOCKEVENT_SOCKETERROR:
+			DbgLog("[DBG-LOGIN] -> SOCKETERROR\n");
 			ChangeGameMode(DEF_GAMEMODE_ONCONNECTIONLOST);
 			delete m_pLSock;
 			m_pLSock = NULL;
 			break;
 
 		case DEF_XSOCKEVENT_CRITICALERROR:
+			DbgLog("[DBG-LOGIN] -> CRITICALERROR\n");
 			delete m_pLSock;
 			m_pLSock = NULL;
+			break;
+
+		default:
+			{ char _b[128]; sprintf(_b, "[DBG-LOGIN] -> UNHANDLED event %d\n", iRet); DbgLog(_b); }
 			break;
 	}
 }
@@ -17656,6 +17621,8 @@ void CGame::LogResponseHandler(char * pData)
 	wp = (WORD *)(pData + DEF_INDEX2_MSGTYPE);
 	wResponse = *wp;
 	cp = (char *)(pData + DEF_INDEX2_MSGTYPE + 2);
+
+	{ char _b[256]; sprintf(_b, "[DBG-LOGIN] LogResponseHandler: msgID=0x%X response=0x%04X\n", *dwp, wResponse); DbgLog(_b); }
 
 	/*wServerUpperVersion = DEF_UPPERVERSION;
 	wServerLowerVersion = DEF_LOWERVERSION;
@@ -18077,6 +18044,10 @@ void CGame::ChangeGameMode(char cMode)
 #ifndef DEF_SELECTSERVER
 	if (cMode == DEF_GAMEMODE_ONSELECTSERVER)
 	{
+		// FIX: leer ClientIP.cfg aqui porque UpdateScreen_OnSelectServer nunca se ejecuta
+		// cuando DEF_SELECTSERVER no esta definido (se salta directo al login)
+		bReadLoginConfigFile("ClientIP.cfg");
+
 		ZeroMemory(m_cWorldServerName, sizeof(m_cWorldServerName));
 		strcpy(m_cWorldServerName, NAME_WORLDNAME1);
 		EncriptString(m_cWorldServerName);
@@ -18091,8 +18062,9 @@ BOOL CGame::bReadIp()
 #ifdef DEF_USE_DNS
 	strcpy(m_cLogServerAddrBuffer, DEF_SERVER_DNS);
 #else
-	//morla1 no ip
-	strcpy(m_cLogServerAddrBuffer, "rivergrande.ddns.net");
+	// FIX: usar DEF_SERVER_IP (127.0.0.1) como default en vez de DNS externo
+	// El DNS "rivergrande.ddns.net" resuelve a una IP LAN que no es localhost
+	strcpy(m_cLogServerAddrBuffer, DEF_SERVER_IP);
 #endif
 	m_iLogServerPort = DecriptInt(DEF_SERVER_PORT);
 	return TRUE;
@@ -18172,25 +18144,26 @@ BOOL CGame::bReadLoginConfigFile(char * cFn)
 
 	delete[] cp;
 	if (pFile != NULL) fclose(pFile);
+	{ char _b[256]; sprintf(_b, "[DBG-LOGIN] ClientIP.cfg OK: addr='%s' port=%d ConfigIP=%d\n", m_cLogServerAddrBuffer, m_iLogServerPort, (int)ConfigIP); DbgLog(_b); }
 	return TRUE;
 
 DEFAULT_IP:;
 	ZeroMemory(m_cLogServerAddr, sizeof(m_cLogServerAddr));
-	
+
 	strcpy(m_cLogServerAddrBuffer, DEF_SERVER_IP);
 	m_iLogServerPort = EncriptInt(DEF_SERVER_PORT);
+	{ char _b[256]; sprintf(_b, "[DBG-LOGIN] DEFAULT_IP: addr='%s' port=%d ConfigIP=%d\n", m_cLogServerAddrBuffer, m_iLogServerPort, (int)ConfigIP); DbgLog(_b); }
 	return FALSE;
 }
 
 void CGame::GetIPByDNS()
 {
-#ifndef DEF_SELECTSERVER
-	// Solo usar IP hardcodeada si no se leyo un ClientIP.cfg (ConfigIP==-1 si se leyo archivo)
+	// FIX: Si no se leyo ClientIP.cfg (ConfigIP==0), forzar DEF_SERVER_IP siempre.
+	// Antes estaba dentro de #ifndef DEF_SELECTSERVER, lo cual podia fallar.
 	if (ConfigIP == 0) {
 		strcpy(m_cLogServerAddrBuffer, DEF_SERVER_IP);
 		m_iLogServerPort = EncriptInt(DEF_SERVER_PORT);
 	}
-#endif
 	ZeroMemory(m_cLogServerAddr, sizeof(m_cLogServerAddr));
 	if ((m_cLogServerAddrBuffer[0] >= 65 && m_cLogServerAddrBuffer[0] <= 122) && (ConfigIP == 0)) {
 		char cDnsResult[40];
@@ -18209,6 +18182,7 @@ void CGame::GetIPByDNS()
 	}
 	else strcpy(m_cLogServerAddr, m_cLogServerAddrBuffer);
 	EncriptString(m_cLogServerAddr);
+	{ char _b[256]; DecriptString(m_cLogServerAddr); sprintf(_b, "[DBG-LOGIN] GetIPByDNS result: addr='%s' port=%d ConfigIP=%d\n", m_cLogServerAddr, DecriptInt(m_iLogServerPort), (int)ConfigIP); EncriptString(m_cLogServerAddr); DbgLog(_b); }
 }
 
 void CGame::ReleaseUnusedSprites()
@@ -18654,9 +18628,26 @@ void CGame::DrawBackground(short sDivX, short sModX, short sDivY, short sModY)
 {
 	if (m_bModernMovement)
 	{
-		// Añade estas líneas al inicio para obtener el offset actual
-		int offsetX = static_cast<int>(m_fRenderOffsetX);
-		int offsetY = static_cast<int>(m_fRenderOffsetY);
+		// v13 FIX: render offset disabled — single lerp-camera system.
+		// m_fSmoothViewPointX handles all smoothing; dual systems caused desync jitter.
+		int offsetX = 0;
+		int offsetY = 0;
+
+		// [DIAG-D] Render trace: log every 120 frames.
+		// viewX=m_sViewPointX (int-cast of float lerp), offsetX=always 0 now.
+		// Jitter comes from float→int truncation: sX=100.7→rX=100, sX=101.0→rX=101.
+		{
+			static int s_renderDiagN = 0;
+			if (++s_renderDiagN % 120 == 1) {
+				char _rb[128];
+				sprintf(_rb,
+					"[RENDER] vpX=%d vpY=%d offX=%d offY=%d divX=%d modX=%d divY=%d modY=%d\n",
+					(int)m_sViewPointX, (int)m_sViewPointY,
+					offsetX, offsetY,
+					(int)sDivX, (int)sModX, (int)sDivY, (int)sModY);
+				DbgLog(_rb);
+			}
+		}
 
 		int indexX, indexY, ix, iy, map;
 		short sSpr, sSprFrame;
@@ -18683,9 +18674,15 @@ void CGame::DrawBackground(short sDivX, short sModX, short sDivY, short sModY)
 
 		if (sDivX < 0 || sDivY < 0) return;
 
+		// DBG-A: reset tile counters antes del loop de tiles
+		{ extern int g_dbgTileToSFML, g_dbgTileToDDraw; g_dbgTileToSFML = 0; g_dbgTileToDDraw = 0; }
+
+		bool bDidRedrawTiles = false; // DBG-A: track si entramos al bloque de redibujado
+
 		if (g_pRenderBackend != nullptr || (m_bIsRedrawPDBGS == TRUE) || (m_iPDBGSdivX != sDivX) || (m_iPDBGSdivY != sDivY))
 
 		{
+			bDidRedrawTiles = true; // DBG-A
 			m_bIsRedrawPDBGS = FALSE;
 			m_iPDBGSdivX = sDivX;
 			m_iPDBGSdivY = sDivY;
@@ -18737,11 +18734,36 @@ void CGame::DrawBackground(short sDivX, short sModX, short sDivY, short sModY)
 
 		RECT rcRect;
 		SetRect(&rcRect, sModX + offsetX, sModY + offsetY, res_x + sModX + offsetX, res_y + sModY + offsetY);
-		// Tiles siempre via DDraw BltFast (diseño híbrido: DDraw=tiles, SFML=sprites)
-		m_DDraw.m_lpBackB4->BltFast(0, 0, m_DDraw.m_lpPDBGS, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
 		if (g_pRenderBackend)
+		{
+			// SFML activo: tiles ya estan en el RenderTexture SFML (interceptados en
+			// PutSpriteFastNoColorKeyDst). NO copiar PDBGS→BackB4 porque PDBGS esta
+			// vacio/stale (los tiles nunca llegaron ahi). BlitRenderTextureToDDraw en
+			// EndFrame se encarga de copiar los tiles SFML al BackB4.
+			// Solo necesitamos SetViewCrop para que el blit recorte correctamente.
 			g_pRenderBackend->SetViewCrop(sModX + offsetX, sModY + offsetY);
+		}
+		else
+		{
+			// DDraw puro (sin SFML): tiles estan en PDBGS, copiarlos a BackB4
+			m_DDraw.m_lpBackB4->BltFast(0, 0, m_DDraw.m_lpPDBGS, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
+		}
 
+		// DBG-A: log DrawBackground cada 60 frames
+		{
+			static int s_dbgBgFrame = 0;
+			s_dbgBgFrame++;
+			extern int g_dbgTileToSFML, g_dbgTileToDDraw;
+			if (s_dbgBgFrame % 60 == 0) {
+				char buf[512];
+				sprintf(buf, "[DBG-BG] f=%d redraw=%d sDivX=%d sDivY=%d sModX=%d sModY=%d offX=%d offY=%d rc=(%ld,%ld,%ld,%ld) tileSFML=%d tileDDraw=%d",
+					s_dbgBgFrame, (int)bDidRedrawTiles, sDivX, sDivY, sModX, sModY, offsetX, offsetY,
+					rcRect.left, rcRect.top, rcRect.right, rcRect.bottom,
+					g_dbgTileToSFML, g_dbgTileToDDraw);
+				DbgLog(buf);
+				DbgLog("\n");
+			}
+		}
 
 		if (m_bGrid)
 		{
@@ -18852,10 +18874,16 @@ void CGame::DrawBackground(short sDivX, short sModX, short sDivY, short sModY)
 
 		RECT rcRect;
 		SetRect(&rcRect, sModX, sModY, res_x + sModX, res_y + sModY);
-		// Tiles siempre via DDraw BltFast (diseño híbrido: DDraw=tiles, SFML=sprites)
-		m_DDraw.m_lpBackB4->BltFast(0, 0, m_DDraw.m_lpPDBGS, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
 		if (g_pRenderBackend)
+		{
+			// SFML activo: tiles en RenderTexture, no copiar PDBGS stale a BackB4
 			g_pRenderBackend->SetViewCrop(sModX, sModY);
+		}
+		else
+		{
+			// DDraw puro: copiar PDBGS a BackB4
+			m_DDraw.m_lpBackB4->BltFast(0, 0, m_DDraw.m_lpPDBGS, &rcRect, DDBLTFAST_NOCOLORKEY | DDBLTFAST_WAIT);
+		}
 
 		if (m_bGrid)
 		{
@@ -23855,6 +23883,9 @@ void CGame::InitDataResponseHandler(char * pData)
 		m_sViewDstY = m_sViewPointY = (sY + 5 + 5 - 4) * 32 - 32 - 32;
 		_ReadMapData(sX + 4 + 5 - 6, sY + 5 + 5 - 4, cp);
 	}
+	// Sync float camera to prevent lerp from sliding in from previous position
+	m_fSmoothViewPointX = (float)m_sViewPointX;
+	m_fSmoothViewPointY = (float)m_sViewPointY;
 
 	//original
 	/*m_sViewDstX = m_sViewPointX = (sX + 4 + 5) * 32;
@@ -25343,7 +25374,20 @@ void CGame::DrawNewDialogBox(char cType, int sX, int sY, int iFrame, BOOL bIsNoC
 	{
 		if (bIsTrans == TRUE)
 			m_pSprite[cType]->PutTransSprite2(sX, sY, iFrame, dwTime);
-		else m_pSprite[cType]->PutSpriteFast(sX, sY, iFrame, dwTime);
+		else {
+			// FIX-UI-BG v5: En SFML, fondos de dialogos con colorkey=0 (negro) hacen que
+			// los pixels negros del fondo sean alpha=0. Esto hace que el mundo se vea
+			// a traves del fondo del panel (fondo "invisible").
+			// En DDraw original esto no ocurria porque BackB4 estaba limpio (negro) detras
+			// del area de UI. En SFML, los tiles cubren toda la pantalla incluida el area UI.
+			// Solucion: cuando SFML esta activo, usar NoColorKey para panels de dialogo,
+			// haciendo que los pixels negros sean opacos (alpha=255).
+			// Si SFML no esta activo (login, menus), usar PutSpriteFast normal (DDraw).
+			if (g_pRenderBackend && g_pRenderBackend->IsFrameActive())
+				m_pSprite[cType]->PutSpriteFastNoColorKey(sX, sY, iFrame, dwTime);
+			else
+				m_pSprite[cType]->PutSpriteFast(sX, sY, iFrame, dwTime);
+		}
 	}
 	else m_pSprite[cType]->PutSpriteFastNoColorKey(sX, sY, iFrame, dwTime);
 }
@@ -25933,7 +25977,7 @@ void CGame::DrawDialogBox_IconPannel(short msX, short msY)
 	DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_ICONPANNEL, sX, sY, 14, FALSE, m_bDialogTrans);
 
 	//	if ((362 < msX)	&& (404 > msX) && (434 < msY) && (475 > msY)) {
-	//		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(362, 434, 16, dwTime);
+	//		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(362, 434, 16, dwTime);
 	//	}
 
 		//Boton modo atake!
@@ -25960,55 +26004,55 @@ void CGame::DrawDialogBox_IconPannel(short msX, short msY)
 	// CLEROTH - LU
 	if (DecriptInt(m_iLU_Point) > 0) {
 		if ((322 <= msX) && (355 >= msX) && (434 < msY) && (475 > msY))
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322, 434, 17, dwTime);
-		else m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322, 434, 18, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322, 434, 17, dwTime);
+		else m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322, 434, 18, dwTime);
 	}
 
 	//EVENT LaloRamos
 	if (DecriptBool(m_bAresden) == TRUE)
 		DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_ICONPANNEL, 322, 434, 2, FALSE, m_bDialogTrans);
 	else
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322, 434, 15, dwTime);//15
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322, 434, 15, dwTime);//15
 
 	if (DecriptBool(m_bAresden) == TRUE)
 	{
 		if ((322 <= msX) && (355 >= msX) && (434 < msY) && (475 > msY))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322, 434, 1, dwTime);//0// Event
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322, 434, 1, dwTime);//0// Event
 		}
 	}
 	else
 	{
 		if ((322 <= msX) && (355 >= msX) && (434 < msY) && (475 > msY))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322, 434, 0, dwTime);//1// Event
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322, 434, 0, dwTime);//1// Event
 		}
 	}
 	if ((msY > 436) && (msY < 478))
 	{
 		if ((msX > 410) && (msX < 447))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(412, 434, 6, dwTime);// Character
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(412, 434, 6, dwTime);// Character
 		}
 		if ((msX > 447) && (msX < 484))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(449, 434, 7, dwTime);// Inventory
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(449, 434, 7, dwTime);// Inventory
 		}
 		if ((msX > 484) && (msX < 521))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(486, 434, 8, dwTime);// Magic
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(486, 434, 8, dwTime);// Magic
 		}
 		if ((msX > 521) && (msX < 558))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(523, 434, 9, dwTime);// Skill
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(523, 434, 9, dwTime);// Skill
 		}
 		if ((msX > 558) && (msX < 595))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(560, 434, 10, dwTime);// History
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(560, 434, 10, dwTime);// History
 		}
 		if ((msX > 595) && (msX < 631))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(597, 434, 11, dwTime);// System Menu
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(597, 434, 11, dwTime);// System Menu
 		}
 	}
 
@@ -26116,19 +26160,19 @@ void CGame::DrawDialogBox_IconPannel(short msX, short msY)
 	m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastWidth(147, 435, 13, iBarWidth, m_dwCurTime);
 
 		if (bPfm) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(601, 133, 2, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(601, 133, 2, dwTime);
 		}
 		if (bZerk) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(601, 176, 1, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(601, 176, 1, dwTime);
 		}
 		if (bInvi) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(601, 219, 0, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(601, 219, 0, dwTime);
 		}
 		if (bShield) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(601, 262, 4, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(601, 262, 4, dwTime);
 		}
 		if (bPfa) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(601, 305, 3, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(601, 305, 3, dwTime);
 		}
 		if (m_stMCursor.sCursorFrame == 4) {
 			bInvi = false;
@@ -26185,8 +26229,8 @@ void CGame::DrawDialogBox_IconPannel800x600(short msX, short msY)
 	// CLEROTH - LU
 	if (DecriptInt(m_iLU_Point) > 0) {
 		if ((322 + resx + addx <= msX) && (355 + resx + addx >= msX) && (434 + resy < msY) && (475 + resy > msY))
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322 + resx + addx + 1, 434 + resy, 17, dwTime);
-		else m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322 + resx + addx, 434 + resy, 18, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322 + resx + addx + 1, 434 + resy, 17, dwTime);
+		else m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322 + resx + addx, 434 + resy, 18, dwTime);
 	}
 
 	//EVENT LaloRamos
@@ -26194,44 +26238,44 @@ void CGame::DrawDialogBox_IconPannel800x600(short msX, short msY)
 		//DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_ICONPANNEL, 322 + resx + addx + 1, 434 + resy, 2, FALSE, m_bDialogTrans);
 		DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_ICONPANNEL, 322 + resx + addx + 1, 433 + resy, 2, FALSE, m_bDialogTrans);
 	else
-		//m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322 + resx + addx, 434 + resy, 15, dwTime);//15
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322 + resx + addx, 433 + resy, 15, dwTime);//15
+		//m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322 + resx + addx, 434 + resy, 15, dwTime);//15
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322 + resx + addx, 433 + resy, 15, dwTime);//15
 
 	if (DecriptBool(m_bAresden) == TRUE)
 	{
 		if ((322 + resx + addx <= msX) && (355 + resx + addx >= msX) && (434 + resy < msY) && (475 + resy > msY))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322 + resx + addx + 1, 434 + resy, 1, dwTime);//0// Event
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322 + resx + addx + 1, 434 + resy, 1, dwTime);//0// Event
 		}
 	}
 	else
 	{
 		if ((322 + resx + addx <= msX) && (355 + resx + addx >= msX) && (434 + resy < msY) && (475 + resy > msY))
 		{
-		//	m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322 + resx + addx, 434 + resy, 0, dwTime);//1// Event
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322 + resx + addx, 433 + resy, 0, dwTime);//1// Event
+		//	m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322 + resx + addx, 434 + resy, 0, dwTime);//1// Event
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322 + resx + addx, 433 + resy, 0, dwTime);//1// Event
 		}
 	}
 	//if ((msY > 436) && (msY < 478))
 	if ((msY > 436 + resy) && (msY < 478 + resy)) // Menu Icons
 	{
 		if ((msX > 410 + resx + addx) && (msX < 447 + resx + addx)) { // Character    
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(410 + resx + addx + 2, 434 + resy, 6, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(410 + resx + addx + 2, 434 + resy, 6, dwTime);
 		}
 		if ((msX > 447 + resx + addx) && (msX < 484 + resx + addx)) { // Inventory
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(447 + resx + addx + 1, 434 + resy, 7, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(447 + resx + addx + 1, 434 + resy, 7, dwTime);
 		}
 		if ((msX > 484 + resx + addx) && (msX < 521 + resx + addx)) { // Magic
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(484 + resx + addx, 434 + resy, 8, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(484 + resx + addx, 434 + resy, 8, dwTime);
 		}
 		if ((msX > 521 + resx + addx) && (msX < 558 + resx + addx)) { // Skill
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(521 + resx + addx + 1, 434 + resy, 9, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(521 + resx + addx + 1, 434 + resy, 9, dwTime);
 		}
 		if ((msX > 558 + resx + addx) && (msX < 595 + resx + addx)) { // History
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(558 + resx + addx, 434 + resy, 10, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(558 + resx + addx, 434 + resy, 10, dwTime);
 		}
 		if ((msX > 595 + resx + addx) && (msX < 631 + resx + addx)) { // System Menu
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(595 + resx + addx + 1, 434 + resy, 11, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(595 + resx + addx + 1, 434 + resy, 11, dwTime);
 		}
 	}
 
@@ -26346,19 +26390,19 @@ void CGame::DrawDialogBox_IconPannel800x600(short msX, short msY)
 	m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastWidth(147 + resx, 434 + resy, 13, iBarWidth, m_dwCurTime);
 
 	if (bPfm) {
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(761, 133, 2, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(761, 133, 2, dwTime);
 	}
 	if (bZerk) {
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(761, 176, 1, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(761, 176, 1, dwTime);
 	}
 	if (bInvi) {
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(761, 219, 0, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(761, 219, 0, dwTime);
 	}
 	if (bShield) {
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(761, 262, 4, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(761, 262, 4, dwTime);
 	}
 	if (bPfa) {
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(761, 305, 3, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(761, 305, 3, dwTime);
 	}
 	if (m_stMCursor.sCursorFrame == 4) {
 		bInvi = false;
@@ -26518,8 +26562,8 @@ void CGame::DlgBoxClick_IconPannel800x600(short msX, short msY)
 		// CLEROTH - LU
 		if (DecriptInt(m_iLU_Point) > 0) {
 			if ((322 + resx + addx <= msX) && (355 + resx + addx >= msX) && (434 + resy < msY) && (475 + resy > msY))
-				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322 + resx + addx + 1, 434 + resy, 17, dwTime);
-			else m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322 + resx + addx, 434 + resy, 18, dwTime);
+				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322 + resx + addx + 1, 434 + resy, 17, dwTime);
+			else m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322 + resx + addx, 434 + resy, 18, dwTime);
 		}
 
 		//EVENT LaloRamos
@@ -26527,44 +26571,44 @@ void CGame::DlgBoxClick_IconPannel800x600(short msX, short msY)
 			//DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_ICONPANNEL, 322 + resx + addx + 1, 434 + resy, 2, FALSE, m_bDialogTrans);
 			DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_ICONPANNEL, 322 + resx + addx + 1, 433 + resy, 2, FALSE, m_bDialogTrans);
 		else
-			//m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322 + resx + addx, 434 + resy, 15, dwTime);//15
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322 + resx + addx, 433 + resy, 15, dwTime);//15
+			//m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322 + resx + addx, 434 + resy, 15, dwTime);//15
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322 + resx + addx, 433 + resy, 15, dwTime);//15
 
 		if (DecriptBool(m_bAresden) == TRUE)
 		{
 			if ((322 + resx + addx <= msX) && (355 + resx + addx >= msX) && (434 + resy < msY) && (475 + resy > msY))
 			{
-				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322 + resx + addx + 1, 434 + resy, 1, dwTime);//0// Event
+				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322 + resx + addx + 1, 434 + resy, 1, dwTime);//0// Event
 			}
 		}
 		else
 		{
 			if ((322 + resx + addx <= msX) && (355 + resx + addx >= msX) && (434 + resy < msY) && (475 + resy > msY))
 			{
-				//	m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322 + resx + addx, 434 + resy, 0, dwTime);//1// Event
-				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(322 + resx + addx, 433 + resy, 0, dwTime);//1// Event
+				//	m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322 + resx + addx, 434 + resy, 0, dwTime);//1// Event
+				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(322 + resx + addx, 433 + resy, 0, dwTime);//1// Event
 			}
 		}
 		//if ((msY > 436) && (msY < 478))
 		if ((msY > 436 + resy) && (msY < 478 + resy)) // Menu Icons
 		{
 			if ((msX > 410 + resx + addx) && (msX < 447 + resx + addx)) { // Character    
-				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(410 + resx + addx, 435 + resy, 6, dwTime);
+				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(410 + resx + addx, 435 + resy, 6, dwTime);
 			}
 			if ((msX > 447 + resx + addx) && (msX < 484 + resx + addx)) { // Inventory
-				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(447 + resx + addx - 1, 435 + resy, 7, dwTime);
+				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(447 + resx + addx - 1, 435 + resy, 7, dwTime);
 			}
 			if ((msX > 484 + resx + addx) && (msX < 521 + resx + addx)) { // Magic
-				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(483 + resx + addx, 435 + resy, 8, dwTime);
+				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(483 + resx + addx, 435 + resy, 8, dwTime);
 			}
 			if ((msX > 521 + resx + addx) && (msX < 558 + resx + addx)) { // Skill
-				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(521 + resx + addx, 435 + resy, 9, dwTime);
+				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(521 + resx + addx, 435 + resy, 9, dwTime);
 			}
 			if ((msX > 558 + resx + addx) && (msX < 595 + resx + addx)) { // History
-				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(558 + resx + addx, 435 + resy, 10, dwTime);
+				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(558 + resx + addx, 435 + resy, 10, dwTime);
 			}
 			if ((msX > 595 + resx + addx) && (msX < 631 + resx + addx)) { // System Menu
-				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFast(595 + resx + addx, 435 + resy, 11, dwTime);
+				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastNoColorKey(595 + resx + addx, 435 + resy, 11, dwTime);
 			}
 		}
 
@@ -26680,19 +26724,19 @@ void CGame::DlgBoxClick_IconPannel800x600(short msX, short msY)
 		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL]->PutSpriteFastWidth(144 + resx, 436 + resy, 13, iBarWidth, m_dwCurTime);
 
 		if (bPfm) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(985, 133, 2, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(985, 133, 2, dwTime);
 		}
 		if (bZerk) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(985, 176, 1, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(985, 176, 1, dwTime);
 		}
 		if (bInvi) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(985, 219, 0, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(985, 219, 0, dwTime);
 		}
 		if (bShield) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(985, 262, 4, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(985, 262, 4, dwTime);
 		}
 		if (bPfa) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(985, 305, 3, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(985, 305, 3, dwTime);
 		}
 		if (m_stMCursor.sCursorFrame == 4) {
 			bInvi = false;
@@ -26815,9 +26859,9 @@ void CGame::DrawDialogBox_IconPannel3(short msX, short msY)
 	DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_ICONPANNEL3, sX, sY, 0, FALSE, m_bDialogTrans);
 
 	if (DecriptBool(m_bAresden) == TRUE)
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 109, sY + 19, 10, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 109, sY + 19, 10, dwTime);
 	else
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 109, sY + 19, 11, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 109, sY + 19, 11, dwTime);
 
 	if (((msX >= 109 + sX) && (msX <= 249 + sX)) && ((msY >= 19 + sY) && (msY <= 38 + sY)))
 	{
@@ -26825,62 +26869,62 @@ void CGame::DrawDialogBox_IconPannel3(short msX, short msY)
 		{
 			if (((msX >= 110 + sX) && (msX <= 123 + sX)) && ((msY >= 19 + sY) && (msY <= 38 + sY)))
 			{
-				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 109, sY + 20, 9, dwTime);// Event
+				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 109, sY + 20, 9, dwTime);// Event
 			}
 		}
 		else
 		{
 			if (((msX >= 110 + sX) && (msX <= 123 + sX)) && ((msY >= 19 + sY) && (msY <= 38 + sY)))
 			{
-				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 109, sY + 20, 8, dwTime);// Event
+				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 109, sY + 20, 8, dwTime);// Event
 			}
 		}
 		if (((msX >= 151 + sX) && (msX <= 165 + sX)) && ((msY >= 19 + sY) && (msY <= 38 + sY)))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 151, sY + 20, 2, dwTime);// Character
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 151, sY + 20, 2, dwTime);// Character
 		}
 		if (((msX >= 167 + sX) && (msX <= 182 + sX)) && ((msY >= 19 + sY) && (msY <= 38 + sY)))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 167, sY + 20, 3, dwTime);// Inventory
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 167, sY + 20, 3, dwTime);// Inventory
 		}
 		if (((msX >= 184 + sX) && (msX <= 198 + sX)) && ((msY >= 19 + sY) && (msY <= 38 + sY)))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 184, sY + 20, 4, dwTime);// Magic
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 184, sY + 20, 4, dwTime);// Magic
 		}
 		if (((msX >= 201 + sX) && (msX <= 215 + sX)) && ((msY >= 19 + sY) && (msY <= 38 + sY)))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 201, sY + 20, 5, dwTime);// Skill
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 201, sY + 20, 5, dwTime);// Skill
 		}
 		if (((msX >= 217 + sX) && (msX <= 232 + sX)) && ((msY >= 19 + sY) && (msY <= 38 + sY)))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 217, sY + 20, 6, dwTime);// History
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 217, sY + 20, 6, dwTime);// History
 		}
 		if (((msX >= 234 + sX) && (msX <= 249 + sX)) && ((msY >= 19 + sY) && (msY <= 38 + sY)))
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 234, sY + 20, 7, dwTime);// System Menu
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 234, sY + 20, 7, dwTime);// System Menu
 		}
 	}
 
 	//Boton modo atake!
 	if ((sX + 130 <= msX) && (sX + 147 >= msX) && (sY + 20 <= msY) && (sY + 37 >= msY))
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 130, sY + 20, 12, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 130, sY + 20, 12, dwTime);
 
 		if (DecriptBool(m_bIsSafeAttackMode))
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 133, sY + 22, 14, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 133, sY + 22, 14, dwTime);
 		else
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 133, sY + 22, 15, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 133, sY + 22, 15, dwTime);
 	}
 	else
 	{
 		if (DecriptBool(m_bIsSafeAttackMode))
 		{
 			if (DecriptBool(m_bIsCombatMode))
-				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 133, sY + 22, 14, dwTime);
+				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 133, sY + 22, 14, dwTime);
 		}
 		else
 			if (DecriptBool(m_bIsCombatMode))
-				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX + 133, sY + 22, 15, dwTime);
+				m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX + 133, sY + 22, 15, dwTime);
 	}
 
 	//ZeroEoyPnk - New Critical
@@ -26989,19 +27033,19 @@ void CGame::DrawDialogBox_IconPannel3(short msX, short msY)
 	if (c_reso->IsResolution() == C800x600)
 	{
 		if (bPfm) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(761, 133, 2, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(761, 133, 2, dwTime);
 		}
 		if (bZerk) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(761, 176, 1, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(761, 176, 1, dwTime);
 		}
 		if (bInvi) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(761, 219, 0, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(761, 219, 0, dwTime);
 		}
 		if (bShield) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(761, 262, 4, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(761, 262, 4, dwTime);
 		}
 		if (bPfa) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(761, 305, 3, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(761, 305, 3, dwTime);
 		}
 		if (m_stMCursor.sCursorFrame == 4) {
 			bInvi = false;
@@ -27010,19 +27054,19 @@ void CGame::DrawDialogBox_IconPannel3(short msX, short msY)
 	else if (c_reso->IsResolution() == C1024x768)
 	{
 		if (bPfm) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(985, 133, 2, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(985, 133, 2, dwTime);
 		}
 		if (bZerk) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(985, 176, 1, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(985, 176, 1, dwTime);
 		}
 		if (bInvi) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(985, 219, 0, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(985, 219, 0, dwTime);
 		}
 		if (bShield) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(985, 262, 4, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(985, 262, 4, dwTime);
 		}
 		if (bPfa) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(985, 305, 3, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(985, 305, 3, dwTime);
 		}
 		if (m_stMCursor.sCursorFrame == 4) {
 			bInvi = false;
@@ -27031,20 +27075,20 @@ void CGame::DrawDialogBox_IconPannel3(short msX, short msY)
 	else if (c_reso->IsResolution() == C640x480)
 	{
 		if (bPfm) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(601, 133, 2, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(601, 133, 2, dwTime);
 		}
 
 		if (bZerk) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(601, 176, 1, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(601, 176, 1, dwTime);
 		}
 		if (bInvi) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(601, 219, 0, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(601, 219, 0, dwTime);
 		}
 		if (bShield) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(601, 262, 4, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(601, 262, 4, dwTime);
 		}
 		if (bPfa) {
-			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFast(601, 305, 3, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL2]->PutSpriteFastNoColorKey(601, 305, 3, dwTime);
 		}
 		if (m_stMCursor.sCursorFrame == 4) {
 			bInvi = false;
@@ -27469,8 +27513,8 @@ void CGame::DrawDialogBox_Slates(short msX, short msY, short msZ, char cLB)
 				sX = m_stDialogBoxInfo[40].sX;
 				sY = m_stDialogBoxInfo[40].sY;
 			}
-			m_pSprite[DEF_SPRID_INTERFACE_ND_INVENTORY]->PutSpriteFast(sX, sY, 4, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_INVENTORY]->PutSpriteFast(sX + 22, sY + 14, 3, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_INVENTORY]->PutSpriteFastNoColorKey(sX, sY, 4, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_INVENTORY]->PutSpriteFastNoColorKey(sX + 22, sY + 14, 3, dwTime);
 			//PutString_SprFont(sX + iAdjX + 170, sY + iAdjY + 170, "KURURURURURURURURU!!!", 20,6,6);
 			PutAlignedString(199, 438, 201, "KURURURURURURURURU!!!", 220, 140, 160);
 			PutAlignedString(200, 439, 200, "KURURURURURURURURU!!!", 90, 220, 200);
@@ -34462,20 +34506,20 @@ BOOL CGame::_bDraw_OnCreateNewCharacter(char * pName, short msX, short msY, int 
 	if (m_Misc.bCheckValidName(pName) == FALSE) bFlag = FALSE;
 
 
-	if ((bFlag == TRUE) && (m_cCurFocus == 2)) m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(384 + add_x, 445 + add_y, 25, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(384 + add_x, 445 + add_y, 24, dwTime);
+	if ((bFlag == TRUE) && (m_cCurFocus == 2)) m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(384 + add_x, 445 + add_y, 25, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(384 + add_x, 445 + add_y, 24, dwTime);
 	if (m_cCurFocus == 3)
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(500 + add_x, 445 + add_y, 17, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(500 + add_x, 445 + add_y, 16, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(500 + add_x, 445 + add_y, 17, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(500 + add_x, 445 + add_y, 16, dwTime);
 	if (m_cCurFocus == 4)
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(60 + add_x, 445 + add_y, 68, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(60 + add_x, 445 + add_y, 67, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(60 + add_x, 445 + add_y, 68, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(60 + add_x, 445 + add_y, 67, dwTime);
 	if (m_cCurFocus == 5)
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(145 + add_x, 445 + add_y, 66, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(145 + add_x, 445 + add_y, 65, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(145 + add_x, 445 + add_y, 66, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(145 + add_x, 445 + add_y, 65, dwTime);
 	if (m_cCurFocus == 6)
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(230 + add_x, 445 + add_y, 64, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(230 + add_x, 445 + add_y, 63, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(230 + add_x, 445 + add_y, 64, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(230 + add_x, 445 + add_y, 63, dwTime);
 
 
 	ShowReceivedString();
@@ -35155,7 +35199,7 @@ void CGame::UpdateScreen_OnAgreement()
 	d3 = (double)d1 / d2;
 	d1 = 338.0f * d3;
 	iPointerLoc = (int)d1;
-	m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutSpriteFast(sX + 361 - 112, sY + 37 + 13 + iPointerLoc, 7, dwTime);
+	m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutSpriteFastNoColorKey(sX + 361 - 112, sY + 37 + 13 + iPointerLoc, 7, dwTime);
 
 	for (i = 0; i < 20; i++)
 		if (m_pAgreeMsgTextList[i + DecriptInt(m_iAgreeView)] != NULL) {
@@ -35465,16 +35509,16 @@ void CGame::UpdateScreen_OnCreateNewAccount()
 	if ((strlen(cName) == 0))							iFlag = 1;
 
 	if ((iFlag == 0) && (m_cCurFocus == 7))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(189 + addx + addx3, 325 + addy + addy3, 25, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(189 + addx + addx3, 325 + addy + addy3, 24, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(189 + addx + addx3, 325 + addy + addy3, 25, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(189 + addx + addx3, 325 + addy + addy3, 24, dwTime);
 
 	if (m_cCurFocus == 8)
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(284 + addx + addx3, 325 + addy + addy3, 27, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(284 + addx + addx3, 325 + addy + addy3, 26, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(284 + addx + addx3, 325 + addy + addy3, 27, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(284 + addx + addx3, 325 + addy + addy3, 26, dwTime);
 
 	if (m_cCurFocus == 9)
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(380 + addx + addx3, 325 + addy + addy3, 17, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(380 + addx + addx3, 325 + addy + addy3, 16, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(380 + addx + addx3, 325 + addy + addy3, 17, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(380 + addx + addx3, 325 + addy + addy3, 16, dwTime);
 
 	DrawVersion(TRUE);
 	m_DInput.UpdateMouseState(&msX, &msY, &msZ, &cLB, &cRB);
@@ -35984,16 +36028,16 @@ void CGame::UpdateScreen_OnCreateNewAccount()
 	if ((strlen(cName) == 0))							iFlag = 1;
 
 	if ((iFlag == 0) && (m_cCurFocus == 7))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(189 + addx + addx3, 325 + addy + addy3, 25, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(189 + addx + addx3, 325 + addy + addy3, 24, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(189 + addx + addx3, 325 + addy + addy3, 25, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(189 + addx + addx3, 325 + addy + addy3, 24, dwTime);
 
 	if (m_cCurFocus == 8)
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(284 + addx + addx3, 325 + addy + addy3, 27, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(284 + addx + addx3, 325 + addy + addy3, 26, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(284 + addx + addx3, 325 + addy + addy3, 27, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(284 + addx + addx3, 325 + addy + addy3, 26, dwTime);
 
 	if (m_cCurFocus == 9)
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(380 + addx + addx3, 325 + addy + addy3, 17, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(380 + addx + addx3, 325 + addy + addy3, 16, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(380 + addx + addx3, 325 + addy + addy3, 17, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(380 + addx + addx3, 325 + addy + addy3, 16, dwTime);
 
 	//DrawVersion(TRUE);
 	m_DInput.UpdateMouseState(&msX, &msY, &msZ, &cLB, &cRB);
@@ -36290,7 +36334,7 @@ void CGame::RenderCreateAccountMenu()
 
 	// ===== Botones
 	auto DrawButton = [&](UIElement e, int frameNormal, int frameHover, bool hover){
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(SX(e.x), SY(e.y), hover ? frameHover : frameNormal, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(SX(e.x), SY(e.y), hover ? frameHover : frameNormal, dwTime);
 	};
 
 	// ===== Mouse
@@ -43978,12 +44022,12 @@ void CGame::UpdateScreen_OnChangePassword()
 	PutAlignedString(153, 487, 288, UPDATE_SCREEN_ON_CHANGE_PASSWORD7);//"
 
 	if ((bFlag == TRUE) && (m_cCurFocus == 5))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(197, 320, 21, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(197, 320, 20, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(197, 320, 21, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(197, 320, 20, dwTime);
 
 	if (m_cCurFocus == 6)
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(370, 320, 17, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(370, 320, 16, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(370, 320, 17, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(370, 320, 16, dwTime);
 
 	DrawVersion();
 	m_DInput.UpdateMouseState(&msX, &msY, &msZ, &cLB, &cRB);
@@ -44293,12 +44337,12 @@ void CGame::UpdateScreen_OnChangePassword()
 	PutAlignedString(153 + centerX, 487 + centerX, 288 + 10 + centerY, UPDATE_SCREEN_ON_CHANGE_PASSWORD7);//"
 
 	if (bFlag && m_cCurFocus == 6)
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(197 + centerX, 320 + centerY, 21, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(197 + centerX, 320 + centerY, 20, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(197 + centerX, 320 + centerY, 21, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(197 + centerX, 320 + centerY, 20, dwTime);
 
 	if (m_cCurFocus == 7)
-		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(370 + centerX, 320 + centerY, 17, dwTime);
-	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(370 + centerX, 320 + centerY, 16, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(370 + centerX, 320 + centerY, 17, dwTime);
+	else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(370 + centerX, 320 + centerY, 16, dwTime);
 
 	DrawVersion();
 	m_DInput.UpdateMouseState(&msX, &msY, &msZ, &cLB, &cRB);
@@ -48086,60 +48130,51 @@ void CGame::UpdateScreen_OnGame()
 	if (m_bIsDialogEnabled[76] && !isInMarketMap(m_cMapName)) DisableDialogBox(76);
 	//if (m_bIsDialogEnabled[46] && !isInMarketMap(m_cMapName)) DisableDialogBox(46); //Quest.
 
-	sVPXsave = m_sViewPointX;
-	sVPYsave = m_sViewPointY;
+	// FIX-FLICKER: CalcViewPoint ANTES del render para que m_sViewPointX sea correcto
+	// cuando se calcule sDivX/sModX. El sVPXsave captura la posicion ya interpolada.
+	if (iUpdateRet > 0) CalcViewPoint();
 
+	// Camera shake: offset local, NO muta m_sViewPointX (sin restore necesario)
+	int iShakeX = 0, iShakeY = 0;
 	if ((m_iCameraShakingDegree > 0) && (iUpdateRet != 0))
 	{
-		m_sViewPointX += m_iCameraShakingDegree - (rand() % m_iCameraShakingDegree * 2);
-		m_sViewPointY += m_iCameraShakingDegree - (rand() % m_iCameraShakingDegree * 2);
+		iShakeX = m_iCameraShakingDegree - (rand() % m_iCameraShakingDegree * 2);
+		iShakeY = m_iCameraShakingDegree - (rand() % m_iCameraShakingDegree * 2);
 		m_iCameraShakingDegree--;
 		if (m_iCameraShakingDegree <= 0) m_iCameraShakingDegree = 0;
 	}
-	// Movement Smoothing Logic
-	DWORD dwCurrentTime = timeGetTime();
-	if (m_dwLastSmoothTime == 0) m_dwLastSmoothTime = dwCurrentTime;
-	float dt = (dwCurrentTime - m_dwLastSmoothTime) / 1000.0f;
-	m_dwLastSmoothTime = dwCurrentTime;
-
-	// Clamp dt
-	if (dt > 0.1f) dt = 0.1f;
-
-	float fSmoothFactor = 10.0f; 
-
-	// Target is sVPXsave (logical position without shake), current is m_fSmoothViewPointX
-	if (abs(sVPXsave - m_fSmoothViewPointX) > 1000 || abs(sVPYsave - m_fSmoothViewPointY) > 1000)
-	{
-		m_fSmoothViewPointX = (float)sVPXsave;
-		m_fSmoothViewPointY = (float)sVPYsave;
-	}
-	else
-	{
-		m_fSmoothViewPointX += (sVPXsave - m_fSmoothViewPointX) * fSmoothFactor * dt;
-		m_fSmoothViewPointY += (sVPYsave - m_fSmoothViewPointY) * fSmoothFactor * dt;
-	}
-
-	// Calculate Shake Offset (Current m_sViewPointX contains shake)
-	int iShakeX = m_sViewPointX - sVPXsave;
-	int iShakeY = m_sViewPointY - sVPYsave;
-
-	// Apply smoothing + shake to m_sViewPointX for rendering
-	m_sViewPointX = (short)(m_fSmoothViewPointX + iShakeX);
-	m_sViewPointY = (short)(m_fSmoothViewPointY + iShakeY);
 
 	sPivotX = m_pMapData->m_sPivotX;
 	sPivotY = m_pMapData->m_sPivotY;
-	sVal = m_sViewPointX - (sPivotX * 32);
+	sVal = (m_sViewPointX + iShakeX) - (sPivotX * 32);
 	sDivX = sVal / 32;
 	sModX = sVal % 32;
-	sVal = m_sViewPointY - (sPivotY * 32);
+	sVal = (m_sViewPointY + iShakeY) - (sPivotY * 32);
 	sDivY = sVal / 32;
 	sModY = sVal % 32;
+
+	// DBG-A/D: diagnostico mundo negro - log periodico + timeline de frames criticos
+	{
+		static int s_dbgFrameCount = 0;
+		static int s_dbgSkipCount = 0;
+		s_dbgFrameCount++;
+		if (iUpdateRet == 0) s_dbgSkipCount++;
+
+		// Log periodico cada 60 frames (~1 seg)
+		if (s_dbgFrameCount % 60 == 0) {
+			char dbgBuf[512];
+			sprintf(dbgBuf, "[DBG-FRAME] f=%d skip=%d iUR=%d sDivX=%d sModX=%d sDivY=%d sModY=%d vpX=%d vpY=%d",
+				s_dbgFrameCount, s_dbgSkipCount, iUpdateRet, sDivX, sModX, sDivY, sModY,
+				(int)m_sViewPointX, (int)m_sViewPointY);
+			DbgLog(dbgBuf);
+			DbgLog("\n");
+		}
+	}
 
 	if (iUpdateRet != 0)
 	{
 
-		
+
 		//UpdateRadius(); // Reducir el radio
 
 		// FASE 7: SFML limpia su canvas antes del frame
@@ -48294,10 +48329,6 @@ void CGame::UpdateScreen_OnGame()
 			EncriptString(m_cMapName);
 		}
 	}
-	// Restore m_sViewPointX/Y to original logical values (undo smoothing/shake override for logic)
-	m_sViewPointX = sVPXsave;
-	m_sViewPointY = sVPYsave;
-
 	// Fase 11: EndFrame movido DESPUES de todo el rendering (incluido HUD).
 	// Todas las funciones de dibujo (DrawShadowBox, PutSpriteFast, PutPixel, etc.)
 	// ahora tienen SFML intercepts (Fase 10), asi que todo pasa por SFML.
@@ -49222,12 +49253,12 @@ void CGame::UpdateScreen_OnGame()
 		}
 
 		//Aresden Flag's
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(560 + res_x, 125, 19, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(560 + res_x, 125, 19, dwTime);
 		wsprintf(G_cTxt, "%d", AresdenFlags);
 		PutString(600 + res_x, 125, G_cTxt, RGB(255, 255, 255));
 
 		//Elvine Flag's
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(560 + res_x, 145, 20, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(560 + res_x, 145, 20, dwTime);
 		wsprintf(G_cTxt, "%d", ElvineFlags);
 		PutString(600 + res_x, 145, G_cTxt, RGB(255, 255, 255));
 
@@ -49351,13 +49382,13 @@ void CGame::UpdateScreen_OnGame()
 	if (g_ev.Is(EventID::CVC) && IsShopMap() || g_ev.Is(EventID::CVC) && isInMap("city"))
 	{
 		int res_y = 160;
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(10, res_y, 19, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(10, res_y, 19, dwTime);
 		wsprintf(G_cTxt, "%d", DecriptInt(m_iAresdenKills));
 		PutString_SprFont2(40, res_y, G_cTxt, 0, 0, 0);
 		PutString_SprFont2(42, res_y, G_cTxt, 0, 0, 0);
 		PutString_SprFont2(41, res_y, G_cTxt, 255, 0, 0);
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(10, res_y + 40, 20, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(10, res_y + 40, 20, dwTime);
 		wsprintf(G_cTxt, "%d", DecriptInt(m_iElvineKills));
 		PutString_SprFont2(40, res_y + 40, G_cTxt, 0, 0, 0);
 		PutString_SprFont2(42, res_y + 40, G_cTxt, 0, 0, 0);
@@ -49925,10 +49956,8 @@ void CGame::UpdateScreen_OnGame()
 
 	CommandProcessor(msX, msY, ((sDivX + sPivotX) * 32 + sModX + msX - 17) / 32 + 1, ((sDivY + sPivotY) * 32 + sModY + msY - 17) / 32 + 1, cLB, cRB);
 
-	m_sViewPointX = sVPXsave;
-	m_sViewPointY = sVPYsave;
-
-	if (iUpdateRet > 0) CalcViewPoint();
+	// CalcViewPoint ya fue llamado ANTES del render (ver arriba). No volver a llamar aqui.
+	// m_sViewPointX NO se restaura: CalcViewPoint mantiene la posicion canonica.
 
 	if (DecriptBool(m_bIsObserverMode))
 	{
@@ -50113,7 +50142,7 @@ void CGame::MotionResponseHandler(char * pData)
 			m_cCommandCount = 0;
 			m_bIsGetPointingMode = FALSE;
 
-			//added resolution 
+			//added resolution
 			if (c_reso->IsResolution() == C800x600)
 			{
 				m_sViewDstX = m_sViewPointX = (m_sPlayerX - 12) * 32 - 16;
@@ -50129,6 +50158,9 @@ void CGame::MotionResponseHandler(char * pData)
 				m_sViewDstX = m_sViewPointX = (m_sPlayerX - 16) * 32;
 				m_sViewDstY = m_sViewPointY = (m_sPlayerY - 11) * 32;//11
 			}
+			// Sync float camera on teleport/warp to prevent lerp drift
+			m_fSmoothViewPointX = (float)m_sViewPointX;
+			m_fSmoothViewPointY = (float)m_sViewPointY;
 
 			m_bIsRedrawPDBGS = TRUE;
 			break;
@@ -50149,27 +50181,20 @@ void CGame::MotionResponseHandler(char * pData)
 				if (DecriptInt(m_iSP) < 0) m_iSP = EncriptInt(0);
 				cp++;
 
-				// Configurar el offset inicial basado en la dirección
-				switch (cDir) {
-				case 1: m_fTargetOffsetY = -TILE_HEIGHT; break;  // Arriba
-				case 2: m_fTargetOffsetX = TILE_WIDTH;
-					m_fTargetOffsetY = -TILE_HEIGHT; break;  // Arriba-Derecha
-				case 3: m_fTargetOffsetX = TILE_WIDTH; break;    // Derecha
-				case 4: m_fTargetOffsetX = TILE_WIDTH;
-					m_fTargetOffsetY = TILE_HEIGHT; break;  // Abajo-Derecha
-				case 5: m_fTargetOffsetY = TILE_HEIGHT; break;   // Abajo
-				case 6: m_fTargetOffsetX = -TILE_WIDTH;
-					m_fTargetOffsetY = TILE_HEIGHT; break;   // Abajo-Izquierda
-				case 7: m_fTargetOffsetX = -TILE_WIDTH; break;  // Izquierda
-				case 8: m_fTargetOffsetX = -TILE_WIDTH;
-					m_fTargetOffsetY = -TILE_HEIGHT; break; // Arriba-Izquierda
-				}
-
-				m_bIsInterpolating = true;
+				// v13: render offset system removed — lerp camera handles smoothing alone.
+				// m_fRenderOffsetX/Y no longer modified here.
 				m_pMapData->ShiftMapData(cDir);
 				_ReadMapData(sX, sY, cp);
 				m_bIsRedrawPDBGS = TRUE;
 				m_cCommandCount--;
+
+				// DBG-D: timeline - MOVE_CONFIRM recibido (v13: offset system removed)
+				{
+					char buf[256];
+					sprintf(buf, "[DBG-MOVE] MOVE_CONFIRM dir=%d sX=%d sY=%d", (int)cDir, sX, sY);
+					DbgLog(buf);
+					DbgLog("\n");
+				}
 			}
 			else
 			{
@@ -50267,6 +50292,9 @@ void CGame::MotionResponseHandler(char * pData)
 				m_sViewDstX = m_sViewPointX = (m_sPlayerX - 10) * 32;
 				m_sViewDstY = m_sViewPointY = (m_sPlayerY - 7) * 32;
 			}
+			// Sync float camera on teleport/warp to prevent lerp drift
+			m_fSmoothViewPointX = (float)m_sViewPointX;
+			m_fSmoothViewPointY = (float)m_sViewPointY;
 
 			m_bIsPrevMoveBlocked = TRUE;
 			switch (m_sPlayerType) {
@@ -50357,6 +50385,9 @@ void CGame::MotionResponseHandler(char * pData)
 				m_sViewDstX = m_sViewPointX = (m_sPlayerX - 10) * 32;
 				m_sViewDstY = m_sViewPointY = (m_sPlayerY - 7) * 32;
 			}
+			// Sync float camera on teleport/warp to prevent lerp drift
+			m_fSmoothViewPointX = (float)m_sViewPointX;
+			m_fSmoothViewPointY = (float)m_sViewPointY;
 
 			m_bIsPrevMoveBlocked = TRUE;
 			/*switch (m_sPlayerType) {
@@ -54172,9 +54203,9 @@ void CGame::DrawDialogBox_LevelUpSetting(short msX, short msY)
 		PutString(sX + 162, sY + 125, cTxt, RGB(25, 35, 25));
 	}
 	if ((msX >= sX + 195) && (msX <= sX + 205) && (msY >= sY + 127) && (msY <= sY + 133) && (m_iStr < DEF_STATS_LIMIT))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 195, sY + 127, 5, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 195, sY + 127, 5, dwTime);
 	if ((msX >= sX + 210) && (msX <= sX + 220) && (msY >= sY + 127) && (msY <= sY + 133) && (DecriptInt(m_cLU_Str) > 0))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 210, sY + 127, 6, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 210, sY + 127, 6, dwTime);
 
 	// Vitality
 	PutString(sX + 24, sY + 144, DRAW_DIALOGBOX_LEVELUP_SETTING5, RGB(5, 5, 5));
@@ -54191,9 +54222,9 @@ void CGame::DrawDialogBox_LevelUpSetting(short msX, short msY)
 		PutString(sX + 162, sY + 144, cTxt, RGB(25, 35, 25));
 	}
 	if ((msX >= sX + 195) && (msX <= sX + 205) && (msY >= sY + 146) && (msY <= sY + 152) && (m_iVit < DEF_STATS_LIMIT))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 195, sY + 146, 5, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 195, sY + 146, 5, dwTime);
 	if ((msX >= sX + 210) && (msX <= sX + 220) && (msY >= sY + 146) && (msY <= sY + 152) && (DecriptInt(m_cLU_Vit) > 0))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 210, sY + 146, 6, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 210, sY + 146, 6, dwTime);
 
 	// Dexterity
 	PutString(sX + 24, sY + 163, DRAW_DIALOGBOX_LEVELUP_SETTING6, RGB(5, 5, 5));
@@ -54210,9 +54241,9 @@ void CGame::DrawDialogBox_LevelUpSetting(short msX, short msY)
 		PutString(sX + 162, sY + 163, cTxt, RGB(25, 35, 25));
 	}
 	if ((msX >= sX + 195) && (msX <= sX + 205) && (msY >= sY + 165) && (msY <= sY + 171) && (m_iDex < DEF_STATS_LIMIT))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 195, sY + 165, 5, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 195, sY + 165, 5, dwTime);
 	if ((msX >= sX + 210) && (msX <= sX + 220) && (msY >= sY + 165) && (msY <= sY + 171) && (DecriptInt(m_cLU_Dex) > 0))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 210, sY + 165, 6, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 210, sY + 165, 6, dwTime);
 
 	// Intelligence
 	PutString(sX + 24, sY + 182, DRAW_DIALOGBOX_LEVELUP_SETTING7, RGB(5, 5, 5));
@@ -54229,9 +54260,9 @@ void CGame::DrawDialogBox_LevelUpSetting(short msX, short msY)
 		PutString(sX + 162, sY + 182, cTxt, RGB(25, 35, 25));
 	}
 	if ((msX >= sX + 195) && (msX <= sX + 205) && (msY >= sY + 184) && (msY <= sY + 190) && (m_iInt < DEF_STATS_LIMIT))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 195, sY + 184, 5, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 195, sY + 184, 5, dwTime);
 	if ((msX >= sX + 210) && (msX <= sX + 220) && (msY >= sY + 184) && (msY <= sY + 190) && (DecriptInt(m_cLU_Int) > 0))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 210, sY + 184, 6, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 210, sY + 184, 6, dwTime);
 
 	// Magic
 	PutString(sX + 24, sY + 201, DRAW_DIALOGBOX_LEVELUP_SETTING8, RGB(5, 5, 5));
@@ -54248,9 +54279,9 @@ void CGame::DrawDialogBox_LevelUpSetting(short msX, short msY)
 		PutString(sX + 162, sY + 201, cTxt, RGB(25, 35, 25));
 	}
 	if ((msX >= sX + 195) && (msX <= sX + 205) && (msY >= sY + 203) && (msY <= sY + 209) && (m_iMag < DEF_STATS_LIMIT))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 195, sY + 203, 5, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 195, sY + 203, 5, dwTime);
 	if ((msX >= sX + 210) && (msX <= sX + 220) && (msY >= sY + 203) && (msY <= sY + 209) && (DecriptInt(m_cLU_Mag) > 0))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 210, sY + 203, 6, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 210, sY + 203, 6, dwTime);
 
 	// Charisma
 	PutString(sX + 24, sY + 220, DRAW_DIALOGBOX_LEVELUP_SETTING9, RGB(5, 5, 5));
@@ -54267,9 +54298,9 @@ void CGame::DrawDialogBox_LevelUpSetting(short msX, short msY)
 		PutString(sX + 162, sY + 220, cTxt, RGB(25, 35, 25));
 	}
 	if ((msX >= sX + 195) && (msX <= sX + 205) && (msY >= sY + 222) && (msY <= sY + 228) && (m_iCharisma < DEF_STATS_LIMIT))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 195, sY + 222, 5, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 195, sY + 222, 5, dwTime);
 	if ((msX >= sX + 210) && (msX <= sX + 220) && (msY >= sY + 222) && (msY <= sY + 228) && (DecriptInt(m_cLU_Char) > 0))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 210, sY + 222, 6, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 210, sY + 222, 6, dwTime);
 
 	if ((msX >= sX + DEF_RBTNPOSX) && (msX <= sX + DEF_RBTNPOSX + DEF_BTNSZX) && (msY > sY + DEF_BTNPOSY) && (msY < sY + DEF_BTNPOSY + DEF_BTNSZY))
 		DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_BUTTON, sX + DEF_RBTNPOSX, sY + DEF_BTNPOSY, 1);
@@ -56508,7 +56539,7 @@ void CGame::DrawDialogBox_Exchange(short msX, short msY, short msZ, char cLB)
 				}
 			}
 
-			m_pSprite[DEF_SPRID_INTERFACE_ND_NEWEXCHANGE]->PutSpriteFast(sX + 14, sY + 293, 2, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_NEWEXCHANGE]->PutSpriteFastNoColorKey(sX + 14, sY + 293, 2, dwTime);
 
 			if (ExchangeErrors)
 			{
@@ -56580,13 +56611,13 @@ void CGame::ShowItemExchange(short Dialog, short sX, short sY, short Item, short
 
 	if (Show == 1)
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_NEWEXCHANGE]->PutSpriteFast(sX + 158, sY + 59, 1, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_NEWEXCHANGE]->PutSpriteFastNoColorKey(sX + 158, sY + 59, 1, dwTime);
 		X = 159;
 		X2 = 295;
 	}
 	else
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_NEWEXCHANGE]->PutSpriteFast(sX + 14, sY + 59, 1, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_NEWEXCHANGE]->PutSpriteFastNoColorKey(sX + 14, sY + 59, 1, dwTime);
 		X = 16;
 		X2 = 151;
 	}
@@ -58913,7 +58944,7 @@ void CGame::DrawDialogBox_Skill(short msX, short msY, short msZ, char cLB)
 
 				if (m_iDownSkillIndex == (i + m_stDialogBoxInfo[15].sView))
 					m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutTransSpriteRGB(sX + 215, sY + 47 + i * 15, 21, 50, 50, 50, m_dwTime);
-				else m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFast(sX + 215, sY + 47 + i * 15, 20, m_dwTime);
+				else m_pSprite[DEF_SPRID_INTERFACE_ADDINTERFACE]->PutSpriteFastNoColorKey(sX + 215, sY + 47 + i * 15, 20, m_dwTime);
 			}
 		}
 
@@ -61655,6 +61686,36 @@ void CGame::UpdateScreen_OnLoading(bool bActive)
 			/*ChangeGameMode(DEF_GAMEMODE_ONMAINMENU);*/
 			// Solo cambiar de modo si han pasado al menos 10 segundos
 			if (bMinTimeElapsed) {
+				// ============================================================
+				// POST-LOAD SWEEP: Asignar m_iSpriteIndex a TODOS los sprites
+				// que quedaron en -1 porque fueron cargados con new CSprite()
+				// directamente (sin pasar por MakeSprite/MakeTileSpr).
+				//
+				// Afecta: armas (Msw/Wsw/Wbo/Mbo.pak inline), escudos (Msh/Wsh.pak),
+				//         undies (Mpt/Wpt.pak), hair (Mhr/Whr.pak), Energy-Sphere,
+				//         effect5.pak inline, item-pack.pak, y cualquier otro sprite
+				//         cargado directamente con new CSprite() en el futuro.
+				//
+				// Convención de índices (igual que las funciones Make*):
+				//   m_pSprite[i]     -> índice = i         (0 .. DEF_MAXSPRITES-1)
+				//   m_pTileSpr[i]    -> índice = 100000+i  (igual que MakeTileSpr)
+				//   m_pEffectSpr[i]  -> índice = 200000+i  (igual que MakeEffectSpr corregido)
+				//
+				// El backend SFML carga la textura lazily en el primer PutSpriteFast.
+				// ============================================================
+				for (int _idx = 0; _idx < DEF_MAXSPRITES; _idx++) {
+					if (m_pSprite[_idx] && m_pSprite[_idx]->m_iSpriteIndex == -1)
+						m_pSprite[_idx]->m_iSpriteIndex = _idx;
+				}
+				for (int _idx = 0; _idx < DEF_MAXTILES; _idx++) {
+					if (m_pTileSpr[_idx] && m_pTileSpr[_idx]->m_iSpriteIndex == -1)
+						m_pTileSpr[_idx]->m_iSpriteIndex = 100000 + _idx;
+				}
+				for (int _idx = 0; _idx < DEF_MAXEFFECTSPR; _idx++) {
+					if (m_pEffectSpr[_idx] && m_pEffectSpr[_idx]->m_iSpriteIndex == -1)
+						m_pEffectSpr[_idx]->m_iSpriteIndex = 200000 + _idx;
+				}
+				// ============================================================
 				ChangeGameMode(DEF_GAMEMODE_ONMAINMENU);
 			}
 			break;
@@ -66582,7 +66643,7 @@ void CGame::DrawDialogBox_ChangeStatsMajestic(short msX, short msY)
 	else
 		PutString(sX + 162, sY + 150, cTxt, RGB(0, 0, 0));
 	if ((msX >= sX + 210) && (msX <= sX + 220) && (msY >= sY + 152) && (msY <= sY + 158))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 210, sY + 152, 6, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 210, sY + 152, 6, dwTime);
 
 	// Vitality
 	PutString(sX + 24, sY + 169, DRAW_DIALOGBOX_LEVELUP_SETTING5, RGB(5, 5, 5));
@@ -66597,7 +66658,7 @@ void CGame::DrawDialogBox_ChangeStatsMajestic(short msX, short msY)
 	else
 		PutString(sX + 162, sY + 169, cTxt, RGB(0, 0, 0));
 	if ((msX >= sX + 210) && (msX <= sX + 220) && (msY >= sY + 171) && (msY <= sY + 177))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 210, sY + 171, 6, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 210, sY + 171, 6, dwTime);
 
 	// Dexterity
 	PutString(sX + 24, sY + 188, DRAW_DIALOGBOX_LEVELUP_SETTING6, RGB(5, 5, 5));
@@ -66612,7 +66673,7 @@ void CGame::DrawDialogBox_ChangeStatsMajestic(short msX, short msY)
 	else
 		PutString(sX + 162, sY + 188, cTxt, RGB(0, 0, 0));
 	if ((msX >= sX + 210) && (msX <= sX + 220) && (msY >= sY + 190) && (msY <= sY + 196))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 210, sY + 190, 6, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 210, sY + 190, 6, dwTime);
 
 	// Intelligence
 	PutString(sX + 24, sY + 207, DRAW_DIALOGBOX_LEVELUP_SETTING7, RGB(5, 5, 5));
@@ -66627,7 +66688,7 @@ void CGame::DrawDialogBox_ChangeStatsMajestic(short msX, short msY)
 	else
 		PutString(sX + 162, sY + 207, cTxt, RGB(0, 0, 0));
 	if ((msX >= sX + 210) && (msX <= sX + 220) && (msY >= sY + 209) && (msY <= sY + 215))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 210, sY + 209, 6, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 210, sY + 209, 6, dwTime);
 
 	// Magic
 	PutString(sX + 24, sY + 226, DRAW_DIALOGBOX_LEVELUP_SETTING8, RGB(5, 5, 5));
@@ -66642,7 +66703,7 @@ void CGame::DrawDialogBox_ChangeStatsMajestic(short msX, short msY)
 	else
 		PutString(sX + 162, sY + 226, cTxt, RGB(0, 0, 0));
 	if ((msX >= sX + 210) && (msX <= sX + 220) && (msY >= sY + 228) && (msY <= sY + 234))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 210, sY + 228, 6, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 210, sY + 228, 6, dwTime);
 
 	// Charisma
 	PutString(sX + 24, sY + 245, DRAW_DIALOGBOX_LEVELUP_SETTING9, RGB(5, 5, 5));
@@ -66657,7 +66718,7 @@ void CGame::DrawDialogBox_ChangeStatsMajestic(short msX, short msY)
 	else
 		PutString(sX + 162, sY + 245, cTxt, RGB(0, 0, 0));
 	if ((msX >= sX + 210) && (msX <= sX + 220) && (msY >= sY + 247) && (msY <= sY + 253))
-		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFast(sX + 210, sY + 247, 6, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_GAME4]->PutSpriteFastNoColorKey(sX + 210, sY + 247, 6, dwTime);
 
 	if ((msX >= sX + DEF_LBTNPOSX) && (msX <= sX + DEF_LBTNPOSX + DEF_BTNSZX) && (msY > sY + DEF_BTNPOSY) && (msY < sY + DEF_BTNPOSY + DEF_BTNSZY))
 		DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_BUTTON, sX + DEF_LBTNPOSX, sY + DEF_BTNPOSY, 17);
@@ -69757,10 +69818,10 @@ void CGame::DrawFlag(short sX, short sY, DWORD dwTime)
 {
 	/*//Elvine Flag
 	if ((_tmp_iStatus & 0x40000) != 0)
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX - 2, sY, 20, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX - 2, sY, 20, dwTime);
 	//Aresden Flag
 	else if ((_tmp_iStatus & 0x80000) != 0)
-		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFast(sX, sY, 19, dwTime);*/
+		m_pSprite[DEF_SPRID_INTERFACE_ND_ICONPANNEL3]->PutSpriteFastNoColorKey(sX, sY, 19, dwTime);*/
 }
 
 void CGame::DlgBoxClick_Status(short msX, short msY)
@@ -71791,7 +71852,7 @@ void CGame::PartyBar(short sX, short sY, short i, DWORD dwTime)
 	if (iBarWidth < 0) iBarWidth = 0;
 	if (iBarWidth > 54) iBarWidth = 54;
 
-	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX - 25, sY + 14, 1, dwTime);
+	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX - 25, sY + 14, 1, dwTime);
 	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastWidth(sX - 25, sY + 14, 0, iBarWidth, dwTime);
 }
 
@@ -71818,7 +71879,7 @@ void CGame::MyBar(short sX, short sY, DWORD dwTime)
 	iBarWidth = (DecriptInt(m_iHP) * 54) / iMaxPoint;
 	if (iBarWidth < 0) iBarWidth = 0;
 	if (iBarWidth > 54) iBarWidth = 54;
-	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX - 25, sY + 14, 1, dwTime);
+	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX - 25, sY + 14, 1, dwTime);
 	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastWidth(sX - 25, sY + 14, 0, iBarWidth, dwTime);
 
 	//MP bar
@@ -71827,7 +71888,7 @@ void CGame::MyBar(short sX, short sY, DWORD dwTime)
 	iBarWidth = (DecriptInt(m_iMP) * 54) / iMaxPoint;
 	if (iBarWidth < 0) iBarWidth = 0;
 	if (iBarWidth > 54) iBarWidth = 54;
-	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX - 25, sY + 17, 1, dwTime);
+	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX - 25, sY + 17, 1, dwTime);
 	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastWidth(sX - 25, sY + 17, 2, iBarWidth, dwTime);
 	// SP bar
 	if (DecriptInt(m_iAngelicStr) != 0) iMaxPoint = DecriptInt(m_iLevel) * 2 + (m_iStr + m_sRankAddStr + DecriptInt(m_iAngelicStr)) * 2;
@@ -71836,7 +71897,7 @@ void CGame::MyBar(short sX, short sY, DWORD dwTime)
 	iBarWidth = (DecriptInt(m_iSP) * 54) / iMaxPoint;
 	if (iBarWidth < 0) iBarWidth = 0;
 	if (iBarWidth > 54) iBarWidth = 54;
-	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX - 25, sY + 20, 1, dwTime);
+	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX - 25, sY + 20, 1, dwTime);
 	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastWidth(sX - 25, sY + 20, 3, iBarWidth, dwTime);
 }
 
@@ -72193,8 +72254,8 @@ void CGame::ShowItemDetail(short Dialog, short sX, short sY, short msX, short ms
 		}
 	}
 
-	m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutSpriteFast(sX + 156, sY + 219, 19, dwTime);
-	m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutSpriteFast(sX + 170, sY + 219, 19, dwTime);
+	m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutSpriteFastNoColorKey(sX + 156, sY + 219, 19, dwTime);
+	m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutSpriteFastNoColorKey(sX + 170, sY + 219, 19, dwTime);
 	PutString(sX + 123 - 35, sY + 237 - 10, DRAW_DIALOGBOX_SHOP27, RGB(255, 255, 255)); // "Quantity:"
 	PutString(sX + 124 - 35, sY + 237 - 10, DRAW_DIALOGBOX_SHOP27, RGB(255, 255, 255));
 	if (iGetTopDialogBoxIndex() == Dialog && msZ != 0)
@@ -72226,8 +72287,8 @@ void CGame::ShowItemDetail(short Dialog, short sX, short sY, short msX, short ms
 		PutString(sX - 35 + 200, sY - 10 + 237, (cTemp), RGB(255, 255, 255));
 		PutString(sX - 35 + 201, sY - 10 + 237, (cTemp), RGB(255, 255, 255));
 	}
-	m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutSpriteFast(sX + 156, sY + 244, 20, dwTime);
-	m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutSpriteFast(sX + 170, sY + 244, 20, dwTime);
+	m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutSpriteFastNoColorKey(sX + 156, sY + 244, 20, dwTime);
+	m_pSprite[DEF_SPRID_INTERFACE_ND_GAME2]->PutSpriteFastNoColorKey(sX + 170, sY + 244, 20, dwTime);
 
 	if ((msX >= sX + DEF_LBTNPOSX) && (msX <= sX + DEF_LBTNPOSX + DEF_BTNSZX) && (msY >= sY + DEF_BTNPOSY) && (msY <= sY + DEF_BTNPOSY + DEF_BTNSZY))
 		DrawNewDialogBox(DEF_SPRID_INTERFACE_ND_BUTTON, sX + DEF_LBTNPOSX, sY + DEF_BTNPOSY, 31);
@@ -74254,20 +74315,20 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	/********** First Line **********/
 	if (Achivement[0].Active == FALSE)
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 12, sY + 56, 3 + 44, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 45, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 88, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 122, 5, dwTime); // 5 Red // 4 Green -> Vertical		
+		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 12, sY + 56, 3 + 44, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 45, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 88, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 122, 5, dwTime); // 5 Red // 4 Green -> Vertical		
 	}
 	else
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 12, sY + 56, 3, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 45, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 88, 4, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 122, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 12, sY + 56, 3, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 45, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 88, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 122, 4, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
-	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 12, sY + 56 + 30, 8, dwTime); // Red Bar
+	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 12, sY + 56 + 30, 8, dwTime); // Red Bar
 	iBarWidth = (Achivement[0].Porcent*MaxBarWidth) / 100;
 	if (iBarWidth < 0) iBarWidth = 0;
 	if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74275,18 +74336,18 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 
 	if (Achivement[1].Active == FALSE)
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 61, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 76, sY + 56, 2 + 44, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 109, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 61, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 76, sY + 56, 2 + 44, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 109, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
 	}
 	else
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 61, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 76, sY + 56, 2, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 109, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 61, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 76, sY + 56, 2, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 109, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
 	}
 
-	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 76, sY + 56 + 30, 8, dwTime); // Red Bar
+	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 76, sY + 56 + 30, 8, dwTime); // Red Bar
 	iBarWidth = (Achivement[1].Porcent*MaxBarWidth) / 100;
 	if (iBarWidth < 0) iBarWidth = 0;
 	if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74294,18 +74355,18 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 
 	if (Achivement[2].Active == FALSE)
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 125, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 140, sY + 56, 19 + 44, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 173, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 125, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 140, sY + 56, 19 + 44, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 173, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
 	}
 	else
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 125, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 140, sY + 56, 19, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 173, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 125, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 140, sY + 56, 19, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 173, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
 	}
 
-	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 140, sY + 56 + 30, 8, dwTime); // Red Bar
+	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 140, sY + 56 + 30, 8, dwTime); // Red Bar
 	iBarWidth = (Achivement[2].Porcent*MaxBarWidth) / 100;
 	if (iBarWidth < 0) iBarWidth = 0;
 	if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74313,18 +74374,18 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 
 	if (Achivement[3].Active == FALSE)
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 189, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 204, sY + 56, 29 + 44, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 237, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 189, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 204, sY + 56, 29 + 44, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 237, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
 	}
 	else
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 189, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 204, sY + 56, 29, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 237, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 189, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 204, sY + 56, 29, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 237, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
 	}
 
-	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 204, sY + 56 + 30, 8, dwTime); // Red Bar
+	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 204, sY + 56 + 30, 8, dwTime); // Red Bar
 	iBarWidth = (Achivement[3].Porcent*MaxBarWidth) / 100;
 	if (iBarWidth < 0) iBarWidth = 0;
 	if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74332,20 +74393,20 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 
 	if (Achivement[4].Active == FALSE)
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 253, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 268, sY + 56, 39 + 44, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 88, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 122, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 253, sY + 72, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 268, sY + 56, 39 + 44, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 88, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 122, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 	else
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 253, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 268, sY + 56, 39, dwTime);
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 88, 4, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 122, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 253, sY + 72, 7, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 268, sY + 56, 39, dwTime);
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 88, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 122, 4, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
-	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 268, sY + 56 + 30, 8, dwTime); // Red Bar
+	m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 268, sY + 56 + 30, 8, dwTime); // Red Bar
 	iBarWidth = (Achivement[4].Porcent*MaxBarWidth) / 100;
 	if (iBarWidth < 0) iBarWidth = 0;
 	if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74354,19 +74415,19 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	/********** Second Line **********/
 	if (Achivement[0].Active && Achivement[1].Active)
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 61, sY + 72, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 61, sY + 72, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[5].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 44, sY + 106, 15 + 44, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 77, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 44, sY + 106, 15 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 77, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 44, sY + 106, 15, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 77, sY + 122, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 44, sY + 106, 15, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 77, sY + 122, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 44, sY + 106 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 44, sY + 106 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[5].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74375,27 +74436,27 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	else
 	{
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 44, sY + 106, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 77, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 61, sY + 72, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 77, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 61, sY + 72, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[1].Active && Achivement[2].Active)
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 125, sY + 72, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 125, sY + 72, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[6].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 92, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 108, sY + 106, 20 + 44, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 141, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 92, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 108, sY + 106, 20 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 141, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 92, sY + 122, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 108, sY + 106, 20, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 141, sY + 122, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 92, sY + 122, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 108, sY + 106, 20, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 141, sY + 122, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 108, sY + 106 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 108, sY + 106 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[6].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74403,29 +74464,29 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	}
 	else
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 92, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 92, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 108, sY + 106, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 141, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 125, sY + 72, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 141, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 125, sY + 72, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[2].Active && Achivement[3].Active)
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 189, sY + 72, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 189, sY + 72, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[7].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 156, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 172, sY + 106, 32 + 44, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 205, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 156, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 172, sY + 106, 32 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 205, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 156, sY + 122, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 172, sY + 106, 32, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 205, sY + 122, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 156, sY + 122, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 172, sY + 106, 32, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 205, sY + 122, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 172, sY + 106 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 172, sY + 106 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[7].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74433,27 +74494,27 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	}
 	else
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 156, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 156, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 172, sY + 106, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 205, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 189, sY + 72, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 205, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 189, sY + 72, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[3].Active && Achivement[4].Active)
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 253, sY + 72, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 253, sY + 72, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[8].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 220, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 236, sY + 106, 10 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 220, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 236, sY + 106, 10 + 44, dwTime);
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 220, sY + 122, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 236, sY + 106, 10, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 220, sY + 122, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 236, sY + 106, 10, dwTime);
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 236, sY + 106 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 236, sY + 106 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[8].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74461,9 +74522,9 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	}
 	else
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 220, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 220, sY + 122, 6, dwTime); // 6 Red // 7 Green -> Horizontal
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 236, sY + 106, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 253, sY + 72, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 253, sY + 72, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 
@@ -74472,26 +74533,26 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	{
 		if (Achivement[9].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 12, sY + 156, 0 + 44, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 188, 5, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 222, 5, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 238, 5, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 288, 5, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 322, 5, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 12, sY + 156, 0 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 188, 5, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 222, 5, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 238, 5, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 288, 5, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 322, 5, dwTime); // 5 Red // 4 Green -> Vertical
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 12, sY + 156, 0, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 188, 4, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 222, 4, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 238, 4, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 272, 4, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 288, 4, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 322, 4, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 12, sY + 156, 0, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 188, 4, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 222, 4, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 238, 4, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 272, 4, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 288, 4, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 322, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 12, sY + 156 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 12, sY + 156 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[9].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74500,29 +74561,29 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	else
 	{
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 12, sY + 156, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 188, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 222, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 238, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 288, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 28, sY + 322, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 188, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 222, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 238, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 288, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 28, sY + 322, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[5].Active && Achivement[6].Active) // Second Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 92, sY + 122, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 92, sY + 122, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[10].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 76, sY + 156, 14 + 44, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 109, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 76, sY + 156, 14 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 109, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 76, sY + 156, 14, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 109, sY + 172, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 76, sY + 156, 14, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 109, sY + 172, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 76, sY + 156 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 76, sY + 156 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[10].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74531,27 +74592,27 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	else
 	{
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 76, sY + 156, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 109, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 92, sY + 122, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 109, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 92, sY + 122, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[6].Active && Achivement[7].Active) // Second Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 156, sY + 122, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 156, sY + 122, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[11].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 124, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 140, sY + 156, 30 + 44, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 173, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 124, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 140, sY + 156, 30 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 173, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 124, sY + 172, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 140, sY + 156, 30, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 173, sY + 172, 7, dwTime); // 6 Red // 7 Green -> Horizontal
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 124, sY + 172, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 140, sY + 156, 30, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 173, sY + 172, 7, dwTime); // 6 Red // 7 Green -> Horizontal
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 140, sY + 156 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 140, sY + 156 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[11].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74560,27 +74621,27 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	else
 	{
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 124, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 124, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 140, sY + 156, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 173, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 156, sY + 122, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 173, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 156, sY + 122, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[7].Active && Achivement[8].Active) // Second Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 220, sY + 122, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 220, sY + 122, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[12].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 188, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 204, sY + 156, 31 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 188, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 204, sY + 156, 31 + 44, dwTime);
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 188, sY + 172, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 204, sY + 156, 31, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 188, sY + 172, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 204, sY + 156, 31, dwTime);
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 204, sY + 156 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 204, sY + 156 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[12].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74588,35 +74649,35 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	}
 	else
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 188, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 188, sY + 172, 6, dwTime); // 6 Red // 7 Green -> Horizontal
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 204, sY + 156, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 220, sY + 122, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 220, sY + 122, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[4].Active) // First Line
 	{
 		if (Achivement[13].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 268, sY + 156, 34 + 44, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 188, 5, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 222, 5, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 238, 5, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 288, 5, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 322, 5, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 268, sY + 156, 34 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 188, 5, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 222, 5, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 238, 5, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 288, 5, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 322, 5, dwTime); // 5 Red // 4 Green -> Vertical
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 268, sY + 156, 34, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 188, 4, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 222, 4, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 238, 4, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 272, 4, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 288, 4, dwTime); // 5 Red // 4 Green -> Vertical
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 322, 4, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 268, sY + 156, 34, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 188, 4, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 222, 4, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 238, 4, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 272, 4, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 288, 4, dwTime); // 5 Red // 4 Green -> Vertical
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 322, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 268, sY + 156 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 268, sY + 156 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[13].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74625,25 +74686,25 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	else
 	{
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 268, sY + 156, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 188, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 222, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 238, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 288, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 284, sY + 322, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 188, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 222, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 238, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 288, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 284, sY + 322, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	/********** Four Line **********/
 	if (Achivement[5].Active) // Second Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 60, sY + 138, 4, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 60, sY + 172, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 60, sY + 138, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 60, sY + 172, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[14].Active == FALSE)
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 44, sY + 206, 18 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 44, sY + 206, 18 + 44, dwTime);
 		else
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 44, sY + 206, 18, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 44, sY + 206, 18, dwTime);
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 44, sY + 206 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 44, sY + 206 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[14].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74652,27 +74713,27 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	else
 	{
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 44, sY + 206, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 60, sY + 138, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 60, sY + 172, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 60, sY + 138, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 60, sY + 172, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[10].Active && Achivement[11].Active) // Thirt Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 124, sY + 172, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 124, sY + 172, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[15].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 92, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 108, sY + 206, 1 + 44, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 141, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 92, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 108, sY + 206, 1 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 141, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 92, sY + 222, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 108, sY + 206, 1, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 141, sY + 222, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 92, sY + 222, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 108, sY + 206, 1, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 141, sY + 222, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 108, sY + 206 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 108, sY + 206 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[15].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74680,29 +74741,29 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	}
 	else
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 92, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 92, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 108, sY + 206, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 141, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 124, sY + 172, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 141, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 124, sY + 172, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[11].Active && Achivement[12].Active) // Thirt Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 188, sY + 172, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 188, sY + 172, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[16].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 156, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 172, sY + 206, 28 + 44, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 205, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 156, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 172, sY + 206, 28 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 205, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 156, sY + 222, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 172, sY + 206, 28, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 205, sY + 222, 7, dwTime); // 6 Red // 7 Green -> Horizontal
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 156, sY + 222, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 172, sY + 206, 28, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 205, sY + 222, 7, dwTime); // 6 Red // 7 Green -> Horizontal
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 172, sY + 206 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 172, sY + 206 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[16].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74711,22 +74772,22 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	else
 	{
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 156, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 156, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 172, sY + 206, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 205, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 188, sY + 172, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 205, sY + 222, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 188, sY + 172, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[8].Active) // Second Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 252, sY + 138, 4, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 252, sY + 172, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 252, sY + 138, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 252, sY + 172, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[17].Active == FALSE)
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 236, sY + 206, 41 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 236, sY + 206, 41 + 44, dwTime);
 		else
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 236, sY + 206, 41, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 236, sY + 206, 41, dwTime);
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 236, sY + 206 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 236, sY + 206 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[17].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74735,26 +74796,26 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	else
 	{
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 236, sY + 206, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 252, sY + 138, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 252, sY + 172, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 252, sY + 138, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 252, sY + 172, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	/********** Five Line **********/
 	if (Achivement[15].Active) // Four Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 92, sY + 222, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 92, sY + 222, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[18].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 76, sY + 256, 12 + 44, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 109, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 76, sY + 256, 12 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 109, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 76, sY + 256, 12, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 109, sY + 272, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 76, sY + 256, 12, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 109, sY + 272, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 76, sY + 256 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 76, sY + 256 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[18].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74763,27 +74824,27 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	else
 	{
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 76, sY + 256, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 109, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 92, sY + 222, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 109, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 92, sY + 222, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[15].Active && Achivement[16].Active) // Four Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 156, sY + 222, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 156, sY + 222, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[19].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 124, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 140, sY + 256, 36 + 44, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 173, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 124, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 140, sY + 256, 36 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 173, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 124, sY + 272, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 140, sY + 256, 36, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 173, sY + 272, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 124, sY + 272, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 140, sY + 256, 36, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 173, sY + 272, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 140, sY + 256 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 140, sY + 256 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[19].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74792,27 +74853,27 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	else
 	{
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 124, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 124, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 140, sY + 256, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 173, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 156, sY + 222, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 173, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 156, sY + 222, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[16].Active) // Four Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 220, sY + 222, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 220, sY + 222, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[20].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 188, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 204, sY + 256, 42 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 188, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 204, sY + 256, 42 + 44, dwTime);
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 188, sY + 272, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 204, sY + 256, 42, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 188, sY + 272, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 204, sY + 256, 42, dwTime);
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 204, sY + 256 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 204, sY + 256 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[20].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74820,28 +74881,28 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	}
 	else
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 188, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 188, sY + 272, 6, dwTime); // 6 Red // 7 Green -> Horizontal
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 204, sY + 256, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 220, sY + 222, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 220, sY + 222, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	/********** Six Line **********/
 	if (Achivement[14].Active) // Four Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 60, sY + 238, 4, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 60, sY + 272, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 60, sY + 238, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 60, sY + 272, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[21].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 44, sY + 306, 24 + 44, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 141, sY + 322, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 44, sY + 306, 24 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 141, sY + 322, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 44, sY + 306, 24, dwTime);
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 141, sY + 322, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 44, sY + 306, 24, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 141, sY + 322, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 44, sY + 306 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 44, sY + 306 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[21].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74850,26 +74911,26 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	else
 	{
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 44, sY + 306, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 141, sY + 322, 6, dwTime); // 6 Red // 7 Green -> Horizontal
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 60, sY + 238, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 60, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 141, sY + 322, 6, dwTime); // 6 Red // 7 Green -> Horizontal
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 60, sY + 238, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 60, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[18].Active && Achivement[19].Active) // Five Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 124, sY + 272, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 124, sY + 272, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[22].Active == FALSE)
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 156, sY + 322, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 108, sY + 306, 35 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 156, sY + 322, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 108, sY + 306, 35 + 44, dwTime);
 		}
 		else
 		{
-			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 156, sY + 322, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 108, sY + 306, 35, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 156, sY + 322, 7, dwTime); // 6 Red // 7 Green -> Horizontal	
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 108, sY + 306, 35, dwTime);
 		}
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 108, sY + 306 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 108, sY + 306 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[22].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74877,20 +74938,20 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	}
 	else
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 156, sY + 322, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 156, sY + 322, 6, dwTime); // 6 Red // 7 Green -> Horizontal	
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 108, sY + 306, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 124, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 124, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[19].Active && Achivement[20].Active) // Five Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 188, sY + 272, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 188, sY + 272, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[23].Active == FALSE)
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 172, sY + 306, 21 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 172, sY + 306, 21 + 44, dwTime);
 		else
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 172, sY + 306, 21, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 172, sY + 306, 21, dwTime);
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 172, sY + 306 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 172, sY + 306 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[23].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74899,19 +74960,19 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	else
 	{
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 172, sY + 306, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 188, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 188, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[17].Active) // Four Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 252, sY + 238, 4, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 252, sY + 272, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 252, sY + 238, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 252, sY + 272, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[24].Active == FALSE)
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 236, sY + 306, 8 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 236, sY + 306, 8 + 44, dwTime);
 		else
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 236, sY + 306, 8, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 236, sY + 306, 8, dwTime);
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 236, sY + 306 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 236, sY + 306 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[24].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74920,19 +74981,19 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	else
 	{
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 236, sY + 306, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 252, sY + 238, 5, dwTime); // 5 Red // 4 Green -> Vertical
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 252, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 252, sY + 238, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 252, sY + 272, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	/********** Seven Line **********/
 	if (Achivement[9].Active) // Thirht Line
 	{
 		if (Achivement[25].Active == FALSE)
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 12, sY + 356, 5 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 12, sY + 356, 5 + 44, dwTime);
 		else
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 12, sY + 356, 5, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 12, sY + 356, 5, dwTime);
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 12, sY + 356 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 12, sY + 356 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[25].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74943,13 +75004,13 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 
 	if (Achivement[22].Active && Achivement[23].Active) // Six Line
 	{
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 155, sY + 322, 4, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 155, sY + 322, 4, dwTime); // 5 Red // 4 Green -> Vertical
 		if (Achivement[26].Active == FALSE)
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 140, sY + 356, 27 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 140, sY + 356, 27 + 44, dwTime);
 		else
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 140, sY + 356, 27, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 140, sY + 356, 27, dwTime);
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 140, sY + 356 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 140, sY + 356 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[26].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -74958,17 +75019,17 @@ void CGame::DrawDialogBox_Achivements(short msX, short msY)
 	else
 	{
 		m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS2]->PutSpriteFast(sX + 140, sY + 356, 0, dwTime); // Unknow
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 155, sY + 322, 5, dwTime); // 5 Red // 4 Green -> Vertical
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 155, sY + 322, 5, dwTime); // 5 Red // 4 Green -> Vertical
 	}
 
 	if (Achivement[13].Active) // Thirt Line
 	{
 		if (Achivement[27].Active == FALSE)
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 268, sY + 356, 43 + 44, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 268, sY + 356, 43 + 44, dwTime);
 		else
-			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFast(sX + 268, sY + 356, 43, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ACHIVEMENTS]->PutSpriteFastNoColorKey(sX + 268, sY + 356, 43, dwTime);
 
-		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFast(sX + 268, sY + 356 + 30, 8, dwTime); // Red Bar
+		m_pSprite[DEF_SPRID_INTERFACE_ND_PARTY]->PutSpriteFastNoColorKey(sX + 268, sY + 356 + 30, 8, dwTime); // Red Bar
 		iBarWidth = (Achivement[27].Porcent*MaxBarWidth) / 100;
 		if (iBarWidth < 0) iBarWidth = 0;
 		if (iBarWidth > MaxBarWidth) iBarWidth = MaxBarWidth;
@@ -78826,8 +78887,8 @@ void CGame::UpdateScreen_OnSelectCharacter(short sX, short sY, short msX, short 
 	for (i = 0; i < 4; i++)
 	{
 		if ((m_cCurFocus - 1 == i) && (bIgnoreFocus == FALSE))
-			m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(sX + add_x + 110 + i * 109 - 7, 63 - 9 + add_y, 62, dwTime);
-		else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFast(sX + add_x + 110 + i * 109 - 7, 63 - 9 + add_y, 61, dwTime);
+			m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(sX + add_x + 110 + i * 109 - 7, 63 - 9 + add_y, 62, dwTime);
+		else m_pSprite[DEF_SPRID_INTERFACE_ND_BUTTON]->PutSpriteFastNoColorKey(sX + add_x + 110 + i * 109 - 7, 63 - 9 + add_y, 61, dwTime);
 
 		if (m_pCharList[i] != NULL)
 		{

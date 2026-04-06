@@ -11,6 +11,27 @@
 // ============================================================
 
 #include "RenderBackend_SFML.h"
+#include <cstdio>
+
+// DBG: log a archivo fisico junto al .exe
+// Modo "w" = trunca al inicio de cada sesion (sin acumulacion entre runs).
+// Archivo: debug.txt en la misma carpeta que el .exe
+static FILE* g_dbgLogFile = nullptr;
+void DbgLog(const char* msg)
+{
+    if (!g_dbgLogFile) {
+        char exePath[MAX_PATH] = {0};
+        GetModuleFileNameA(NULL, exePath, MAX_PATH);
+        char* lastSlash = strrchr(exePath, '\\');
+        if (lastSlash) strcpy(lastSlash + 1, "debug.txt");
+        else strcpy(exePath, "debug.txt");
+        g_dbgLogFile = fopen(exePath, "w"); // "w" = nueva sesion, archivo limpio
+    }
+    if (g_dbgLogFile) {
+        fputs(msg, g_dbgLogFile);
+        fflush(g_dbgLogFile); // flush inmediato = legible incluso si crashea
+    }
+}
 
 // ============================================================
 // Fase 8.F: Configuracion de fuentes (tamanios y estilos GDI)
@@ -61,9 +82,6 @@ RenderBackend_SFML::RenderBackend_SFML(DXC_ddraw& ddraw)
     , m_bFontsLoaded(false)
     , m_pGrayscaleShader  (nullptr)
     , m_bGrayscaleShaderLoaded  (false)
-    , m_hSFMLChild(NULL)
-    , m_pRenderWin(nullptr)
-    , m_bDirectPresent(false)
 {
 }
 
@@ -180,6 +198,13 @@ void RenderBackend_SFML::BeginFrame()
 {
     if (!m_bInitialized) return;
 
+    // === SFML FIX v5 - CONFIRMACION DE EXE ===
+    static bool s_firstFrame = true;
+    if (s_firstFrame) {
+        s_firstFrame = false;
+        DbgLog("=== SFML FIX v14 FINAL BUILD 20260406 === lerp-snap+ui-nokey-complete\n");
+    }
+
     // Activar contexto SFML y mantenerlo activo durante todo el frame.
     // cnc-ddraw usa shadow buffers CPU para BltFast (no usa OpenGL entre frames).
     // OpenGL de cnc-ddraw solo se necesita en iFlip() que ocurre DESPUES de EndFrame().
@@ -196,7 +221,17 @@ void RenderBackend_SFML::EndFrame()
 
     // Guardia: si BeginFrame() no fue llamado primero, salir sin hacer nada.
     // Esto evita crasheos si EndFrame llega en un estado inesperado.
-    if (!m_bFrameActive) return;
+    if (!m_bFrameActive) {
+        // DBG-B: EndFrame llamado sin BeginFrame previo (iUpdateRet fue 0)
+        static int s_noopCount = 0;
+        s_noopCount++;
+        if (s_noopCount % 30 == 0) {
+            char buf[128];
+            sprintf(buf, "[DBG-ENDFRAME] NOOP (no BeginFrame) count=%d\n", s_noopCount);
+            DbgLog(buf);
+        }
+        return;
+    }
 
     // Asegurar que el contexto esta activo antes de display()
     m_pRenderTex->setActive(true);
@@ -612,6 +647,45 @@ bool RenderBackend_SFML::LoadSpriteTexture(int iSpriteIndex,
     tex.setSmooth(true); // Bilinear para suavizar bordes al escalar 2x
 
     m_mapTextures[iSpriteIndex] = std::move(tex);
+
+    // ============================================================
+    // [DIAG-A] SPRITE-LOAD: log every first load per slot.
+    // idx<0  = NoColorKey namespace (dual-cache negative key)
+    // idx>=0 = PutSpriteFast  namespace (colorkey path)
+    // ck=0x10000 = opaque sentinel (NoColorKey), ck<=0xFFFF = real colorkey
+    // pixfmt: 1=RGB565  2=RGB555  3=BGR565  0/other=RGB565 fallback
+    // ============================================================
+    {
+        const char* method = (iSpriteIndex < 0) ? "NoColorKey" : "Fast";
+        char buf[192];
+        sprintf(buf,
+            "[SPRITE-LOAD] idx=%d slot=%d method=%s ck=0x%08X size=%dx%d pixfmt=%d\n",
+            (iSpriteIndex < 0) ? -(iSpriteIndex + 1) : iSpriteIndex, // original sprite index
+            iSpriteIndex,                                              // actual cache slot
+            method,
+            (unsigned)dwColorKey,
+            iWidth, iHeight,
+            (int)m_DDraw.m_cPixelFormat);
+        DbgLog(buf);
+
+        // [DIAG-A2] Sample pixel 0 to detect color decode issues (color celeste origin)
+        if (pPixels16 && iWidth > 0 && iHeight > 0) {
+            unsigned short px0 = pPixels16[0];
+            sf::Color c0 = ConvertPixel16ToRGBA(px0, dwColorKey);
+            sprintf(buf,
+                "[SPRITE-LOAD-PIX0] idx=%d raw16=0x%04X → R=%u G=%u B=%u A=%u\n",
+                iSpriteIndex, px0, c0.r, c0.g, c0.b, c0.a);
+            DbgLog(buf);
+            // Also sample center pixel for better color representation
+            int cx = (iWidth / 2) + (iHeight / 2) * iWidth;
+            unsigned short pxC = pPixels16[cx];
+            sf::Color cC = ConvertPixel16ToRGBA(pxC, dwColorKey);
+            sprintf(buf,
+                "[SPRITE-LOAD-PIXC] idx=%d raw16=0x%04X → R=%u G=%u B=%u A=%u\n",
+                iSpriteIndex, pxC, cC.r, cC.g, cC.b, cC.a);
+            DbgLog(buf);
+        }
+    }
     return true;
 
 }
@@ -641,6 +715,9 @@ sf::Color RenderBackend_SFML::ConvertPixel16ToRGBA(unsigned short pixel16,
     // dwColorKey: colorkey real del sprite (valor RGB565 del fondo transparente)
     // dwColorKey > 0xFFFF = "sin colorkey" (tiles opacos - se usa 0x10000 como sentinel)
     // dwColorKey <= 0xFFFF = colorkey valido (incluye 0xFFFF=blanco, comun en arboles)
+    // colorkey=0 (negro) ES transparente para sprites del mundo (arboles, decoraciones).
+    // UI panels usan PutSpriteFastNoColorKey con dwColorKey=0x10000, nunca llegan aqui.
+    // colorkey=0x10000 (sentinel "sin colorkey") nunca iguala un pixel de 16 bits → todos opacos.
     if (dwColorKey <= 0xFFFF && pixel16 == static_cast<unsigned short>(dwColorKey))
         return sf::Color::Transparent;
 
@@ -732,6 +809,9 @@ void RenderBackend_SFML::BlitRenderTextureToDDraw()
         return;
     }
 
+    // DEBUG: conteo de pixels escritos vs saltados
+    int dbgWritten = 0, dbgSkipped = 0;
+
     for (int y = 0; y < iH; y++)
     {
         // Filas fuente: cada fila destino cubre SFML_S filas en el canvas 2x
@@ -757,7 +837,7 @@ void RenderBackend_SFML::BlitRenderTextureToDDraw()
                 uint32_t p10 = pSrcRow0[sx + 1];
                 uint32_t p01 = pSrcRow1[sx];
                 uint32_t p11 = pSrcRow1[sx + 1];
-                if (!((p00 | p10 | p01 | p11) & 0xFF000000)) continue;
+                if (!((p00 | p10 | p01 | p11) & 0xFF000000)) { dbgSkipped++; continue; }
                 ri = static_cast<int>( (p00        & 0xFF) + (p10        & 0xFF)
                                      + (p01        & 0xFF) + (p11        & 0xFF)) >> 2;
                 gi = static_cast<int>(((p00 >>  8) & 0xFF) + ((p10 >>  8) & 0xFF)
@@ -768,22 +848,32 @@ void RenderBackend_SFML::BlitRenderTextureToDDraw()
             else
             {
                 // SFML_S=1: pixel unico, sin promediar (1:1 mapping)
-                if (!(p00 & 0xFF000000)) continue;
+                if (!(p00 & 0xFF000000)) { dbgSkipped++; continue; }
                 ri = static_cast<int>(p00        & 0xFF);
                 gi = static_cast<int>((p00 >>  8) & 0xFF);
                 bi = static_cast<int>((p00 >> 16) & 0xFF);
             }
 
-            // Sin modificacion de color: respetar colores originales DDraw
-            float r = ri / 255.0f;
-            float g = gi / 255.0f;
-            float b = bi / 255.0f;
-
-            sf::Uint8 R = static_cast<sf::Uint8>(r * 255.0f);
-            sf::Uint8 G = static_cast<sf::Uint8>(g * 255.0f);
-            sf::Uint8 B = static_cast<sf::Uint8>(b * 255.0f);
+            dbgWritten++;
+            // Conversion directa RGBA -> RGB565 sin paso intermedio float
             pDstRow[x] = static_cast<unsigned short>(
-                ((R >> 3) << 11) | ((G >> 2) << 5) | (B >> 3));
+                ((ri >> 3) << 11) | ((gi >> 2) << 5) | (bi >> 3));
+        }
+    }
+
+    // DBG-C: log SFML blit coverage cada 30 frames para mejor resolucion temporal
+    {
+        static int s_blitFrameCount = 0;
+        s_blitFrameCount++;
+        if (s_blitFrameCount % 30 == 0) {
+            // Calcular cuantos pixels cubren la region del mundo (asumiendo res completa)
+            int totalPx = iW * iH;
+            float coverage = (totalPx > 0) ? (dbgWritten * 100.0f / totalPx) : 0.0f;
+            char buf[512];
+            sprintf(buf, "[DBG-BLIT] f=%d crop=%d,%d size=%dx%d written=%d skipped=%d coverage=%.1f%%",
+                s_blitFrameCount, m_iCropX, m_iCropY, iW, iH, dbgWritten, dbgSkipped, coverage);
+            DbgLog(buf);
+            OutputDebugStringA("\n");
         }
     }
 
